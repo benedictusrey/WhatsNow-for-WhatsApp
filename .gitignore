@@ -1,0 +1,15 @@
+# Local release staging. Upload these files to GitHub Releases instead of
+# committing binaries to the repository history.
+release-assets/windows/*.exe
+release-assets/windows/*.msi
+release-assets/macos/*
+release-assets/linux/*
+
+# Keep release documentation and checksums visible.
+!release-assets/**/README.md
+!release-assets/**/checksums.sha256
+
+.DS_Store
+Thumbs.db
+*.log
+
