@@ -82,9 +82,11 @@ Use the [latest GitHub Release](https://github.com/benedictusrey/WhatsNow/releas
 
 | Platform | Recommended asset |
 | --- | --- |
-| Windows 10/11 x64 | `WhatsNow_1.0.0_x64-setup.exe` |
+| Windows 11 x64 | `WhatsNow_1.0.0_x64-setup.exe` |
+| Windows 10 x64, memory-conscious | `WhatsNow_1.0.0_windows10_x64-setup.exe` |
 | Managed Windows deployment | `WhatsNow_1.0.0_x64_en-US.msi` |
-| Portable Windows | `WhatsNow.exe` |
+| Portable Windows 11 | `WhatsNow.exe` |
+| Portable Windows 10, memory-conscious | `WhatsNow_1.0.0_windows10_x64-portable.exe` |
 | Linux x64 | `WhatsNow_1.0.0_amd64.AppImage` or `.deb` |
 | Apple silicon Mac | `WhatsNow_1.0.0_aarch64.dmg` or `.app.tar.gz` |
 
@@ -94,7 +96,8 @@ assets must be produced and tested on their respective build runners before
 publication.
 
 Read the complete [installation guide](docs/INSTALLATION.md) and
-[platform notes](docs/PLATFORM_SUPPORT.md).
+[platform notes](docs/PLATFORM_SUPPORT.md). Windows 10 users can also read the
+[memory-conscious build notes](docs/WINDOWS_10.md).
 
 ## Security in brief
 
@@ -118,6 +121,7 @@ See [Security and verification](docs/SECURITY_AND_VERIFICATION.md),
 - [Install on Windows, macOS, or Linux](docs/INSTALLATION.md)
 - [Features and app comparison](docs/FEATURES_AND_COMPARISON.md)
 - [Platform support and limitations](docs/PLATFORM_SUPPORT.md)
+- [Windows 10 memory-conscious build](docs/WINDOWS_10.md)
 - [Security and download verification](docs/SECURITY_AND_VERIFICATION.md)
 - [Privacy and local data](PRIVACY.md)
 - [Troubleshooting](docs/TROUBLESHOOTING.md)
