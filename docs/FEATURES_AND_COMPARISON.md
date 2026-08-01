@@ -1,8 +1,8 @@
 # Features and comparison
 
-WhatsNow is a productivity-oriented desktop host for the official WhatsApp Web
-service. It does not implement a separate messaging protocol or operate a chat
-relay.
+WhatsNow 1.1.0 is a productivity-oriented desktop host for the official
+WhatsApp Web service. It does not implement a separate messaging protocol or
+operate a chat relay.
 
 ## Accounts
 
@@ -64,6 +64,18 @@ WhatsApp's transport.
 - Route ordinary downloads to the user's Downloads directory.
 - Maintain a clean tray icon and taskbar/window identity.
 
+## WebView2 efficiency
+
+- Keep the focused account on WebView2's normal memory target for responsive
+  chat interaction.
+- Request WebView2's supported low-memory target for minimized, tray-hidden,
+  and secondary accounts.
+- Keep background message observers and native notifications active.
+
+The policy is best-effort. WebView2 still manages browser, renderer, GPU, and
+utility subprocesses, so total memory varies with accounts, chats, media,
+extensions, runtime versions, and call activity.
+
 ## App Lock and local security
 
 - Lock account and Settings windows behind an application password.
@@ -113,4 +125,3 @@ then total every related process.
 
 WhatsNow is independent and unofficial. It is not affiliated with, endorsed by,
 or maintained by WhatsApp or Meta.
-

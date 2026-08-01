@@ -6,6 +6,9 @@ labels: bug
 assignees: ""
 ---
 
+WhatsNow is authored and maintained solely by
+[@benedictusrey](https://github.com/benedictusrey).
+
 **WhatsNow version and package**
 
 **Operating system and architecture**
@@ -20,4 +23,3 @@ assignees: ""
 
 Do not attach phone numbers, messages, QR codes, session data, tokens, or
 credentials. Report security problems privately through SECURITY.md.
-

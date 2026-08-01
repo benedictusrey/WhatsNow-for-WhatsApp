@@ -3,7 +3,7 @@
 ## Supported release
 
 Security fixes are provided for the latest published WhatsNow release. Version
-1.0.0 is the initial release.
+1.1.0 is the current release.
 
 ## Report a vulnerability privately
 
@@ -20,7 +20,8 @@ messages, profile directories, or exploit details in a public issue.
 
 Release safety depends on provenance, integrity, and platform signing:
 
-1. Download only from the official `benedictusrey/WhatsNow` Releases page.
+1. Download only from the official `benedictusrey/WhatsNow-for-WhatsApp`
+   Releases page.
 2. Verify the SHA-256 checksum.
 3. Verify the publisher signature when the release is signed.
 4. Reject a file whose checksum differs, source is uncertain, or signature is
@@ -34,4 +35,3 @@ and release URL, and wait for review if authenticity cannot be established.
 
 More detail and verification commands are in
 [Security and verification](docs/SECURITY_AND_VERIFICATION.md).
-

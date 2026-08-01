@@ -1,7 +1,7 @@
 # Install WhatsNow
 
 Download WhatsNow only from the
-[official Releases page](https://github.com/benedictusrey/WhatsNow/releases).
+[official Releases page](https://github.com/benedictusrey/WhatsNow-for-WhatsApp/releases).
 Compare the SHA-256 checksum before running an installer.
 
 ## Windows 10 or 11
@@ -11,7 +11,7 @@ includes it.
 
 ### Standard setup
 
-1. Download `WhatsNow_1.0.0_x64-setup.exe`.
+1. Download `WhatsNow_1.1.0_x64-setup.exe`.
 2. Verify its hash and publisher information.
 3. Run the installer.
 4. Open WhatsNow from the Start menu and link WhatsApp using the displayed QR
@@ -20,7 +20,7 @@ includes it.
 ### MSI deployment
 
 ```powershell
-msiexec.exe /i .\WhatsNow_1.0.0_x64_en-US.msi
+msiexec.exe /i .\WhatsNow_1.1.0_x64_en-US.msi
 ```
 
 ### Portable use
@@ -29,17 +29,24 @@ Download `WhatsNow.exe` and run it from a user-writable folder. Portable refers
 to the executable format: WhatsNow still keeps account sessions and preferences
 in the normal per-user application-data location.
 
-The included helper can install either a local or release asset:
+The included helper can install either a local or release asset. For the
+v1.1.0 package, use:
 
 ```powershell
 .\scripts\install-windows.ps1 `
-  -Source .\WhatsNow_1.0.0_x64-setup.exe `
+  -Source .\WhatsNow_1.1.0_x64-setup.exe `
   -ExpectedSha256 'EXPECTED_SHA256'
 ```
 
 ```powershell
-.\scripts\install-windows.ps1 -Repository 'benedictusrey/WhatsNow'
+.\scripts\install-windows.ps1 -Repository 'benedictusrey/WhatsNow-for-WhatsApp'
 ```
+
+The v1.1.0 build requests WebView2's supported low-memory target for minimized,
+tray-hidden, and secondary accounts while keeping the focused account at the
+normal responsive target. This is best-effort process management; it does not
+guarantee a fixed RAM value or eliminate WebView2 subprocesses. See the
+[Windows efficiency notes](WINDOWS_10.md).
 
 Uninstall an installed copy through **Settings > Apps > Installed apps**. For a
 portable copy, exit through the tray before deleting the executable.
@@ -55,14 +62,14 @@ supports DMG and `.app.tar.gz` assets:
 
 ```bash
 sh ./scripts/install-macos.sh \
-  --source ./WhatsNow_1.0.0_aarch64.dmg \
+  --source ./WhatsNow_1.1.0_aarch64.dmg \
   --sha256 EXPECTED_SHA256
 ```
 
 Or select the latest compatible published asset:
 
 ```bash
-sh ./scripts/install-macos.sh --repository benedictusrey/WhatsNow
+sh ./scripts/install-macos.sh --repository benedictusrey/WhatsNow-for-WhatsApp
 ```
 
 Do not remove quarantine metadata from an unverified download merely to bypass
@@ -77,20 +84,20 @@ x64 option; Debian and Ubuntu users can install the `.deb`.
 
 ```bash
 sh ./scripts/install-linux.sh \
-  --source ./WhatsNow_1.0.0_amd64.AppImage \
+  --source ./WhatsNow_1.1.0_amd64.AppImage \
   --sha256 EXPECTED_SHA256
 ```
 
 ```bash
 sh ./scripts/install-linux.sh \
-  --source ./WhatsNow_1.0.0_amd64.deb \
+  --source ./WhatsNow_1.1.0_amd64.deb \
   --sha256 EXPECTED_SHA256
 ```
 
 Or select the latest compatible published asset:
 
 ```bash
-sh ./scripts/install-linux.sh --repository benedictusrey/WhatsNow
+sh ./scripts/install-linux.sh --repository benedictusrey/WhatsNow-for-WhatsApp
 ```
 
 Some Linux WebKitGTK builds omit WebRTC support. Text chat, downloads,
@@ -109,4 +116,3 @@ linking again.
 Uninstalling can intentionally leave per-user data for future upgrades. Read
 [Privacy](../PRIVACY.md) before removing application data. Deleting it logs
 accounts out and cannot be undone.
-

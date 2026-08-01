@@ -1,45 +1,49 @@
-# WhatsNow for Windows 10
+# WhatsNow WebView2 efficiency on Windows 10
 
-WhatsNow 1.0.0 includes a separate Windows 10 memory-conscious build:
+WhatsNow 1.1.0 uses one memory-conscious Windows implementation for Windows 10
+and Windows 11. Use the same release packages on both systems:
 
-- `WhatsNow_1.0.0_windows10_x64-setup.exe` — installer
-- `WhatsNow_1.0.0_windows10_x64-portable.exe` — portable application
+- `WhatsNow_1.1.0_x64-setup.exe` — installer
+- `WhatsNow_1.1.0_x64_en-US.msi` — MSI deployment package
+- `WhatsNow.exe` — portable application
 
-Use the standard `WhatsNow_1.0.0_x64-setup.exe` on Windows 11. That existing
-installer is unchanged.
+## What v1.1.0 changes
 
-## What the Windows 10 build changes
+The focused, visible account uses WebView2's normal memory target so active chat
+remains responsive. Unfocused, minimized, tray-hidden, and secondary accounts
+request WebView2's supported low-memory target. Background scripts, account
+sessions, and native notifications remain active.
 
-When WhatsNow is active, WebView2 uses its normal memory target so the chat stays
-responsive. When WhatsNow is unfocused, minimized, or in the system tray, it
-requests WebView2's supported low-memory target. Scripts and network connections
-continue running, so background messages and native notifications remain active.
-
-The optimization is best-effort. WebView2 still uses separate browser, renderer,
-GPU, and utility processes by design, and Task Manager can continue to show
-several `msedgewebview2.exe` entries. Compare total memory after leaving WhatsNow
-in the background for a few minutes rather than comparing process count alone.
+This is best-effort optimization. WebView2 still uses separate browser,
+renderer, GPU, and utility processes by design, so Task Manager can continue to
+show several `msedgewebview2.exe` entries. Compare the total process tree after
+the same workload and idle period rather than comparing process count alone.
 
 The build does not use Chromium single-process flags, renderer-process limits,
-or WebView suspension. Those approaches can weaken process isolation, cause
-instability, or pause the background scripts that WhatsNow needs.
+forced process termination, or WebView suspension. Those workarounds can weaken
+process isolation, interrupt background notifications, or cause instability.
 
 ## Installation
 
 Installer:
 
-1. Download `WhatsNow_1.0.0_windows10_x64-setup.exe`.
-2. Verify its SHA-256 value against `checksums-windows10.sha256`.
+1. Download `WhatsNow_1.1.0_x64-setup.exe`.
+2. Verify its SHA-256 value against the release checksum.
 3. Run the installer and launch WhatsNow normally.
 
 Portable:
 
-1. Download `WhatsNow_1.0.0_windows10_x64-portable.exe`.
+1. Download `WhatsNow.exe`.
 2. Keep it in a writable folder, such as `Documents\WhatsNow Portable`.
-3. Run it directly. Do not place it in `Program Files`.
+3. Run it directly. Do not place the portable copy in `Program Files`.
 
 Keep Microsoft Edge WebView2 Runtime updated through Windows Update or Microsoft
-Edge Update. WhatsNow uses the installed Evergreen runtime and gracefully falls
-back to standard behavior if an outdated runtime does not expose the supported
-memory-target API.
+Edge Update. WhatsNow uses the installed Evergreen runtime and falls back to
+standard behavior if an outdated runtime does not expose the supported memory
+target API.
 
+If memory remains high, close unused secondary accounts, update WebView2, and
+attach only the content-free diagnostic log to a [support report](../SUPPORT.md).
+
+WhatsNow is authored and maintained solely by
+[@benedictusrey](https://github.com/benedictusrey).

@@ -6,7 +6,7 @@ set -eu
 
 SOURCE=""
 INSTALL_DIR="${WHATSNOW_INSTALL_DIR:-$HOME/.local/opt/WhatsNow}"
-REPOSITORY="${WHATSNOW_GITHUB_REPOSITORY:-benedictusrey/WhatsNow}"
+REPOSITORY="${WHATSNOW_GITHUB_REPOSITORY:-benedictusrey/WhatsNow-for-WhatsApp}"
 EXPECTED_SHA256=""
 LAUNCH=0
 TMP=""

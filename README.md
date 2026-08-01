@@ -1,11 +1,11 @@
 <p align="center">
-  <img src="docs/assets/whatsnow-hero.png" alt="Concept artwork showing the WhatsNow productivity workspace" width="100%">
+  <img src="docs/assets/whatsnow-hero-icon.png" alt="WhatsNow workspace artwork using the canonical WhatsNow icon" width="100%">
 </p>
 
 <p align="center">
-  <a href="https://github.com/benedictusrey/WhatsNow/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/benedictusrey/WhatsNow?display_name=tag&sort=semver"></a>
+  <a href="https://github.com/benedictusrey/WhatsNow-for-WhatsApp/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/benedictusrey/WhatsNow-for-WhatsApp?display_name=tag&sort=semver"></a>
   <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-168B72"></a>
-  <img alt="Version 1.0.0" src="https://img.shields.io/badge/version-1.0.0-213547">
+  <img alt="Version 1.1.0" src="https://img.shields.io/badge/version-1.1.0-213547">
 </p>
 
 # WhatsNow
@@ -15,7 +15,7 @@ Web service with focused desktop controls. It is designed for people who want
 multiple accounts, quieter notifications, personal themes, and faster access
 without changing how WhatsApp messages are delivered.
 
-This repository distributes WhatsNow 1.0.0, installation helpers, user
+This repository distributes WhatsNow 1.1.0, installation helpers, user
 documentation, and release checksums. The application source and Settings UI
 implementation are not included.
 
@@ -31,7 +31,7 @@ implementation are not included.
 
 <p align="center"><em>Original concept artwork representing WhatsNow's desktop productivity features.</em></p>
 
-| Area | WhatsNow 1.0.0 |
+| Area | WhatsNow 1.1.0 |
 | --- | --- |
 | Accounts | Separate desktop sessions, switching, renaming, removal, unread state, and per-account notification choices |
 | Focus | Preset and custom focus sessions with tray controls |
@@ -40,6 +40,7 @@ implementation are not included.
 | Productivity | Global shortcut, launch at startup, close to tray, start minimized, always on top, and direct browser links |
 | Security | App Lock, supported platform biometrics, isolated account profiles, narrow page-to-app permissions, and content-free diagnostics |
 | Desktop integration | Profile-based window titles, native tray behavior, taskbar unread state, downloads, and direct drag-and-drop attachments |
+| Efficiency | Active WebView2 accounts stay responsive while minimized, tray-hidden, and secondary accounts request the supported low-memory target |
 
 The account window title follows the logged-in WhatsApp profile name. A profile
 named Ben appears as `WhatsNow — Ben`.
@@ -78,22 +79,25 @@ before drawing performance conclusions.
 
 ## Download
 
-Use the [latest GitHub Release](https://github.com/benedictusrey/WhatsNow/releases/latest).
+Use the [latest GitHub Release](https://github.com/benedictusrey/WhatsNow-for-WhatsApp/releases/latest).
 
 | Platform | Recommended asset |
 | --- | --- |
-| Windows 11 x64 | `WhatsNow_1.0.0_x64-setup.exe` |
-| Windows 10 x64, memory-conscious | `WhatsNow_1.0.0_windows10_x64-setup.exe` |
-| Managed Windows deployment | `WhatsNow_1.0.0_x64_en-US.msi` |
-| Portable Windows 11 | `WhatsNow.exe` |
-| Portable Windows 10, memory-conscious | `WhatsNow_1.0.0_windows10_x64-portable.exe` |
-| Linux x64 | `WhatsNow_1.0.0_amd64.AppImage` or `.deb` |
-| Apple silicon Mac | `WhatsNow_1.0.0_aarch64.dmg` or `.app.tar.gz` |
+| Windows 10/11 x64 | `WhatsNow_1.1.0_x64-setup.exe` |
+| Managed Windows deployment | `WhatsNow_1.1.0_x64_en-US.msi` |
+| Portable Windows 10/11 | `WhatsNow.exe` |
+| Linux x64 | `WhatsNow_1.1.0_amd64.AppImage` or `.deb` |
+| Apple silicon Mac | `WhatsNow_1.1.0_aarch64.dmg` or `.app.tar.gz` |
 
 Only install assets that are actually attached to a published release.
-Windows packages are staged locally for the initial release. Linux and macOS
-assets must be produced and tested on their respective build runners before
-publication.
+The v1.1.0 Windows packages are staged locally. Linux and macOS assets must be
+produced and tested on their respective native build runners before publication;
+do not publish placeholder files.
+
+Version 1.1.0 keeps the active account responsive while requesting WebView2's
+supported low-memory target for minimized, tray-hidden, and secondary accounts.
+This is best-effort process management, not a fixed-RAM guarantee: WebView2
+still owns browser, renderer, GPU, and utility processes.
 
 Read the complete [installation guide](docs/INSTALLATION.md) and
 [platform notes](docs/PLATFORM_SUPPORT.md). Windows 10 users can also read the

@@ -1,9 +1,12 @@
 # Privacy
 
+WhatsNow is authored and maintained solely by
+[@benedictusrey](https://github.com/benedictusrey).
+
 WhatsNow loads the official WhatsApp Web service in the operating system's
 webview. The page communicates with WhatsApp under WhatsApp's terms and privacy
 policy. WhatsNow does not proxy chats through a server operated by this project
-and version 1.0.0 contains no project analytics or advertising SDK.
+and version 1.1.0 contains no project analytics or advertising SDK.
 
 ## Data kept locally
 
@@ -39,4 +42,3 @@ that data logs accounts out and cannot be undone.
 
 Never post session files, authentication tokens, private screenshots, or
 unredacted diagnostics in a public issue.
-

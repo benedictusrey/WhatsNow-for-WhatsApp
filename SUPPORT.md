@@ -1,5 +1,8 @@
 # Support
 
+WhatsNow is authored and maintained solely by
+[@benedictusrey](https://github.com/benedictusrey).
+
 Use GitHub Issues for reproducible application problems and feature requests.
 Before opening an issue, check the
 [installation guide](docs/INSTALLATION.md) and
@@ -17,4 +20,3 @@ Include:
 Do not post phone numbers, chat content, QR codes, session profiles, tokens, or
 other credentials. Report vulnerabilities through the private process in
 [SECURITY.md](SECURITY.md).
-

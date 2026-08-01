@@ -1,90 +1,123 @@
-# Publish WhatsNow with GitHub Desktop
+# Publish WhatsNow 1.1.0 with GitHub Desktop
 
-This guide publishes the documentation repository without publishing the
-application source or placing installer binaries in Git history.
+This folder is the public installation-only repository. It contains user
+documentation, installation helpers, artwork, and release staging metadata;
+it intentionally does not contain the WhatsNow source or Settings UI
+implementation.
+
+## Repository metadata for discovery
+
+Before committing, open the repository page on GitHub and edit the **About**
+panel. Use these values:
+
+**Description**
+
+> A Rust + Tauri WhatsApp Web desktop client with multi-account sessions, quiet notifications, themes, App Lock, and focus tools.
+
+**Website**
+
+`https://github.com/benedictusrey/WhatsNow-for-WhatsApp/releases/latest`
+
+**Topics** (use lowercase, hyphenated terms; choose up to 20)
+
+`whatsapp`, `whatsapp-web`, `whatsapp-client`, `desktop-app`, `rust`, `tauri`, `productivity`, `focus-mode`, `multi-account`, `native-notifications`, `app-lock`, `themes`, `webview2`, `windows`, `windows-10`, `linux`, `macos`, `cross-platform`, `privacy`, `low-memory`
+
+These topics improve search and filtering without implying that WhatsNow is an
+official WhatsApp product. The `v1.1.0` release tag is separate: it identifies
+a published version, while topics classify the repository.
+
+For the README, keep using the canonical `docs/assets/whatsnow-hero-icon.png`.
+If GitHub asks for a social-preview image, upload a compressed 1280×640 (or
+640×320) PNG/JPG copy under 1 MB; keep the full-resolution artwork for the
+README.
 
 ## 1. Review the prepared folder
 
 Open:
 
-`C:\Users\Benedictus\Desktop\WhatsNow - Repository`
+`%USERPROFILE%\Desktop\WhatsNow`
 
-The folder should contain Markdown documents, images, installer helpers, and
-`release-assets\windows`. The `.gitignore` intentionally hides `.exe` and `.msi`
-files from commits. They remain available locally for upload to a GitHub
-Release.
+Before committing, confirm that the folder contains no `src-tauri`,
+`settings-ui`, `.rs`, `Cargo.toml`, application source JavaScript, account
+profiles, signing certificates, or private credentials. The public
+`.gitignore` also guards against accidentally copying those directories.
 
-Before continuing, confirm there is no `src-tauri`, `settings-ui`, `.rs`,
-`Cargo.toml`, application JavaScript, or private credential file.
+Installer binaries are ignored from normal Git history. They remain available
+locally for upload to a GitHub Release.
 
-## 2. Add the exact folder to GitHub Desktop
+## 2. Update the v1.1.0 distribution
+
+Copy only the v1.1.0 Markdown, installation scripts, artwork, release notes,
+and checksum manifests from the private build process. Do not copy the private
+source checkout. Build Windows, Linux, and macOS packages from the same private
+v1.1.0 source revision, then stage only the finished release assets.
+
+Use `docs/assets/whatsnow-hero-icon.png` as the canonical WhatsNow artwork. It
+is derived from the official `icon.png` brand mark; do not substitute another
+application icon.
+
+## 3. Add the exact folder to GitHub Desktop
 
 1. Open GitHub Desktop and sign in as `benedictusrey`.
 2. Choose **File > Add local repository**.
-3. Select the exact folder above.
-4. If GitHub Desktop says it is not yet a Git repository, choose the offered
-   **create a repository** action for that exact folder.
-5. Do not create a second `WhatsNow` folder inside it.
+3. Select this exact `WhatsNow` folder.
+4. Do not select the parent `i-w` checkout or the private v1.1.0 source folder.
+5. If the repository already has an origin, use **Push origin** after committing;
+   do not create a nested repository.
 
-This avoids the common mistake of publishing an empty nested repository.
+The current remote is:
 
-## 3. Review the first commit
+`https://github.com/benedictusrey/WhatsNow-for-WhatsApp.git`
 
-In **Changes**, verify the real documentation and images are listed. Installer
-`.exe` and `.msi` files should not be listed because release assets do not belong
-in normal Git history.
+## 4. Review and commit
 
-Confirm these three README images are present:
+In **Changes**, confirm that only public documentation, scripts, artwork, and
+release metadata are listed. No Settings or native source files should appear.
 
-- `docs\assets\whatsnow-hero.png`
-- `docs\assets\whatsnow-features.png`
-- `docs\assets\whatsnow-resource-snapshot.png`
+Use this commit summary:
 
-Use this summary:
+`Publish WhatsNow 1.1.0 installation distribution`
 
-`Prepare WhatsNow 1.0.0 distribution repository`
+Use this optional commit description:
 
-Click **Commit to main**.
+```text
+Refresh the public installation-only distribution for WhatsNow 1.1.0.
 
-## 4. Publish the repository
+- Update README, release notes, installation, security, privacy, and platform docs.
+- Add WebView2 efficiency guidance and current repository metadata.
+- Stage canonical WhatsNow artwork, Windows 1.1.0 installers, and checksums.
+- Keep the private Settings UI and application source out of the public repository.
+```
 
-1. Click **Publish repository**.
-2. Set the GitHub name to `WhatsNow`.
-3. Set the owner to `benedictusrey`.
-4. Add: `A productivity-focused desktop client for WhatsApp Web`.
-5. Clear **Keep this code private** only when the documents are ready to be
-   public.
-6. Click **Publish repository**.
+The summary is the short, searchable commit title. The description records
+what changed and confirms that private implementation files were not published.
 
-Open the repository on GitHub and verify that README images and links render.
+Select **Commit to main**, then **Push origin**.
 
-## 5. Create release 1.0.0
+## 5. Create the 1.1.0 release
 
-GitHub Desktop publishes commits, but GitHub Releases and binary uploads are
-completed in the browser:
+GitHub Desktop publishes commits; GitHub Releases stores installers:
 
-1. On GitHub, open **Releases > Draft a new release**.
-2. Create tag `v1.0.0` targeting `main`.
-3. Use title `WhatsNow 1.0.0`.
-4. Paste the contents of `RELEASE_NOTES.md`.
-5. Drag these files from `release-assets\windows` into the release:
-   - `WhatsNow.exe`
-   - `WhatsNow_1.0.0_x64-setup.exe`
-   - `WhatsNow_1.0.0_x64_en-US.msi`
-   - `checksums.sha256`
-6. Mark it as the latest release.
-7. Publish only after the upload finishes and each filename is correct.
+1. Open the repository on GitHub.
+2. Choose **Releases > Draft a new release**.
+3. Create or select tag `v1.1.0` targeting `main`.
+4. Use title `WhatsNow 1.1.0`.
+5. Paste the contents of `RELEASE_NOTES.md`.
+6. Upload only packages that were actually built and tested.
+7. Upload the matching SHA-256 checksum manifest.
+8. Publish after every filename and checksum has been checked.
 
-Do not attach placeholder Linux or macOS files. Add those packages to a later
-draft only after native building, signing where applicable, and platform tests.
+Do not attach placeholder Linux or macOS files. GitHub Actions can build those
+packages only from a private source/build repository unless the complete
+application source is intentionally made public.
 
 ## 6. Final public check
 
-Use a private/incognito browser window to confirm:
+Use a private browser window to confirm:
 
 - the repository is owned by `benedictusrey`;
-- the release tag and displayed app version are `1.0.0`;
-- all Windows assets download;
-- SHA-256 values match;
+- the release tag and displayed app version are `1.1.0`;
+- README images and links render;
+- Windows assets download and match their checksums;
 - no source or Settings UI implementation was committed;
 - security reporting and installation links work.

@@ -1,5 +1,8 @@
 # Security and verification
 
+WhatsNow is authored and maintained solely by
+[@benedictusrey](https://github.com/benedictusrey).
+
 ## Understand the trust boundary
 
 WhatsNow is a desktop host for the official WhatsApp Web service. WhatsApp
@@ -15,9 +18,10 @@ casual access to the visible app, but it does not encrypt profile files.
 From PowerShell:
 
 ```powershell
-Get-FileHash .\WhatsNow_1.0.0_x64-setup.exe -Algorithm SHA256
-Get-AuthenticodeSignature .\WhatsNow_1.0.0_x64-setup.exe |
+Get-FileHash .\WhatsNow_1.1.0_x64-setup.exe -Algorithm SHA256
+Get-AuthenticodeSignature .\WhatsNow_1.1.0_x64-setup.exe |
   Format-List Status,StatusMessage,SignerCertificate
+Get-FileHash .\WhatsNow.exe -Algorithm SHA256
 ```
 
 Compare the hash character-for-character with `checksums.sha256` on the same
@@ -34,7 +38,7 @@ The bundled verification helper checks local Windows assets:
 ## Verify macOS downloads
 
 ```bash
-shasum -a 256 WhatsNow_1.0.0_aarch64.dmg
+shasum -a 256 WhatsNow_1.1.0_aarch64.dmg
 codesign --verify --deep --strict --verbose=2 /Applications/WhatsNow.app
 spctl --assess --type execute --verbose=2 /Applications/WhatsNow.app
 ```
@@ -42,8 +46,8 @@ spctl --assess --type execute --verbose=2 /Applications/WhatsNow.app
 ## Verify Linux downloads
 
 ```bash
-sha256sum WhatsNow_1.0.0_amd64.AppImage
-sha256sum WhatsNow_1.0.0_amd64.deb
+sha256sum WhatsNow_1.1.0_amd64.AppImage
+sha256sum WhatsNow_1.1.0_amd64.deb
 ```
 
 ## Antivirus and reputation warnings

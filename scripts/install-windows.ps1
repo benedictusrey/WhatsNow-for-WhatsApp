@@ -7,7 +7,7 @@ param(
   [string]$Repository = $(if ($env:WHATSNOW_GITHUB_REPOSITORY) {
     $env:WHATSNOW_GITHUB_REPOSITORY
   } else {
-    'benedictusrey/WhatsNow'
+    'benedictusrey/WhatsNow-for-WhatsApp'
   }),
   [string]$ExpectedSha256,
   [switch]$Portable,
