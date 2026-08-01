@@ -26,7 +26,8 @@ These topics improve search and filtering without implying that WhatsNow is an
 official WhatsApp product. The `v1.1.0` release tag is separate: it identifies
 a published version, while topics classify the repository.
 
-For the README, keep using the canonical `docs/assets/whatsnow-hero-icon.png`.
+For the README introduction, use the canonical `docs/assets/icon.png`. Keep
+`docs/assets/whatsnow-hero-icon.png` for the larger workspace artwork.
 If GitHub asks for a social-preview image, upload a compressed 1280×640 (or
 640×320) PNG/JPG copy under 1 MB; keep the full-resolution artwork for the
 README.
@@ -52,9 +53,8 @@ and checksum manifests from the private build process. Do not copy the private
 source checkout. Build Windows, Linux, and macOS packages from the same private
 v1.1.0 source revision, then stage only the finished release assets.
 
-Use `docs/assets/whatsnow-hero-icon.png` as the canonical WhatsNow artwork. It
-is derived from the official `icon.png` brand mark; do not substitute another
-application icon.
+Use `docs/assets/icon.png` for the README logo and retain the larger artwork
+files for feature sections. Do not substitute another application icon.
 
 ## 3. Add the exact folder to GitHub Desktop
 

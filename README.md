@@ -1,23 +1,40 @@
 <p align="center">
-  <img src="docs/assets/whatsnow-hero-icon.png" alt="WhatsNow workspace artwork using the canonical WhatsNow icon" width="100%">
+  <img src="docs/assets/icon.png" alt="WhatsNow icon" width="168">
+</p>
+
+<h1 align="center">WhatsNow</h1>
+
+<p align="center">
+  <strong>A calm, lightweight desktop experience for WhatsApp Web</strong><br>
+  Built with Tauri v2 + Rust + WebView2
+</p>
+
+<p align="center">
+  <em>🎉 WhatsNow 1.1.0 is now available 🎉</em><br>
+  <em>Personalized themes, quieter notifications, multi-account sessions, and focused desktop controls.</em>
 </p>
 
 <p align="center">
   <a href="https://github.com/benedictusrey/WhatsNow-for-WhatsApp/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/benedictusrey/WhatsNow-for-WhatsApp?display_name=tag&sort=semver"></a>
-  <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-168B72"></a>
   <img alt="Version 1.1.0" src="https://img.shields.io/badge/version-1.1.0-213547">
+  <img alt="Platform Windows macOS Linux" src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-168B72">
+  <img alt="Built with Tauri v2" src="https://img.shields.io/badge/built%20with-Tauri%20v2-24A6D8">
+  <img alt="Built with Rust" src="https://img.shields.io/badge/built%20with-Rust-B7410E">
+  <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-6B9E3A"></a>
+  <a href="https://github.com/benedictusrey"><img alt="Author @benedictusrey" src="https://img.shields.io/badge/author-%40benedictusrey-111827"></a>
 </p>
 
-# WhatsNow
+<hr>
 
 WhatsNow is an independent desktop client that combines the official WhatsApp
-Web service with focused desktop controls. It is designed for people who want
-multiple accounts, quieter notifications, personal themes, and faster access
-without changing how WhatsApp messages are delivered.
+Web service with focused desktop controls. Keep your familiar conversations,
+then add the small details that make a desktop workflow feel like your own:
+quiet notifications, isolated accounts, personal themes, App Lock, and focus
+tools.
 
 This repository distributes WhatsNow 1.1.0, installation helpers, user
-documentation, and release checksums. The application source and Settings UI
-implementation are not included.
+documentation, artwork, and release checksums. The application source and
+Settings UI implementation are not included.
 
 > WhatsNow is an independent, unofficial project. It is not affiliated with,
 > endorsed by, or maintained by WhatsApp LLC or Meta Platforms, Inc. WhatsApp
