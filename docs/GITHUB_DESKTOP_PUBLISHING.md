@@ -111,7 +111,30 @@ Do not attach placeholder Linux or macOS files. GitHub Actions can build those
 packages only from a private source/build repository unless the complete
 application source is intentionally made public.
 
-## 6. Final public check
+## 6. Build Linux and macOS packages in GitHub Actions
+
+The public repository includes `.github/workflows/release.yml`. It checks out
+the private source only inside the runner, builds Linux x64 and Apple Silicon
+macOS packages, verifies their checksums, and uploads workflow artifacts.
+
+Before running it:
+
+1. Add a read-only personal access token for the private source repository as
+   the `SOURCE_REPO_TOKEN` Actions secret.
+2. Open **Actions > Build WhatsNow 1.1.0 cross-platform release > Run
+   workflow**.
+3. Enter the private source repository and its v1.1.0 ref. Use
+   `versions/WhatsNow-1.1.0-webview2-efficient` for `source_path` when that
+   nested layout is retained; use `.` when `src-tauri` is at the source root.
+4. Review both platform jobs. Enable `publish_release` only when you want the
+   workflow to create a draft release containing the four verified packages
+   and a combined `checksums.sha256`.
+
+The workflow never copies the private source or Settings UI into this public
+repository. See [RELEASE_NOTES.md](../RELEASE_NOTES.md) for the exact asset
+names and required repository variables.
+
+## 7. Final public check
 
 Use a private browser window to confirm:
 
