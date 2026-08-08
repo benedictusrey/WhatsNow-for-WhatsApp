@@ -16,7 +16,7 @@ the tray, and relaunch it.
 ## Windows Task Manager shows several WebView2 processes
 
 This is expected. WebView2 separates browser, renderer, GPU, and utility work
-into multiple processes. Version 1.1.0 requests its supported low-memory target
+into multiple processes. Version 2.0.0 requests its supported low-memory target
 for minimized, tray-hidden, and secondary accounts while keeping the focused
 account responsive. Compare total memory for the whole WhatsNow process tree,
 not one `msedgewebview2.exe` entry or the process count alone.

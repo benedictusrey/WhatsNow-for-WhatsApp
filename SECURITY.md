@@ -3,7 +3,7 @@
 ## Supported release
 
 Security fixes are provided for the latest published WhatsNow release. Version
-1.1.0 is the current release.
+2.0.0 is the current release.
 
 ## Report a vulnerability privately
 

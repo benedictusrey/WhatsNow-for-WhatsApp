@@ -11,7 +11,7 @@ includes it.
 
 ### Standard setup
 
-1. Download `WhatsNow_1.1.0_x64-setup.exe`.
+1. Download `WhatsNow_2.0.0_x64-setup.exe`.
 2. Verify its hash and publisher information.
 3. Run the installer.
 4. Open WhatsNow from the Start menu and link WhatsApp using the displayed QR
@@ -20,21 +20,21 @@ includes it.
 ### MSI deployment
 
 ```powershell
-msiexec.exe /i .\WhatsNow_1.1.0_x64_en-US.msi
+msiexec.exe /i .\WhatsNow_2.0.0_x64_en-US.msi
 ```
 
 ### Portable use
 
-Download `WhatsNow.exe` and run it from a user-writable folder. Portable refers
+Download `WhatsNow_2.0.0_portable.exe` and run it from a user-writable folder. Portable refers
 to the executable format: WhatsNow still keeps account sessions and preferences
 in the normal per-user application-data location.
 
 The included helper can install either a local or release asset. For the
-v1.1.0 package, use:
+v2.0.0 package, use:
 
 ```powershell
 .\scripts\install-windows.ps1 `
-  -Source .\WhatsNow_1.1.0_x64-setup.exe `
+  -Source .\WhatsNow_2.0.0_x64-setup.exe `
   -ExpectedSha256 'EXPECTED_SHA256'
 ```
 
@@ -42,7 +42,7 @@ v1.1.0 package, use:
 .\scripts\install-windows.ps1 -Repository 'benedictusrey/WhatsNow-for-WhatsApp'
 ```
 
-The v1.1.0 build requests WebView2's supported low-memory target for minimized,
+The v2.0.0 build requests WebView2's supported low-memory target for minimized,
 tray-hidden, and secondary accounts while keeping the focused account at the
 normal responsive target. This is best-effort process management; it does not
 guarantee a fixed RAM value or eliminate WebView2 subprocesses. See the
@@ -62,7 +62,7 @@ supports DMG and `.app.tar.gz` assets:
 
 ```bash
 sh ./scripts/install-macos.sh \
-  --source ./WhatsNow_1.1.0_aarch64.dmg \
+  --source ./WhatsNow_2.0.0_aarch64.dmg \
   --sha256 EXPECTED_SHA256
 ```
 
@@ -84,13 +84,13 @@ x64 option; Debian and Ubuntu users can install the `.deb`.
 
 ```bash
 sh ./scripts/install-linux.sh \
-  --source ./WhatsNow_1.1.0_amd64.AppImage \
+  --source ./WhatsNow_2.0.0_amd64.AppImage \
   --sha256 EXPECTED_SHA256
 ```
 
 ```bash
 sh ./scripts/install-linux.sh \
-  --source ./WhatsNow_1.1.0_amd64.deb \
+  --source ./WhatsNow_2.0.0_amd64.deb \
   --sha256 EXPECTED_SHA256
 ```
 

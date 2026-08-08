@@ -1,8 +1,24 @@
 # Features and comparison
 
-WhatsNow 1.1.0 is a productivity-oriented desktop host for the official
+WhatsNow 2.0.0 is a productivity-oriented desktop host for the official
 WhatsApp Web service. It does not implement a separate messaging protocol or
 operate a chat relay.
+
+## WhatsNow vs WhatsApp Web — the desktop layer
+
+| Your day | WhatsNow 🟢 | WhatsApp Web in a browser tab |
+| --- | --- | --- |
+| Where it lives | Its own desktop window | One tab among twenty others |
+| Close the window | Hides to the tray; messages keep arriving | Closes the chat entirely |
+| Startup | Launches with Windows, waits quietly in the tray | Find the tab, log in again |
+| Notifications | Native toasts with the WhatsNow icon; click to jump into the sender's chat | Browser pop-ups; gone when dismissed |
+| Multiple accounts | Isolated sessions side by side | One account per browser profile |
+| Unread count | Big, readable taskbar badge | A tiny favicon dot |
+| Themes | Official Dark/Light + 8 personality palettes; doodles on official themes only | Light, Dark, and the browser's dark mode |
+| Focus mode | Quiet-interruption sessions, 15 minutes to 24 hours | Closing the tab |
+| App Lock | Optional password or biometric lock | Nothing |
+| Attachments | Drag and drop straight into the chat | The browser's file picker |
+| Resource use | A focused Tauri + WebView2 shell | An entire browser for one tab |
 
 ## Accounts
 

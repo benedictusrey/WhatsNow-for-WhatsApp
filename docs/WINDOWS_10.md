@@ -1,13 +1,13 @@
 # WhatsNow WebView2 efficiency on Windows 10
 
-WhatsNow 1.1.0 uses one memory-conscious Windows implementation for Windows 10
+WhatsNow 2.0.0 uses one memory-conscious Windows implementation for Windows 10
 and Windows 11. Use the same release packages on both systems:
 
-- `WhatsNow_1.1.0_x64-setup.exe` — installer
-- `WhatsNow_1.1.0_x64_en-US.msi` — MSI deployment package
-- `WhatsNow.exe` — portable application
+- `WhatsNow_2.0.0_x64-setup.exe` — installer
+- `WhatsNow_2.0.0_x64_en-US.msi` — MSI deployment package
+- `WhatsNow_2.0.0_portable.exe` — portable application
 
-## What v1.1.0 changes
+## What v2.0.0 changes
 
 The focused, visible account uses WebView2's normal memory target so active chat
 remains responsive. Unfocused, minimized, tray-hidden, and secondary accounts
@@ -27,13 +27,13 @@ process isolation, interrupt background notifications, or cause instability.
 
 Installer:
 
-1. Download `WhatsNow_1.1.0_x64-setup.exe`.
+1. Download `WhatsNow_2.0.0_x64-setup.exe`.
 2. Verify its SHA-256 value against the release checksum.
 3. Run the installer and launch WhatsNow normally.
 
 Portable:
 
-1. Download `WhatsNow.exe`.
+1. Download `WhatsNow_2.0.0_portable.exe`.
 2. Keep it in a writable folder, such as `Documents\WhatsNow Portable`.
 3. Run it directly. Do not place the portable copy in `Program Files`.
 

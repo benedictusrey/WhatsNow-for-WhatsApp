@@ -3,7 +3,7 @@
 WhatsNow is authored and maintained solely by
 [@benedictusrey](https://github.com/benedictusrey).
 
-| Platform | Package | Runtime | v1.1.0 status |
+| Platform | Package | Runtime | v2.0.0 status |
 | --- | --- | --- | --- |
 | Windows 10/11 x64 | NSIS setup, MSI, portable EXE | Edge WebView2 | Built and staged |
 | Linux x64 | AppImage, Debian package | WebKitGTK 2.46.1+ | Publish after native validation |
@@ -14,7 +14,7 @@ Because native packaging and signing are platform-specific, a Windows computer
 cannot meaningfully validate the final macOS Gatekeeper/notarization behavior or
 Linux WebKitGTK integration.
 
-Version 1.1.0 uses WebView2's supported low-memory target for inactive Windows
+Version 2.0.0 uses WebView2's supported low-memory target for inactive Windows
 accounts while keeping the focused account responsive. It does not promise a
 fixed RAM value or suppress WebView2's normal subprocess model.
 

@@ -6,7 +6,7 @@ WhatsNow is authored and maintained solely by
 WhatsNow loads the official WhatsApp Web service in the operating system's
 webview. The page communicates with WhatsApp under WhatsApp's terms and privacy
 policy. WhatsNow does not proxy chats through a server operated by this project
-and version 1.1.0 contains no project analytics or advertising SDK.
+and version 2.0.0 contains no project analytics or advertising SDK.
 
 ## Data kept locally
 
