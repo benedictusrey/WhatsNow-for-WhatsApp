@@ -11,7 +11,7 @@ release-assets/linux/*
 
 # Historical checksum backups stay local to the release staging area.
 release-assets/windows/checksums-*.sha256
-!release-assets/windows/checksums-windows10.sha256
+!release-assets/windows/checksums-windows.sha256
 
 # Private implementation guard. The public repository is installation-only;
 # never copy the Settings UI or native source tree into it.

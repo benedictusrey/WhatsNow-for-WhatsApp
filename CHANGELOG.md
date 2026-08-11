@@ -3,6 +3,61 @@
 WhatsNow is authored and maintained solely by
 [@benedictusrey](https://github.com/benedictusrey).
 
+## 2.5.0 — Four locked pillars: themes, emoji, compact toasts, click-to-chat routing
+
+- **Themes + doodle mapping is a fixed contract.** Official `Dark` and
+  `Light` keep WhatsApp's doodle wallpaper; System and every personality
+  theme (midnight through aurora) stay clean on every surface — including
+  the reply/quote cards and all wallpaper layers. Theme switches are
+  instant and reload-free, and per-theme CSS is never rewritten.
+- **Typing-area emojis render in every theme.** A verified regression had
+  made typed emojis invisible on the official Dark theme and every
+  personality theme (only Light showed them). Root cause: the doodle
+  kill-switch's broad bypass wiped WhatsApp's inline emoji sprite
+  backgrounds. The bypass now excludes emoji-sprite elements, so the same
+  emojis render identically in all themes — with automated invariants
+  guarding the fix.
+- **Float (banner) notifications are always compact.** Every toast and
+  every notification-center entry uses the small WhatsNow icon next to the
+  "WhatsNow" name — never the large left-side banner. Root cause: a
+  per-toast `appLogoOverride` image made Windows draw the large-icon
+  layout; it was removed, and a test now forbids its return.
+- **Clicking a notification opens the sender's chat.** Toast and
+  notification-center clicks reliably land in the sender's conversation.
+  Root causes fixed: WhatsApp ignores untrusted page clicks (routing now
+  synthesizes a real trusted click through the host), the command was
+  missing its ACL registration (now in `build.rs` + the remote
+  capability), and row discovery could target WhatsApp's giant list
+  wrapper instead of the real chat row (now smallest-match). All verified
+  live end-to-end.
+- **Reply/quote bars can no longer flash doodles on dark personality themes.**
+  WhatsApp 2.24xx+ paints its default doodle wallpaper as a CSS *mask*
+  (`[data-testid='conversation-background-*']` with an inline `mask-image`
+  SVG pattern over a translucent tint), not as a `background-image`, and it
+  renamed the composer container to `compose-box`. The doodle kill-switch now
+  zeroes the mask (and the tint it shapes) on every wallpaper layer, adds an
+  inline-mask belt-and-suspenders rule that still spares emoji/compose
+  surfaces, and covers both the legacy and current composer testids — so the
+  curtain effect while Replying is gone on Graphite through Aurora, while
+  Light/Dark keep WhatsApp's official doodles.
+- **Settings > About always shows the real version.** The About card and
+  footer carried a hardcoded "WhatsNow 2.0.1" label that survived the bump.
+  The version is now injected at runtime from the compiled package, so it can
+  never drift from the binary again.
+- **Windows assets use the universal `windows` naming.** The `windows10`
+  tag is retired everywhere: `WhatsNow_2.5.0_windows_x64-setup.exe` /
+  `-portable.exe`, `checksums-windows.sha256`. The build targets any 64-bit
+  Windows 10 or Windows 11.
+- **Complete publish workflow documented.** `docs/GITHUB_DESKTOP_PUBLISHING.md`
+  now walks the full two-repo flow (private `i-w` source + this public
+  installation-only repository) with GitHub Desktop steps, and the release
+  workflow builds Windows (NSIS + MSI + portable), Linux (AppImage + .deb),
+  and macOS (Apple Silicon + Intel DMG/archive) non-universal packages — and
+  refuses to run if the private source repository is ever public.
+- Version 2.5.0 replaces the 2.0.1 line with the same verified fixes in a
+  fresh release; every pillar is backed up byte-identically in the private
+  workspace (`backup/v2.5.0-locked/`).
+
 ## 2.0.0 — Notification icons everywhere, locked theme logic, cross-platform release
 
 - The WhatsNow icon now appears on **every** toast banner and every

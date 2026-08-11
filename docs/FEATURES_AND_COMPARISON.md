@@ -1,6 +1,6 @@
 # Features and comparison
 
-WhatsNow 2.0.0 is a productivity-oriented desktop host for the official
+WhatsNow 2.5.0 is a productivity-oriented desktop host for the official
 WhatsApp Web service. It does not implement a separate messaging protocol or
 operate a chat relay.
 

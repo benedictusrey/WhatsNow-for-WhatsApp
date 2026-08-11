@@ -1,8 +1,10 @@
-name: Build WhatsNow 2.0.0 cross-platform release
+name: Build WhatsNow cross-platform release
 
 # The public repository contains installation documentation only. The build
-# source is checked out from a separate private repository at workflow time.
-# This keeps the Settings UI and native implementation out of the public tree.
+# source is checked out from a separate PRIVATE repository at workflow time
+# (benedictusrey/i-w). This keeps the Settings UI and native implementation
+# out of the public tree. A guard below fails the run if the source
+# repository is ever public.
 
 on:
   workflow_dispatch:
@@ -14,7 +16,7 @@ on:
       source_ref:
         description: "Private source tag or commit to build"
         required: true
-        default: "v2.0.0"
+        default: "v2.5.0"
         type: string
       source_path:
         description: "Source project directory; use . when src-tauri is at the repository root"
@@ -24,12 +26,12 @@ on:
       app_version:
         description: "Application version used in release filenames"
         required: true
-        default: "2.0.0"
+        default: "2.5.0"
         type: string
       release_tag:
         description: "GitHub Release tag"
         required: true
-        default: "v2.0.0"
+        default: "v2.5.0"
         type: string
       publish_release:
         description: "Create a draft GitHub Release after all builds pass"
@@ -38,16 +40,20 @@ on:
         type: boolean
   push:
     tags:
-      - "v2.0.0"
+      - "v*"
 
 permissions:
   contents: write
 
+concurrency:
+  group: whatsnow-release-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
-  APP_VERSION: ${{ github.event.inputs.app_version || vars.WHATSNOW_APP_VERSION || '2.0.0' }}
+  APP_VERSION: ${{ github.event.inputs.app_version || vars.WHATSNOW_APP_VERSION || '2.5.0' }}
   RELEASE_TAG: ${{ github.event.inputs.release_tag || github.ref_name }}
   SOURCE_REPOSITORY: ${{ github.event.inputs.source_repository || vars.WHATSNOW_SOURCE_REPOSITORY }}
-  SOURCE_REF: ${{ github.event.inputs.source_ref || vars.WHATSNOW_SOURCE_REF || 'v2.0.0' }}
+  SOURCE_REF: ${{ github.event.inputs.source_ref || vars.WHATSNOW_SOURCE_REF || 'v2.5.0' }}
   SOURCE_PATH: ${{ github.event.inputs.source_path || vars.WHATSNOW_SOURCE_PATH || '.' }}
 
 jobs:
@@ -72,8 +78,18 @@ jobs:
             echo "::error::Create a read-only SOURCE_REPO_TOKEN secret for the private source repository."
             exit 1
           }
+          visibility="$(curl -fsS \
+            -H "Authorization: Bearer ${SOURCE_REPO_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${SOURCE_REPOSITORY}" \
+            | python3 -c 'import json,sys; print(json.load(sys.stdin).get("visibility","unknown"))')"
+          echo "source repository visibility: ${visibility}"
+          test "${visibility}" = "private" || {
+            echo "::error::Source repository ${SOURCE_REPOSITORY} has visibility '${visibility}', not 'private'. The private Settings UI and native implementation must never be published. Refusing to build."
+            exit 1
+          }
 
-      - name: Checkout private v2.0.0 source
+      - name: Checkout private v2.5.0 source
         uses: actions/checkout@v4
         with:
           repository: ${{ env.SOURCE_REPOSITORY }}
@@ -159,7 +175,7 @@ jobs:
           retention-days: 30
 
   build-macos:
-    name: macOS Apple Silicon bundles
+    name: macOS bundles (Apple Silicon + Intel)
     runs-on: macos-14
     steps:
       - name: Checkout public release metadata
@@ -179,8 +195,18 @@ jobs:
             echo "::error::Create a read-only SOURCE_REPO_TOKEN secret for the private source repository."
             exit 1
           }
+          visibility="$(curl -fsS \
+            -H "Authorization: Bearer ${SOURCE_REPO_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${SOURCE_REPOSITORY}" \
+            | python3 -c 'import json,sys; print(json.load(sys.stdin).get("visibility","unknown"))')"
+          echo "source repository visibility: ${visibility}"
+          test "${visibility}" = "private" || {
+            echo "::error::Source repository ${SOURCE_REPOSITORY} has visibility '${visibility}', not 'private'. Refusing to build."
+            exit 1
+          }
 
-      - name: Checkout private v2.0.0 source
+      - name: Checkout private v2.5.0 source
         uses: actions/checkout@v4
         with:
           repository: ${{ env.SOURCE_REPOSITORY }}
@@ -196,7 +222,7 @@ jobs:
           set -euo pipefail
           project_dir="source/${SOURCE_PATH}"
           test -f "${project_dir}/src-tauri/Cargo.toml" || {
-            echo "::error::No src-tauri/Cargo.toml found under ${project_dir}. Set source_path to the private project directory."
+            echo "::error::No src-tauri/Cargo.toml found under ${project_dir}."
             exit 1
           }
           test -f "${project_dir}/src-tauri/tauri.conf.json" || {
@@ -208,21 +234,28 @@ jobs:
             exit 1
           }
 
-      - name: Install Rust for Apple Silicon
+      - name: Install Rust (Apple Silicon + Intel targets)
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-apple-darwin
+          targets: aarch64-apple-darwin, x86_64-apple-darwin
 
       - name: Install Tauri CLI
         shell: bash
         run: cargo install tauri-cli --version "^2" --locked
 
-      - name: Build DMG and macOS archive
+      - name: Build Apple Silicon DMG and macOS archive
         uses: tauri-apps/tauri-action@v0.5
         with:
           projectPath: source/${{ env.SOURCE_PATH }}
           tauriScript: cargo tauri
           args: --target aarch64-apple-darwin --bundles app,dmg
+
+      - name: Build Intel DMG and macOS archive
+        uses: tauri-apps/tauri-action@v0.5
+        with:
+          projectPath: source/${{ env.SOURCE_PATH }}
+          tauriScript: cargo tauri
+          args: --target x86_64-apple-darwin --bundles app,dmg
 
       - name: Normalize and verify macOS assets
         shell: bash
@@ -230,26 +263,38 @@ jobs:
           set -euo pipefail
           mkdir -p out
           project_dir="source/${SOURCE_PATH}"
-          dmg="$(find "${project_dir}/src-tauri/target" -type f -name '*.dmg' -print -quit)"
-          archive="$(find "${project_dir}/src-tauri/target" -type f -name '*.app.tar.gz' -print -quit)"
-          test -n "${dmg}" || { echo "::error::Tauri did not produce a DMG."; exit 1; }
-          test -n "${archive}" || { echo "::error::Tauri did not produce a macOS app archive."; exit 1; }
-          cp "${dmg}" "out/WhatsNow_${APP_VERSION}_aarch64.dmg"
-          cp "${archive}" "out/WhatsNow_${APP_VERSION}_aarch64.app.tar.gz"
-          shasum -a 256 out/WhatsNow_${APP_VERSION}_aarch64.dmg out/WhatsNow_${APP_VERSION}_aarch64.app.tar.gz | tee out/checksums-macos.sha256
+          a_dmg="$(find "${project_dir}/src-tauri/target/aarch64-apple-darwin" -type f -name '*.dmg' -print -quit 2>/dev/null)"
+          a_archive="$(find "${project_dir}/src-tauri/target/aarch64-apple-darwin" -type f -name '*.app.tar.gz' -print -quit 2>/dev/null)"
+          x_dmg="$(find "${project_dir}/src-tauri/target/x86_64-apple-darwin" -type f -name '*.dmg' -print -quit 2>/dev/null)"
+          x_archive="$(find "${project_dir}/src-tauri/target/x86_64-apple-darwin" -type f -name '*.app.tar.gz' -print -quit 2>/dev/null)"
+          test -n "${a_dmg}" || { echo "::error::Tauri did not produce an Apple Silicon DMG."; exit 1; }
+          test -n "${a_archive}" || { echo "::error::Tauri did not produce an Apple Silicon archive."; exit 1; }
+          test -n "${x_dmg}" || { echo "::error::Tauri did not produce an Intel DMG."; exit 1; }
+          test -n "${x_archive}" || { echo "::error::Tauri did not produce an Intel archive."; exit 1; }
+          cp "${a_dmg}" "out/WhatsNow_${APP_VERSION}_aarch64.dmg"
+          cp "${a_archive}" "out/WhatsNow_${APP_VERSION}_aarch64.app.tar.gz"
+          cp "${x_dmg}" "out/WhatsNow_${APP_VERSION}_x86_64.dmg"
+          cp "${x_archive}" "out/WhatsNow_${APP_VERSION}_x86_64.app.tar.gz"
+          shasum -a 256 \
+            out/WhatsNow_${APP_VERSION}_aarch64.dmg \
+            out/WhatsNow_${APP_VERSION}_aarch64.app.tar.gz \
+            out/WhatsNow_${APP_VERSION}_x86_64.dmg \
+            out/WhatsNow_${APP_VERSION}_x86_64.app.tar.gz | tee out/checksums-macos.sha256
 
       - name: Upload macOS workflow artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: WhatsNow-${{ env.APP_VERSION }}-macos-aarch64
+          name: WhatsNow-${{ env.APP_VERSION }}-macos
           path: |
             out/WhatsNow_${{ env.APP_VERSION }}_aarch64.dmg
             out/WhatsNow_${{ env.APP_VERSION }}_aarch64.app.tar.gz
+            out/WhatsNow_${{ env.APP_VERSION }}_x86_64.dmg
+            out/WhatsNow_${{ env.APP_VERSION }}_x86_64.app.tar.gz
           if-no-files-found: error
           retention-days: 30
 
   build-windows:
-    name: Windows x64 bundles
+    name: Windows x64 bundles (NSIS + MSI + portable)
     runs-on: windows-latest
     steps:
       - name: Checkout public release metadata
@@ -269,8 +314,18 @@ jobs:
             echo "::error::Create a read-only SOURCE_REPO_TOKEN secret for the private source repository."
             exit 1
           }
+          visibility="$(curl -fsS \
+            -H "Authorization: Bearer ${SOURCE_REPO_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${SOURCE_REPOSITORY}" \
+            | python3 -c 'import json,sys; print(json.load(sys.stdin).get("visibility","unknown"))')"
+          echo "source repository visibility: ${visibility}"
+          test "${visibility}" = "private" || {
+            echo "::error::Source repository ${SOURCE_REPOSITORY} has visibility '${visibility}', not 'private'. Refusing to build."
+            exit 1
+          }
 
-      - name: Checkout private v2.0.0 source
+      - name: Checkout private v2.5.0 source
         uses: actions/checkout@v4
         with:
           repository: ${{ env.SOURCE_REPOSITORY }}
@@ -286,7 +341,7 @@ jobs:
           set -euo pipefail
           project_dir="source/${SOURCE_PATH}"
           test -f "${project_dir}/src-tauri/Cargo.toml" || {
-            echo "::error::No src-tauri/Cargo.toml found under ${project_dir}. Set source_path to the private project directory."
+            echo "::error::No src-tauri/Cargo.toml found under ${project_dir}."
             exit 1
           }
           test -f "${project_dir}/src-tauri/tauri.conf.json" || {
@@ -317,7 +372,15 @@ jobs:
         with:
           projectPath: source/${{ env.SOURCE_PATH }}
           tauriScript: cargo tauri
-          args: --target x86_64-pc-windows-msvc --bundles nsis,msi --features windows10-memory
+          args: --target x86_64-pc-windows-msvc --bundles nsis,msi --features windows-memory
+
+      - name: Build portable executable (windows-memory, portable-mode)
+        shell: bash
+        working-directory: source/${{ env.SOURCE_PATH }}/src-tauri
+        run: |
+          cargo build --release \
+            --features "windows-memory,portable-mode" \
+            --target x86_64-pc-windows-msvc
 
       - name: Normalize and verify Windows assets
         shell: bash
@@ -325,21 +388,56 @@ jobs:
           set -euo pipefail
           mkdir -p out
           project_dir="source/${SOURCE_PATH}"
-          setup="$(find "${project_dir}/src-tauri/target" -type f -name '*.exe' -path '*nsis*' -print -quit)"
-          msi="$(find "${project_dir}/src-tauri/target" -type f -name '*.msi' -print -quit)"
+          setup="$(find "${project_dir}/src-tauri/target/x86_64-pc-windows-msvc" -type f -name '*.exe' -path '*nsis*' -print -quit 2>/dev/null)"
+          msi="$(find "${project_dir}/src-tauri/target/x86_64-pc-windows-msvc" -type f -name '*.msi' -print -quit 2>/dev/null)"
+          portable="$(find "${project_dir}/src-tauri/target/x86_64-pc-windows-msvc/release" -maxdepth 1 -type f -name 'whatsnow.exe' -print -quit 2>/dev/null)"
           test -n "${setup}" || { echo "::error::Tauri did not produce an NSIS installer."; exit 1; }
           test -n "${msi}" || { echo "::error::Tauri did not produce an MSI package."; exit 1; }
-          cp "${setup}" "out/WhatsNow_${APP_VERSION}_x64-setup.exe"
-          cp "${msi}" "out/WhatsNow_${APP_VERSION}_x64_en-US.msi"
-          sha256sum out/WhatsNow_${APP_VERSION}_x64-setup.exe out/WhatsNow_${APP_VERSION}_x64_en-US.msi | tee out/checksums-windows.sha256
+          test -n "${portable}" || { echo "::error::The portable-mode build did not produce whatsnow.exe."; exit 1; }
+          cp "${setup}" "out/WhatsNow_${APP_VERSION}_windows_x64-setup.exe"
+          cp "${msi}" "out/WhatsNow_${APP_VERSION}_windows_x64_en-US.msi"
+          cp "${portable}" "out/WhatsNow_${APP_VERSION}_windows_x64-portable.exe"
+          sha256sum \
+            out/WhatsNow_${APP_VERSION}_windows_x64-setup.exe \
+            out/WhatsNow_${APP_VERSION}_windows_x64_en-US.msi \
+            out/WhatsNow_${APP_VERSION}_windows_x64-portable.exe | tee out/checksums-windows.sha256
+
+      - name: Sign Windows assets (when certificate secrets are configured)
+        if: ${{ env.WINDOWS_CERTIFICATE != '' && env.WINDOWS_CERTIFICATE_PASSWORD != '' }}
+        shell: pwsh
+        env:
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+          WINDOWS_TIMESTAMP_URL: ${{ secrets.WINDOWS_TIMESTAMP_URL }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $certPath = Join-Path $env:RUNNER_TEMP "whatsnow.pfx"
+          [IO.File]::WriteAllBytes($certPath, [Convert]::FromBase64String($env:WINDOWS_CERTIFICATE))
+          $timestampArgs = @()
+          if ($env:WINDOWS_TIMESTAMP_URL) {
+            $timestampArgs = @("/tr", $env:WINDOWS_TIMESTAMP_URL, "/td", "sha256")
+          }
+          # Sign the installer, MSI, and portable executable (signtool signs MSI files too)
+          Get-ChildItem out -File -Filter "WhatsNow_$env:APP_VERSION*" | ForEach-Object {
+            & signtool sign /f $certPath /p $env:WINDOWS_CERTIFICATE_PASSWORD /fd sha256 @timestampArgs $_.FullName
+            if ($LASTEXITCODE -ne 0) { throw "signtool failed for $($_.Name)" }
+          }
+          Remove-Item -LiteralPath $certPath -Force
+          # Regenerate the checksum manifest AFTER signing (signing changes bytes) —
+          # must cover ALL three artifacts (setup, MSI, portable), not just *.exe.
+          Get-FileHash -Algorithm SHA256 -LiteralPath (Get-ChildItem out -File -Filter "WhatsNow_$env:APP_VERSION*") |
+            ForEach-Object { "$($_.Hash.ToLowerInvariant())  $([IO.Path]::GetFileName($_.Path))" } |
+            Set-Content -LiteralPath out/checksums-windows.sha256 -Encoding utf8
 
       - name: Upload Windows workflow artifacts
         uses: actions/upload-artifact@v4
         with:
           name: WhatsNow-${{ env.APP_VERSION }}-windows-x64
           path: |
-            out/WhatsNow_${{ env.APP_VERSION }}_x64-setup.exe
-            out/WhatsNow_${{ env.APP_VERSION }}_x64_en-US.msi
+            out/WhatsNow_${{ env.APP_VERSION }}_windows_x64-setup.exe
+            out/WhatsNow_${{ env.APP_VERSION }}_windows_x64_en-US.msi
+            out/WhatsNow_${{ env.APP_VERSION }}_windows_x64-portable.exe
+            out/checksums-windows.sha256
           if-no-files-found: error
           retention-days: 30
 
@@ -366,10 +464,13 @@ jobs:
           expected=(
             "dist/WhatsNow_${APP_VERSION}_amd64.AppImage"
             "dist/WhatsNow_${APP_VERSION}_amd64.deb"
-            "dist/WhatsNow_${APP_VERSION}_x64-setup.exe"
-            "dist/WhatsNow_${APP_VERSION}_x64_en-US.msi"
+            "dist/WhatsNow_${APP_VERSION}_windows_x64-setup.exe"
+            "dist/WhatsNow_${APP_VERSION}_windows_x64_en-US.msi"
+            "dist/WhatsNow_${APP_VERSION}_windows_x64-portable.exe"
             "dist/WhatsNow_${APP_VERSION}_aarch64.dmg"
             "dist/WhatsNow_${APP_VERSION}_aarch64.app.tar.gz"
+            "dist/WhatsNow_${APP_VERSION}_x86_64.dmg"
+            "dist/WhatsNow_${APP_VERSION}_x86_64.app.tar.gz"
           )
           for asset in "${expected[@]}"; do
             test -f "${asset}" || { echo "::error::Missing expected release asset: ${asset}"; exit 1; }
@@ -377,10 +478,13 @@ jobs:
           (cd dist && shasum -a 256 \
             "WhatsNow_${APP_VERSION}_amd64.AppImage" \
             "WhatsNow_${APP_VERSION}_amd64.deb" \
-            "WhatsNow_${APP_VERSION}_x64-setup.exe" \
-            "WhatsNow_${APP_VERSION}_x64_en-US.msi" \
+            "WhatsNow_${APP_VERSION}_windows_x64-setup.exe" \
+            "WhatsNow_${APP_VERSION}_windows_x64_en-US.msi" \
+            "WhatsNow_${APP_VERSION}_windows_x64-portable.exe" \
             "WhatsNow_${APP_VERSION}_aarch64.dmg" \
-            "WhatsNow_${APP_VERSION}_aarch64.app.tar.gz" > checksums.sha256)
+            "WhatsNow_${APP_VERSION}_aarch64.app.tar.gz" \
+            "WhatsNow_${APP_VERSION}_x86_64.dmg" \
+            "WhatsNow_${APP_VERSION}_x86_64.app.tar.gz" > checksums.sha256)
           (cd dist && shasum -a 256 -c checksums.sha256)
 
       - name: Upload draft release assets
@@ -394,8 +498,11 @@ jobs:
           files: |
             dist/WhatsNow_${{ env.APP_VERSION }}_amd64.AppImage
             dist/WhatsNow_${{ env.APP_VERSION }}_amd64.deb
-            dist/WhatsNow_${{ env.APP_VERSION }}_x64-setup.exe
-            dist/WhatsNow_${{ env.APP_VERSION }}_x64_en-US.msi
+            dist/WhatsNow_${{ env.APP_VERSION }}_windows_x64-setup.exe
+            dist/WhatsNow_${{ env.APP_VERSION }}_windows_x64_en-US.msi
+            dist/WhatsNow_${{ env.APP_VERSION }}_windows_x64-portable.exe
             dist/WhatsNow_${{ env.APP_VERSION }}_aarch64.dmg
             dist/WhatsNow_${{ env.APP_VERSION }}_aarch64.app.tar.gz
+            dist/WhatsNow_${{ env.APP_VERSION }}_x86_64.dmg
+            dist/WhatsNow_${{ env.APP_VERSION }}_x86_64.app.tar.gz
             dist/checksums.sha256
