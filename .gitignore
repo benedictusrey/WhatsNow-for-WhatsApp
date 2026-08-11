@@ -1,17 +1,19 @@
 # Local release staging. Upload these files to GitHub Releases instead of
 # committing binaries to the repository history.
-release-assets/windows/*.exe
-release-assets/windows/*.msi
-release-assets/macos/*
-release-assets/linux/*
+release-assets/**/*.exe
+release-assets/**/*.msi
+release-assets/**/*.dmg
+release-assets/**/*.AppImage
+release-assets/**/*.deb
+release-assets/**/*.tar.gz
 
 # Keep release documentation and checksums visible.
 !release-assets/**/README.md
 !release-assets/**/checksums.sha256
+!release-assets/**/checksums-windows.sha256
 
-# Historical checksum backups stay local to the release staging area.
-release-assets/windows/checksums-*.sha256
-!release-assets/windows/checksums-windows.sha256
+# Local-only staging: unpublished leftovers are never committed or uploaded.
+release-assets/_unpublished/
 
 # Private implementation guard. The public repository is installation-only;
 # never copy the Settings UI or native source tree into it.
@@ -22,4 +24,3 @@ release-assets/windows/checksums-*.sha256
 .DS_Store
 Thumbs.db
 *.log
-

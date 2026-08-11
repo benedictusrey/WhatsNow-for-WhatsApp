@@ -32,7 +32,7 @@ The bundled verification helper checks local Windows assets:
 
 ```powershell
 .\scripts\verify-windows-release.ps1 `
-  -Path .\release-assets\windows
+  -Path .\release-assets\v2.5.0
 ```
 
 ## Verify macOS downloads
