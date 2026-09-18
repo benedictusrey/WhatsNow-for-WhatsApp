@@ -1,3 +1,6 @@
+# WhatsNow — Windows release packaging script
+# Authored and maintained solely by @benedictusrey <https://github.com/benedictusrey>
+
 [CmdletBinding()]
 param(
     [string]$OutputDirectory = (Join-Path $PSScriptRoot "..\dist\windows")
