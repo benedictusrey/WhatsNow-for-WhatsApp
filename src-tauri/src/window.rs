@@ -1217,7 +1217,6 @@ fn apply_isolation<'a>(
 
     #[cfg(any(target_os = "linux", windows))]
     {
-        let _ = app;
         if let Ok(dir) = accounts::profile_dir(app, &account.id) {
             let _ = std::fs::create_dir_all(&dir);
             return builder.data_directory(dir);
@@ -1329,14 +1328,6 @@ fn build_deferred_content_popup(
         .user_agent(CHROME_UA);
     if let Some((x, y)) = position {
         builder = builder.position(x, y);
-    }
-    #[cfg(target_os = "macos")]
-    {
-        let _ = &builder; // macOS configuration requires the opener; not available here.
-    }
-    #[cfg(target_os = "linux")]
-    {
-        let _ = &builder; // Linux related-view requires the opener; not available here.
     }
     match builder.build() {
         Ok(window) => {

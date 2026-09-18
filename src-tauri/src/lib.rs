@@ -1,3 +1,7 @@
+#![allow(clippy::used_underscore_binding)]
+#![allow(clippy::no_effect)]
+#![allow(clippy::let_underscore_untyped)]
+
 mod accounts;
 mod applock;
 mod aumid;
@@ -311,18 +315,22 @@ pub fn run() {
         })
         .build(tauri::generate_context!())
         .expect("error while building WhatsNow")
-        .run(|_app_handle, _event| {
+        .run(|app_handle, event| {
             // macOS: clicking the dock icon after hide-to-tray re-shows the window
             // (otherwise the app is only reachable via the menu-bar tray icon).
             #[cfg(target_os = "macos")]
             if let tauri::RunEvent::Reopen {
                 has_visible_windows,
                 ..
-            } = &_event
+            } = &event
             {
                 if !*has_visible_windows {
-                    window::show_main(_app_handle);
+                    window::show_main(app_handle);
                 }
+            }
+            #[cfg(not(target_os = "macos"))]
+            {
+                let _ = (app_handle, event);
             }
         });
 }
