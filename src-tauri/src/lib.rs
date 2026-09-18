@@ -1,6 +1,7 @@
 #![allow(clippy::used_underscore_binding)]
 #![allow(clippy::no_effect)]
 #![allow(clippy::let_underscore_untyped)]
+#![allow(dead_code)]
 
 mod accounts;
 mod applock;

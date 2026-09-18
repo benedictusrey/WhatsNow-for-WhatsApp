@@ -35,8 +35,10 @@ struct RoutePayload {
 /// Content-carrying fields of a route (title/id/text). Blanked when the user
 /// disabled message previews so private message content never reaches the toast
 /// XML or the process command line.
+#[cfg_attr(not(target_os = "windows"), allow(dead_code))]
 const ROUTE_PAYLOAD_TEXT_CAP: usize = 140;
 
+#[cfg_attr(not(target_os = "windows"), allow(dead_code))]
 fn truncate(value: &str, cap: usize) -> String {
     value.chars().take(cap).collect()
 }
@@ -180,7 +182,9 @@ fn escape_toast_xml(value: &str) -> String {
 // icon on the left (verified live across both toast styles), while a toast
 // without it uses the compact layout — small identity icon next to the app
 // name. The user requires the compact layout for EVERY toast.
+#[cfg_attr(not(target_os = "windows"), allow(dead_code))]
 const TOAST_ICON_PNG: &[u8] = include_bytes!("../icons/toast-icon.png");
+#[cfg_attr(not(target_os = "windows"), allow(dead_code))]
 const TOAST_ICON_RELATIVE: &str = "icons/whatsnow-toast.png";
 
 /// The per-user path the toast icon PNG is materialized to. Same directory
