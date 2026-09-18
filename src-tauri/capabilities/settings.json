@@ -1,0 +1,30 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "settings-local",
+  "description": "Local IPC for the settings window.",
+  "windows": ["settings"],
+  "permissions": [
+    "core:default",
+    "core:window:allow-close",
+    "core:window:allow-start-dragging",
+    "allow-add-account",
+    "allow-change-app-lock-password",
+    "allow-disable-app-lock",
+    "allow-get-lock-status",
+    "allow-get-productivity-status",
+    "allow-get-settings",
+    "allow-list-accounts",
+    "allow-lock-app",
+    "allow-open-account",
+    "allow-open-external-url",
+    "allow-remove-account",
+    "allow-rename-account",
+    "allow-set-account-notifications",
+    "allow-set-app-lock-options",
+    "allow-set-app-lock-password",
+    "allow-set-biometric-enabled",
+    "allow-set-focus-mode",
+    "allow-set-settings",
+    "allow-test-notification"
+  ]
+}

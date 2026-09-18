@@ -1,0 +1,126 @@
+name: check
+on:
+  push:
+    branches-ignore: []
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Compile-check on all three desktop targets. Catches platform-specific code
+# (WebKitGTK / WebView2 / WKWebView paths) that can't be built on a single OS.
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-x64
+            platform: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+          - name: windows-x64
+            platform: windows-latest
+            target: x86_64-pc-windows-msvc
+          - name: macos-arm64
+            platform: macos-latest
+            target: aarch64-apple-darwin
+          - name: macos-x64
+            platform: macos-latest
+            target: x86_64-apple-darwin
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux deps
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt update
+          sudo apt install -y libwebkit2gtk-4.1-dev build-essential curl wget file \
+            libxdo-dev libdbus-1-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev libhunspell-dev patchelf
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+          components: rustfmt, clippy
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+
+      - name: cargo build (compile check)
+        working-directory: src-tauri
+        run: cargo build --locked --target ${{ matrix.target }}
+
+      # Behavioral gates: the unit tests cover the drag-drop planning/streaming
+      # pipeline, download destinations, MIME routing, and UA/client-hints
+      # consistency — building alone caught none of the drop regressions.
+      - name: cargo test
+        working-directory: src-tauri
+        run: cargo test --locked
+
+      - name: cargo clippy
+        working-directory: src-tauri
+        run: cargo clippy --locked --all-targets --target ${{ matrix.target }} -- -D warnings
+
+      - name: cargo fmt
+        if: matrix.name == 'linux-x64'
+        working-directory: src-tauri
+        run: cargo fmt --all -- --check
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: bridge.js drop-injector tests (mock DOM, zero deps)
+        run: |
+          node --check src-tauri/resources/bridge.js
+          node src-tauri/resources/bridge.test.mjs
+          node --check src-tauri/resources/chat-theme.js
+          node src-tauri/resources/chat-theme.test.mjs
+
+      - name: settings-ui hotkey tests
+        run: |
+          node --check settings-ui/theme.js
+          node settings-ui/theme.test.mjs
+          node --check settings-ui/main.js
+          node --check settings-ui/lock.js
+          node settings-ui/comboToAccelerator.test.mjs
+          node settings-ui/settingsAcl.test.mjs
+
+      - name: Documentation integrity
+        if: matrix.name == 'linux-x64'
+        run: |
+          node --check scripts/check-docs.mjs
+          node scripts/check-docs.mjs
+
+      - name: POSIX installer syntax
+        if: matrix.name == 'linux-x64'
+        run: sh -n install.sh scripts/install-linux.sh scripts/install-macos.sh
+
+      - name: Authorship notice coverage
+        if: matrix.name == 'linux-x64'
+        run: |
+          failed=0
+          while IFS= read -r file; do
+            if ! grep -q "benedictusrey" "$file"; then
+              echo "::error file=$file::Missing WhatsNow authorship notice"
+              failed=1
+            fi
+          done < <(git ls-files '*.md' '*.ps1' '*.sh')
+          test "$failed" -eq 0
+
+      - name: PowerShell installer syntax
+        if: matrix.name == 'windows-x64'
+        shell: pwsh
+        run: |
+          $files = @(
+            'install.ps1',
+            'scripts/install-windows.ps1',
+            'scripts/package-windows-portable.ps1',
+            'scripts/regen-icons.ps1'
+          )
+          foreach ($file in $files) {
+            [void][ScriptBlock]::Create((Get-Content -LiteralPath $file -Raw))
+          }

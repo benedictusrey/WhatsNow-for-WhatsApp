@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-activate-notification-window"
+description = "Enables the activate_notification_window command without any pre-configured scope."
+commands.allow = ["activate_notification_window"]
+
+[[permission]]
+identifier = "deny-activate-notification-window"
+description = "Denies the activate_notification_window command without any pre-configured scope."
+commands.deny = ["activate_notification_window"]

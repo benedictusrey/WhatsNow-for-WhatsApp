@@ -1,248 +1,180 @@
-# Publish WhatsNow 2.5.0 — the complete GitHub Desktop guide
+# Publish WhatsNow 2.6.0 — The Complete GitHub Desktop Guide
 
-This is the definitive, step-by-step guide for publishing WhatsNow to
-`https://github.com/benedictusrey/WhatsNow-for-WhatsApp` using **GitHub
-Desktop**. Every name — repositories, branches, tags, assets, secrets,
-variables, and commit messages — is spelled out exactly. Follow it top to
-bottom.
+WhatsNow is authored and maintained solely by
+[@benedictusrey](https://github.com/benedictusrey).
 
-## 0. Complete naming reference
+This is the definitive, step-by-step guide for publishing the full, open-source
+release of **WhatsNow v2.6.0** to
+[`https://github.com/benedictusrey/WhatsNow-for-WhatsApp`](https://github.com/benedictusrey/WhatsNow-for-WhatsApp)
+using **GitHub Desktop**.
 
-| Thing | Exact name / value |
-| --- | --- |
-| Public repository (installation-only) | `benedictusrey/WhatsNow-for-WhatsApp` |
-| Public local folder | `%USERPROFILE%\Desktop\WhatsNow` |
-| Public default branch | `main` |
-| Public remote URL | `https://github.com/benedictusrey/WhatsNow-for-WhatsApp.git` |
-| Private source repository | `benedictusrey/i-w` |
-| Private local folder | `%USERPROFILE%\Desktop\WhatsNow - Improved` |
-| Release tag (private + public) | `v2.5.0` |
-| App version | `2.5.0` |
-| Actions secret | `SOURCE_REPO_TOKEN` |
-| Repository variables | `WHATSNOW_SOURCE_REPOSITORY` = `benedictusrey/i-w` · `WHATSNOW_SOURCE_REF` = `v2.5.0` · `WHATSNOW_SOURCE_PATH` = `.` · `WHATSNOW_APP_VERSION` = `2.5.0` |
-| Windows assets | `WhatsNow_2.5.0_windows_x64-setup.exe` · `WhatsNow_2.5.0_windows_x64_en-US.msi` · `WhatsNow_2.5.0_windows_x64-portable.exe` |
-| Linux assets | `WhatsNow_2.5.0_amd64.AppImage` · `WhatsNow_2.5.0_amd64.deb` |
-| macOS assets | `WhatsNow_2.5.0_aarch64.dmg` · `WhatsNow_2.5.0_aarch64.app.tar.gz` · `WhatsNow_2.5.0_x86_64.dmg` · `WhatsNow_2.5.0_x86_64.app.tar.gz` |
-| Checksum manifests | `checksums-windows.sha256` (Windows) · `checksums-linux.sha256` · `checksums-macos.sha256` · `checksums.sha256` (combined release) |
-| Windows Cargo feature | `windows-memory` (universal — never `windows10`) |
-| Commit 1 (private) | `Prepare WhatsNow 2.5.0 release` |
-| Commit 2 (public) | `Publish WhatsNow 2.5.0 installation distribution` |
+---
 
-## 1. How the two repositories work
+## 0. Quick Metadata Reference
 
-- **Private `benedictusrey/i-w`** holds the full application source: `src-tauri`,
-  `settings-ui`, `scripts`, `docs`, `AGENTS.md`, `backup`, `versions`. It must
-  stay **Private** — the Settings UI and native WhatsApp-integration code
-  never go public.
-- **Public `benedictusrey/WhatsNow-for-WhatsApp`** is installation-only:
-  README, docs, install scripts, artwork, and release-assets checksums. No
-  source, no Settings UI.
-- The public repository's `.github/workflows/release.yml` checks out the
-  **private** source *inside the GitHub Actions runner only*, builds Windows,
-  Linux, and macOS packages on their native runners, verifies them, and
-  creates a **draft** GitHub Release. It refuses to run if the source
-  repository is not private.
+Use these exact strings when updating your GitHub repository settings:
 
-## 2. One-time setup (first publish only)
+| Field | Recommended Value |
+| :--- | :--- |
+| **Repository Name** | `WhatsNow-for-WhatsApp` |
+| **Description** | `A calm, lightweight, multi-account desktop client for WhatsApp Web built with Tauri v2 and Rust. Native calling, app lock, quiet notifications, themes, and seamless link routing.` |
+| **Website URL** | `https://github.com/benedictusrey/WhatsNow-for-WhatsApp` |
+| **Topics / Tags** | `tauri`, `tauri-v2`, `rust`, `whatsapp`, `whatsapp-web`, `desktop-app`, `multi-account`, `privacy`, `productivity`, `cross-platform`, `windows`, `macos`, `linux` |
+| **Release Tag** | `v2.6.0` |
+| **Release Title** | `WhatsNow 2.6.0 — Full Desktop Experience` |
+| **Local Folder** | `WhatsNow` (on your Desktop) |
+| **Default Branch** | `main` |
 
-1. **Confirm the private repo exists and is private** — open
-   `https://github.com/benedictusrey/i-w`; the Settings page must show
-   **Private**. If it does not exist: GitHub Desktop→ **File > Add local repository…** → select `%USERPROFILE%\Desktop\WhatsNow - Improved` →
-   **Add repository** → **Publish repository** → name `i-w` → check
-   **Keep this code private** → **Publish repository**.
-2. **Create the read-only token** — open
-   `https://github.com/settings/personal-access-tokens/new`:
-   - Token name: `whatsnow-source-read`
-   - Expiration: 90 days
-   - Repository access: **Only select repositories** → `i-w`
-   - Repository permissions → **Contents: Read-only**
-   - Generate, then copy the token (shown only once).
-3. **Add the secret to the public repo** — open
-   `https://github.com/benedictusrey/WhatsNow-for-WhatsApp/settings/secrets/actions`
-   → **New repository secret**:
-   - Name: `SOURCE_REPO_TOKEN`
-   - Value: the token from step 2.
-4. **Add the variables** — open
-   `https://github.com/benedictusrey/WhatsNow-for-WhatsApp/settings/variables/actions`
-   → **New repository variable** ×4:
-   - `WHATSNOW_SOURCE_REPOSITORY` = `benedictusrey/i-w`
-   - `WHATSNOW_SOURCE_REF` = `v2.5.0`
-   - `WHATSNOW_SOURCE_PATH` = `.`
-   - `WHATSNOW_APP_VERSION` = `2.5.0`
-5. **(Recommended) Windows signing** — add secrets `WINDOWS_CERTIFICATE`
-   (base64 PFX), `WINDOWS_CERTIFICATE_PASSWORD`, `WINDOWS_TIMESTAMP_URL` so
-   the workflow signs the Windows packages. Never commit the certificate.
+---
 
-## 3. Step 1 — Private source: verify, check, commit
+## 1. Setting Up the Repository Details on GitHub
 
-1. Open GitHub Desktop and select the **`i-w`** repository (top-left dropdown).
-2. Verify the version is uniform: `VERSION`, `src-tauri/Cargo.toml`, and
-   `src-tauri/tauri.conf.json` all read `2.5.0`.
-3. Run the checks (all must pass):
+Before pushing your commit, configure the repository description and tags on
+GitHub:
 
-   ```bash
-   node scripts/check-docs.mjs
-   node settings-ui/settingsAcl.test.mjs
-   node settings-ui/theme.test.mjs
-   node settings-ui/comboToAccelerator.test.mjs
-   node src-tauri/resources/bridge.test.mjs
-   node src-tauri/resources/chat-theme.test.mjs
-   node src-tauri/resources/toast-route.test.mjs
-   cd src-tauri
-   cargo test --lib
-   ```
-
-4. Review the **Changes** panel. Confirm no `dist\`, `.workspace\`, backup
-   secrets, or credentials are staged (they are gitignored).
-5. Commit with the **exact** summary and description:
-
-   - Summary: `Prepare WhatsNow 2.5.0 release`
-   - Description:
-
+1. Open your browser and navigate to
+   [https://github.com/benedictusrey/WhatsNow-for-WhatsApp](https://github.com/benedictusrey/WhatsNow-for-WhatsApp).
+2. Look at the right sidebar under the **About** section and click the gear icon
+   (⚙️) next to "About".
+3. **Description:** Paste:
    ```text
-   Prepare the private source for the v2.5.0 release.
-
-   - Universal `windows` asset naming (windows-memory feature, windows_x64
-     assets, checksums-windows.sha256, build-windows.ps1, docs/WINDOWS.md).
-   - MSI bundle added to the local Windows build (nsis,msi bundles).
-   - Locked pillars intact: themes/doodles (Reply-bar mask fix), typing-area
-     emoji, compact toasts, click-to-chat routing, runtime About version.
-   - Publish workflow docs (docs/PUBLISHING.md, docs/RELEASING.md).
+   A calm, lightweight, multi-account desktop client for WhatsApp Web built with Tauri v2 and Rust. Native calling, app lock, quiet notifications, themes, and seamless link routing.
    ```
-
-6. Click **Commit to main**, then **Push origin**. GitHub Desktop shows
-   "Pushed to github.com/benedictusrey/i-w".
-
-## 4. Step 2 — Tag the private source
-
-1. In GitHub Desktop (`i-w`), open the **History** tab.
-2. Right-click the commit you just pushed → **Create Tag…**.
-3. Tag name: `v2.5.0` → **Create Tag**.
-4. Click **Push origin** in the toolbar and confirm you want to push the new
-   tag as well.
-5. Verify at `https://github.com/benedictusrey/i-w/tags` that `v2.5.0` points
-   at the correct commit.
-
-## 5. Step 3 — Public repo: review and commit
-
-1. Open GitHub Desktop and select the **`WhatsNow-for-WhatsApp`** repository.
-2. Review the **Changes** panel — only documentation, scripts, artwork,
-   checksums, and the workflow. No `.rs`, no `Cargo.toml`, no `settings-ui`.
-3. Commit with the **exact** summary and description:
-
-   - Summary: `Publish WhatsNow 2.5.0 installation distribution`
-   - Description:
-
+4. **Website:** Paste:
    ```text
-   Refresh the public installation-only distribution for WhatsNow 2.5.0.
-
-   - Update README (X-Now-style presentation; icon top, hero/features/resource
-     images in the body), release notes, changelog, installation, security,
-     privacy, and platform docs.
-   - Standardize Windows assets to the universal `windows` naming
-     (WhatsNow_2.5.0_windows_x64-*; checksums-windows.sha256).
-   - Stage Windows 2.5.0 installers (NSIS, MSI, portable) and checksums.
-   - Document the four locked pillars and the two-repo publish workflow.
-   - Keep the private Settings UI and application source out of the public
-     repository.
+   https://github.com/benedictusrey/WhatsNow-for-WhatsApp
    ```
+5. **Topics:** Add the following tags for discovery:
+   `tauri`, `tauri-v2`, `rust`, `whatsapp`, `whatsapp-web`, `desktop-app`,
+   `multi-account`, `privacy`, `productivity`, `cross-platform`, `windows`,
+   `macos`, `linux`.
+6. Ensure **Releases**, **Packages**, and **Environments** checkboxes are checked
+   as desired.
+7. Click **Save changes**.
 
-4. Click **Commit to main**, then **Push origin**.
+---
 
-## 6. Step 4 — Run the cross-platform release workflow
+## 2. Publishing via GitHub Desktop (Step-by-Step)
 
-1. Open `https://github.com/benedictusrey/WhatsNow-for-WhatsApp/actions`.
-2. Left sidebar → **Build WhatsNow cross-platform release** → **Run workflow**.
-3. **Use workflow from**: `Branch: main`.
-4. Inputs (pre-filled from the variables — confirm each):
-   - `source_repository` = `benedictusrey/i-w`
-   - `source_ref` = `v2.5.0`
-   - `source_path` = `.`
-   - `app_version` = `2.5.0`
-   - `release_tag` = `v2.5.0`
-   - `publish_release` = tick it when you want the draft release created
-     (leave unticked for a test run).
-5. Click **Run workflow**.
+### Step 1: Open the Repository in GitHub Desktop
 
-The run shows four jobs: `build-linux` (AppImage + .deb), `build-macos`
-(Apple Silicon + Intel DMG/archive), `build-windows` (NSIS + MSI + portable),
-then `publish`. First runs take roughly 10–20 minutes per platform (Rust +
-Tauri compile). Pushing a `v2.5.0` tag to the public repo triggers the
-workflow automatically instead of the manual button.
+1. Open **GitHub Desktop**.
+2. Click the **Current Repository** dropdown at the top-left corner.
+3. Select **WhatsNow-for-WhatsApp**.
+   *(If not listed, click **File > Add local repository...**, browse to your
+   `Desktop\WhatsNow` folder, and click **Add repository**.)*
+4. Ensure the **Current Branch** shows `main`.
 
-## 7. Step 5 — Review and publish the draft release
+### Step 2: Review Staged Changes
 
-1. Open `https://github.com/benedictusrey/WhatsNow-for-WhatsApp/releases`.
-2. Click **Draft** next to `v2.5.0`.
-3. Confirm all nine assets are attached: the 3 Windows files, 2 Linux files,
-   4 macOS files, plus `checksums.sha256`. The description is filled from
-   `RELEASE_NOTES.md`.
-4. Verify one or two downloads locally:
+1. In the left-hand **Changes** panel, you will see all new application source
+   files:
+   - `src-tauri/` (Rust core, Tauri v2 configurations, icons, and capabilities)
+   - `settings-ui/` (Modern frameless settings interface)
+   - `scripts/` (Automated build and test harnesses)
+   - `docs/` (Platform guides and assets)
+   - `.github/workflows/` (The new zero-error cross-platform `release.yml` and `check.yml`)
+   - `README.md`, `RELEASE_NOTES.md`, `CONTRIBUTING.md`, etc.
+2. Confirm that private archives (`backup/`, `.freebuff/`) are **not** present in
+   the changes list (they are safely gitignored).
 
-   ```powershell
-   Get-FileHash .\WhatsNow_2.5.0_windows_x64-setup.exe -Algorithm SHA256
+### Step 3: Commit the Full v2.6.0 Release
+
+In the bottom-left commit box of GitHub Desktop, enter:
+
+- **Summary (Title):**
+  ```text
+  Release WhatsNow 2.6.0: full open-source desktop client
+  ```
+- **Description (Body):**
+  ```text
+  Publish the full WhatsNow 2.6.0 release codebase:
+
+  - Complete application source: Rust backend, Tauri v2 shell, and Settings UI.
+  - Native always-on-top WhatsApp Calling windows with WebRTC session sharing.
+  - Restored official Dark doodle wallpapers alongside the 8 personality themes.
+  - Full WhatsApp-family link routing (wa.me, chat.*, call.*, api.*) with in-place chat opening.
+  - Pre-created content popup architecture preventing WebView2 message-pump deadlocks.
+  - Resolution clamping ensuring safe window geometry across small displays and high-DPI scaling.
+  - Windows whatsapp:// deep-link scheme integration.
+  - Video playback memory-target audio protection.
+  - Optimized cross-platform GitHub Actions release workflow with native caching.
+  - Comprehensive contributing guidelines and pull request template.
+  ```
+
+Click the blue **Commit to main** button.
+
+### Step 4: Push to GitHub
+
+1. Click the **Push origin** button in the top toolbar.
+2. Wait for GitHub Desktop to complete uploading the files.
+3. Once finished, the button will display "Fetch origin" with no local changes.
+
+### Step 5: Tag the Release (`v2.6.0`) in GitHub Desktop
+
+1. In GitHub Desktop, switch from the **Changes** tab to the **History** tab.
+2. The top commit in the list will be your newly pushed commit:
+   `Release WhatsNow 2.6.0: full open-source desktop client`.
+3. Right-click this commit and select **Create Tag...**.
+4. In the dialog box, type the tag name:
+   ```text
+   v2.6.0
    ```
+5. Click **Create Tag**.
+6. A notification banner will appear in GitHub Desktop indicating "Push 1 tag to
+   origin". Click **Push origin** to push the tag to GitHub.
 
-   and compare with `checksums-windows.sha256` / `checksums.sha256`.
-5. When satisfied, click **Publish release**.
+---
 
-## 8. Step 6 — Mirror the public snapshot into the private workspace
+## 3. Automated Cross-Platform Release Pipeline
 
-1. Open a terminal in `%USERPROFILE%\Desktop\WhatsNow - Improved` and run:
+Once tag `v2.6.0` is pushed, GitHub Actions automatically starts the
+cross-platform build workflow:
 
-```bash
-robocopy "%USERPROFILE%\Desktop\WhatsNow" ^
-  "%USERPROFILE%\Desktop\WhatsNow - Improved\versions\WhatsNow-public-repository" ^
-  /MIR /XD .git
-```
+1. Open your repository on GitHub:
+   [https://github.com/benedictusrey/WhatsNow-for-WhatsApp/actions](https://github.com/benedictusrey/WhatsNow-for-WhatsApp/actions).
+2. You will see the **Build WhatsNow cross-platform release** workflow running
+   under your `v2.6.0` tag.
+3. The workflow builds all assets in parallel:
+   - **Linux x64 (`ubuntu-22.04`):** Compiles AppImage and `.deb` packages.
+   - **macOS (`macos-14`):** Compiles Apple Silicon (`aarch64`) and Intel (`x86_64`) DMGs and `.app.tar.gz` bundles.
+   - **Windows x64 (`windows-latest`):** Compiles NSIS Setup `.exe`, `.msi` installer, and standalone `-portable.exe`.
+   - **Publish:** Downloads all 9 platform packages, verifies `checksums.sha256`, and creates a Draft GitHub Release.
 
-2. In GitHub Desktop (`i-w`), commit the refreshed snapshot
-   (`Sync public repository snapshot`), and push.
+Thanks to `@tauri-apps/cli` pre-compiled binaries and `rust-cache`, the entire
+build completes in ~5–7 minutes without burning excessive Action minutes!
 
-## 9. Post-release verification
+---
 
-- The release page lists `WhatsNow 2.5.0` with all nine packages and
-  `checksums.sha256`.
-- Windows hashes match `checksums-windows.sha256`.
-- The installed app's **Settings > About** reads `WhatsNow 2.5.0`.
-- The four locked pillars hold on the installed build (no doodles on
-  personality themes incl. Reply, emojis render everywhere, compact toasts,
-  toast click opens the sender's chat).
-- The public repo contains no `src-tauri/`, `settings-ui/`, or `dist/` —
-  run `git ls-files | grep -E 'src-tauri|settings-ui|dist'` and confirm
-  nothing prints.
+## 4. Publishing the Draft Release on GitHub
 
-## 10. GitHub Desktop quick reference
+1. Navigate to
+   [https://github.com/benedictusrey/WhatsNow-for-WhatsApp/releases](https://github.com/benedictusrey/WhatsNow-for-WhatsApp/releases).
+2. Click **Edit** next to the newly created `v2.6.0` Draft Release.
+3. **Release title:** Ensure it reads:
+   ```text
+   WhatsNow 2.6.0 — Full Desktop Experience
+   ```
+4. **Description:** The body will be pre-populated from `RELEASE_NOTES.md`. You
+   can review the feature highlights and changelog.
+5. Confirm that all 10 assets are attached:
+   - `WhatsNow_2.6.0_windows_x64-setup.exe`
+   - `WhatsNow_2.6.0_windows_x64_en-US.msi`
+   - `WhatsNow_2.6.0_windows_x64-portable.exe`
+   - `WhatsNow_2.6.0_amd64.AppImage`
+   - `WhatsNow_2.6.0_amd64.deb`
+   - `WhatsNow_2.6.0_aarch64.dmg`
+   - `WhatsNow_2.6.0_aarch64.app.tar.gz`
+   - `WhatsNow_2.6.0_x86_64.dmg`
+   - `WhatsNow_2.6.0_x86_64.app.tar.gz`
+   - `checksums.sha256`
+6. Click the green **Publish release** button! 🎉
 
-| Action | Where in GitHub Desktop |
-| --- | --- |
-| Add a local folder as a repository | **File > Add local repository…** |
-| Publish a new private repository | **Publish repository** → check *Keep this code private* |
-| Switch repositories | **Current repository** dropdown (top-left) |
-| Review changes | **Changes** panel |
-| Commit | Summary + description → **Commit to main** |
-| Push | **Push origin** button |
-| Create a tag | **History** tab → right-click commit → **Create Tag…** |
-| Open the repo on GitHub | **Repository > View on GitHub** (`Ctrl+Shift+G`) |
-| Actions / Releases / Settings pages | Use *View on GitHub* — these live on github.com |
+---
 
-## 11. Bumping to a future version
+## 5. Post-Release Verification
 
-Replace every `2.5.0` / `v2.5.0` above with the new version, update the four
-repository variables (`WHATSNOW_SOURCE_REF`, `WHATSNOW_APP_VERSION`, and the
-workflow input defaults), and repeat steps 1–6. The tag trigger (`v*`) and the
-workflow logic require no changes.
-
-## Troubleshooting
-
-- **Workflow fails at "Validate private source configuration"** — the
-  `SOURCE_REPO_TOKEN` secret is missing or expired; regenerate the token and
-  update the secret.
-- **Checkout of `i-w` returns 404** — the token lacks Contents read access,
-  or `WHATSNOW_SOURCE_REPOSITORY` is misspelled.
-- **A platform job produces no package** — Tauri naming or a feature flag
-  changed; compare the build log with the normalize-step expectations.
-- **The draft release is missing `checksums.sha256`** — the publish job
-  failed self-verification; do not publish from such a run.
-- **The release contains an old version** — `source_ref` /
-  `WHATSNOW_SOURCE_REF` points at an old tag; point it at `v2.5.0` and rerun.
+After publishing:
+- Check that the badge on `README.md` shows the live `v2.6.0` release.
+- Test downloading one of the installers to ensure SHA-256 matches the manifest.
+- Welcome new contributors by pointing them to `CONTRIBUTING.md`!

@@ -1,118 +1,200 @@
 # Install WhatsNow
 
-Download WhatsNow only from the
-[official Releases page](https://github.com/benedictusrey/WhatsNow-for-WhatsApp/releases).
-Compare the SHA-256 checksum before running an installer.
+WhatsNow is authored and maintained solely by
+[@benedictusrey](https://github.com/benedictusrey).
 
-## Windows 10 or 11
+Copyright (c) 2026 @benedictusrey. Released under the
+[MIT License](../LICENSE).
 
-WhatsNow requires the Microsoft Edge WebView2 runtime. Windows 11 normally
-includes it.
+## Choose a package
 
-### Standard setup
+Download files from the
+[latest WhatsNow release](https://github.com/benedictusrey/WhatsNow-for-WhatsApp/releases/latest).
 
-1. Download `WhatsNow_2.5.0_windows_x64-setup.exe`.
-2. Verify its hash and publisher information.
-3. Run the installer.
-4. Open WhatsNow from the Start menu and link WhatsApp using the displayed QR
-   code.
+| Platform | Package | Use it when |
+| --- | --- | --- |
+| Windows x64 | `WhatsNow_<version>_windows_x64-setup.exe` | You want Start menu integration, shortcuts, native notifications, and an uninstaller |
+| Windows x64 | `WhatsNow_<version>_windows_x64_en-US.msi` | Your organization deploys MSI packages |
+| Windows x64 | `WhatsNow_<version>_windows_x64-portable.exe` | You want one executable without an installer |
+| macOS Apple silicon | AArch64 DMG | Your Mac uses an M-series processor |
+| macOS Intel | x64 DMG | Your Mac uses an Intel processor |
+| Linux x64 | AppImage | You want a user-level install across distributions |
+| Debian or Ubuntu x64 | `.deb` | You want package-manager integration |
 
-### MSI deployment
+GitHub lists a SHA-256 digest beside each release asset. Compare that digest
+before you run a downloaded package. Windows users should also verify the
+Authenticode publisher.
+
+## Windows
+
+### NSIS setup
+
+1. Download the x64 setup executable.
+2. Open **Properties > Digital Signatures** and confirm the expected publisher.
+3. Run the setup and start WhatsNow from the Start menu.
+
+PowerShell can display the signature and hash:
 
 ```powershell
-msiexec.exe /i .\WhatsNow_2.5.0_x64_en-US.msi
+Get-AuthenticodeSignature .\WhatsNow_2.5.0_windows_x64-setup.exe |
+  Format-List Status,StatusMessage,SignerCertificate
+Get-FileHash .\WhatsNow_2.5.0_windows_x64-setup.exe -Algorithm SHA256
 ```
 
-### Portable use
-
-Download `WhatsNow_2.5.0_windows_x64-portable.exe` and run it from a user-writable folder. Portable refers
-to the executable format: WhatsNow still keeps account sessions and preferences
-in the normal per-user application-data location.
-
-The included helper can install either a local or release asset. For the
-v2.5.0 package, use:
+The repository installer accepts a local package:
 
 ```powershell
 .\scripts\install-windows.ps1 `
   -Source .\WhatsNow_2.5.0_windows_x64-setup.exe `
-  -ExpectedSha256 'EXPECTED_SHA256'
+  -ExpectedSha256 'RELEASE_SHA256'
 ```
+
+It can also select the newest compatible GitHub release:
 
 ```powershell
 .\scripts\install-windows.ps1 -Repository 'benedictusrey/WhatsNow-for-WhatsApp'
 ```
 
-The v2.5.0 build requests WebView2's supported low-memory target for minimized,
-tray-hidden, and secondary accounts while keeping the focused account at the
-normal responsive target. This is best-effort process management; it does not
-guarantee a fixed RAM value or eliminate WebView2 subprocesses. See the
-[Windows efficiency notes](WINDOWS.md).
+### MSI
 
-Uninstall an installed copy through **Settings > Apps > Installed apps**. For a
-portable copy, exit through the tray before deleting the executable.
+Use the MSI for managed deployment:
+
+```powershell
+msiexec.exe /i .\WhatsNow_2.5.0_windows_x64_en-US.msi
+```
+
+Your deployment system can pass its normal `msiexec` user-interface and logging
+options.
+
+### Portable
+
+The release asset may include the version in its filename. You can keep that
+name or rename it to `WhatsNow.exe`.
+
+Run it in place, or install it with shortcuts:
+
+```powershell
+.\scripts\install-windows.ps1 `
+  -Source .\WhatsNow.exe `
+  -Portable `
+  -InstallDir "$env:LOCALAPPDATA\Programs\WhatsNow"
+```
+
+Portable mode stores account sessions and Settings in Windows per-user
+application-data directories. Replacing the executable does not remove your
+sessions.
+
+Portable builds register the per-user Windows notification identity required
+for native toast delivery. WhatsNow does not create a separate notification
+window.
+
+### Windows requirement
+
+WhatsNow needs Microsoft Edge WebView2. Windows 11 includes it. The installer
+warns when it cannot detect the Evergreen runtime.
 
 ## macOS
 
 WhatsNow requires macOS 12.1 or newer. Multiple isolated accounts require
 macOS 14.
 
-For Apple silicon, download the AArch64 DMG. Drag `WhatsNow.app` into
-Applications, then verify the app's signature before first launch. The helper
-supports DMG and `.app.tar.gz` assets:
+Install a downloaded DMG:
 
 ```bash
 sh ./scripts/install-macos.sh \
   --source ./WhatsNow_2.5.0_aarch64.dmg \
-  --sha256 EXPECTED_SHA256
+  --sha256 RELEASE_SHA256
 ```
 
-Or select the latest compatible published asset:
+Select the latest release:
 
 ```bash
 sh ./scripts/install-macos.sh --repository benedictusrey/WhatsNow-for-WhatsApp
 ```
 
-Do not remove quarantine metadata from an unverified download merely to bypass
-Gatekeeper. Use a signed/notarized release when one is available.
+The script validates the `app.whatsnow.desktop` bundle identifier and installs
+`WhatsNow.app` under `~/Applications` unless you pass `--install-dir`.
 
-To uninstall, quit WhatsNow and move `WhatsNow.app` to Trash.
+If macOS warns about an unsigned local development build, use a signed release.
+Do not remove quarantine metadata from an unverified download.
 
 ## Linux
 
-WhatsNow requires WebKitGTK 2.46.1 or newer. AppImage is the broadly portable
-x64 option; Debian and Ubuntu users can install the `.deb`.
+WhatsNow requires WebKitGTK 2.46.1 or newer.
+
+Install an AppImage:
 
 ```bash
 sh ./scripts/install-linux.sh \
   --source ./WhatsNow_2.5.0_amd64.AppImage \
-  --sha256 EXPECTED_SHA256
+  --sha256 RELEASE_SHA256
 ```
 
-```bash
-sh ./scripts/install-linux.sh \
-  --source ./WhatsNow_2.5.0_amd64.deb \
-  --sha256 EXPECTED_SHA256
-```
-
-Or select the latest compatible published asset:
+Select the latest release:
 
 ```bash
 sh ./scripts/install-linux.sh --repository benedictusrey/WhatsNow-for-WhatsApp
 ```
 
-Some Linux WebKitGTK builds omit WebRTC support. Text chat, downloads,
-notifications, and attachments can work while voice or video calling remains
-unavailable.
+The AppImage installer creates:
 
-## Updating without losing sessions
+- `~/.local/opt/WhatsNow/WhatsNow.AppImage`
+- `~/.local/bin/whatsnow`
+- a desktop entry under `~/.local/share/applications`
 
-Exit WhatsNow before replacing a portable executable or app bundle. Install a
-newer package over the existing version. Per-user webview profiles normally
-remain in place, but authentication is controlled by WhatsApp and may require
-linking again.
+Install a Debian package with:
 
-## Removing local sessions
+```bash
+sh ./scripts/install-linux.sh --source ./WhatsNow_2.5.0_amd64.deb
+```
 
-Uninstalling can intentionally leave per-user data for future upgrades. Read
-[Privacy](../PRIVACY.md) before removing application data. Deleting it logs
-accounts out and cannot be undone.
+The script uses `apt-get` or `dpkg` and asks for `sudo` only for the Debian
+package path.
+
+## Update
+
+Close WhatsNow before replacing a portable executable or app bundle. Run the
+new installer over the existing version for NSIS, MSI, DMG, or Debian updates.
+The installer keeps your per-user account data.
+
+Back up your WhatsApp sessions through WhatsApp's supported account tools.
+WhatsNow does not provide a portable export of browser cookies or authentication
+tokens.
+
+## Uninstall
+
+### Windows installer
+
+Open **Settings > Apps > Installed apps > WhatsNow > Uninstall**.
+
+### Windows portable
+
+Exit WhatsNow from the tray, then remove the portable executable and any
+shortcuts you created.
+
+### macOS
+
+Quit WhatsNow and move `WhatsNow.app` from `~/Applications` to Trash.
+
+### Linux AppImage
+
+Remove the AppImage, launcher, and desktop entry created by the installer:
+
+```bash
+rm "$HOME/.local/opt/WhatsNow/WhatsNow.AppImage"
+rm "$HOME/.local/bin/whatsnow"
+rm "$HOME/.local/share/applications/app.whatsnow.desktop"
+```
+
+Use your package manager to remove a Debian installation.
+
+Uninstalling the application can leave per-user sessions and Settings so an
+update or reinstall can reuse them. Read [Privacy](../PRIVACY.md) before deleting
+application data. Removing those directories logs accounts out and cannot be
+undone.
+
+## Need help?
+
+Read [Troubleshooting](TROUBLESHOOTING.md) or open a report through
+[Support](../SUPPORT.md). Send security problems through the private route in
+[SECURITY.md](../SECURITY.md).

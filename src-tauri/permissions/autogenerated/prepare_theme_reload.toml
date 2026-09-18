@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-prepare-theme-reload"
+description = "Enables the prepare_theme_reload command without any pre-configured scope."
+commands.allow = ["prepare_theme_reload"]
+
+[[permission]]
+identifier = "deny-prepare-theme-reload"
+description = "Denies the prepare_theme_reload command without any pre-configured scope."
+commands.deny = ["prepare_theme_reload"]

@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta id="theme_color" name="theme-color" content="#f3f7f5" />
+    <title>WhatsNow — Settings</title>
+    <link rel="stylesheet" href="style.css?v=2.6.0" />
+  </head>
+  <body>
+    <div class="window-titlebar" data-tauri-drag-region>
+      <span class="window-titlebar-name" data-tauri-drag-region>WhatsNow — Settings</span>
+      <button
+        type="button"
+        id="window-close"
+        class="window-close"
+        aria-label="Close settings"
+        title="Close"
+      >
+        <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
+          <path
+            d="M1 1l10 10M11 1L1 11"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+    </div>
+    <div class="settings-shell">
+      <aside class="side-rail" aria-label="Settings navigation">
+        <div class="brand-block">
+          <img class="brand-mark" src="app-icon.svg" alt="" aria-hidden="true" />
+          <div>
+            <strong>WhatsNow</strong>
+            <span>Personal workspace</span>
+          </div>
+        </div>
+
+        <nav class="settings-nav">
+          <button type="button" class="nav-item active" data-panel-target="overview">
+            <span class="nav-icon" aria-hidden="true">⌂</span>
+            <span>Overview</span>
+          </button>
+          <button type="button" class="nav-item" data-panel-target="accounts">
+            <span class="nav-icon" aria-hidden="true">◎</span>
+            <span>Accounts</span>
+          </button>
+          <button type="button" class="nav-item" data-panel-target="focus">
+            <span class="nav-icon" aria-hidden="true">◷</span>
+            <span>Focus</span>
+          </button>
+          <button type="button" class="nav-item" data-panel-target="appearance">
+            <span class="nav-icon" aria-hidden="true">✦</span>
+            <span>Appearance</span>
+          </button>
+          <button type="button" class="nav-item" data-panel-target="notifications">
+            <span class="nav-icon" aria-hidden="true">◉</span>
+            <span>Notifications</span>
+          </button>
+          <button type="button" class="nav-item" data-panel-target="preferences">
+            <span class="nav-icon" aria-hidden="true">⌘</span>
+            <span>Preferences</span>
+          </button>
+          <button type="button" class="nav-item" data-panel-target="security">
+            <span class="nav-icon" aria-hidden="true">◇</span>
+            <span>Security</span>
+          </button>
+          <button type="button" class="nav-item" data-panel-target="about">
+            <span class="nav-icon" aria-hidden="true">i</span>
+            <span>About</span>
+          </button>
+        </nav>
+
+        <div class="rail-status">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span id="focus_status">Ready</span>
+        </div>
+      </aside>
+
+      <div class="workspace">
+        <header class="workspace-header">
+          <div>
+            <p class="eyebrow">Settings workspace</p>
+            <h1 id="panel_title">Overview</h1>
+            <p id="panel_description">Your accounts, attention, and personal style at a glance.</p>
+          </div>
+          <button type="button" id="save" class="primary-action">Save changes</button>
+        </header>
+
+        <main class="panel-stage">
+          <section class="settings-panel active" data-panel="overview" aria-labelledby="panel_title">
+            <div class="welcome-card">
+              <div>
+                <p class="eyebrow">Your communication cockpit</p>
+                <h2>Keep conversations close, without losing your focus.</h2>
+                <p>
+                  Switch accounts, quiet interruptions, and personalize every WhatsNow
+                  window from one compact workspace.
+                </p>
+              </div>
+              <img src="app-icon.svg" alt="" aria-hidden="true" />
+            </div>
+
+            <div class="metric-grid">
+              <button type="button" class="metric-card" data-jump-panel="accounts">
+                <span class="metric-label">Connected spaces</span>
+                <strong id="overview_accounts">—</strong>
+                <small>Manage accounts</small>
+              </button>
+              <button type="button" class="metric-card" data-jump-panel="focus">
+                <span class="metric-label">Attention mode</span>
+                <strong id="overview_focus">Ready</strong>
+                <small>Start a focus session</small>
+              </button>
+              <button type="button" class="metric-card" data-jump-panel="appearance">
+                <span class="metric-label">Current style</span>
+                <strong id="overview_theme">Dark</strong>
+                <small>Personalize WhatsNow</small>
+              </button>
+            </div>
+
+            <div class="section-surface">
+              <div class="section-heading">
+                <div>
+                  <p class="eyebrow">Quick start</p>
+                  <h2>Focus presets</h2>
+                </div>
+                <p>Pause native notifications while every chat stays connected.</p>
+              </div>
+              <div class="focus-presets compact-presets" aria-label="Quick focus duration">
+                <button type="button" class="preset-button" data-focus-minutes="15">
+                  <strong>15</strong><span>minutes</span>
+                </button>
+                <button type="button" class="preset-button" data-focus-minutes="30">
+                  <strong>30</strong><span>minutes</span>
+                </button>
+                <button type="button" class="preset-button" data-focus-minutes="60">
+                  <strong>1</strong><span>hour</span>
+                </button>
+                <button type="button" class="preset-button" data-focus-minutes="120">
+                  <strong>2</strong><span>hours</span>
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <section class="settings-panel" data-panel="accounts" hidden>
+            <div class="panel-intro">
+              <p class="eyebrow">Workspace</p>
+              <h2>Accounts</h2>
+              <p>Keep work, personal, and project sessions separate and easy to reach.</p>
+            </div>
+            <div class="section-surface">
+              <div id="accounts-list" class="accounts-list"></div>
+              <div class="add-row">
+                <input
+                  type="text"
+                  id="new_account_name"
+                  maxlength="60"
+                  placeholder="Account name, e.g. Work"
+                  aria-label="New account name"
+                />
+                <button id="add_account">Add account</button>
+              </div>
+              <p id="macos-note" class="warning-note" hidden>
+                Multiple accounts require macOS 14 or newer.
+              </p>
+            </div>
+          </section>
+
+          <section class="settings-panel" data-panel="focus" hidden>
+            <div class="panel-intro">
+              <p class="eyebrow">Productivity</p>
+              <h2>Focus mode</h2>
+              <p>Pause native alerts for a chosen window of time without disconnecting chats.</p>
+            </div>
+            <div class="focus-presets" aria-label="Focus duration">
+              <button type="button" class="preset-button" data-focus-minutes="15">
+                <strong>15</strong><span>minutes</span>
+              </button>
+              <button type="button" class="preset-button" data-focus-minutes="30">
+                <strong>30</strong><span>minutes</span>
+              </button>
+              <button type="button" class="preset-button" data-focus-minutes="45">
+                <strong>45</strong><span>minutes</span>
+              </button>
+              <button type="button" class="preset-button" data-focus-minutes="60">
+                <strong>1</strong><span>hour</span>
+              </button>
+              <button type="button" class="preset-button" data-focus-minutes="120">
+                <strong>2</strong><span>hours</span>
+              </button>
+              <button type="button" class="preset-button" data-focus-minutes="240">
+                <strong>4</strong><span>hours</span>
+              </button>
+            </div>
+            <div class="section-surface custom-focus">
+              <div class="custom-focus-copy">
+                <strong>Custom duration</strong>
+                <span>Choose any focused interval from 1 minute to 24 hours.</span>
+              </div>
+              <label class="field custom-focus-field" for="focus_custom">
+                <span class="sr-only">Custom focus duration in minutes</span>
+                <div class="number-action">
+                  <input type="number" id="focus_custom" min="1" max="1440" value="90" />
+                  <span>minutes</span>
+                  <button type="button" id="focus_custom_start">Start focus</button>
+                </div>
+              </label>
+              <button type="button" id="focus_off" class="quiet" hidden>End current focus</button>
+            </div>
+          </section>
+
+          <section class="settings-panel" data-panel="appearance" hidden>
+            <div class="panel-intro">
+              <p class="eyebrow">Personalize</p>
+              <h2>Appearance</h2>
+              <p>
+                Choose a readable personality for Settings, app lock, native chrome,
+                and the WhatsApp chatting workspace.
+              </p>
+            </div>
+            <fieldset class="theme-picker">
+              <legend class="sr-only">WhatsNow theme</legend>
+              <label class="theme-option">
+                <input type="radio" name="theme" value="system" />
+                <span class="theme-swatch theme-swatch-system" aria-hidden="true"></span>
+                <span><strong>Dark</strong><small>Official WhatsApp dark with doodles</small></span>
+              </label>
+              <label class="theme-option">
+                <input type="radio" name="theme" value="light" />
+                <span class="theme-swatch theme-swatch-light" aria-hidden="true"></span>
+                <span><strong>Light</strong><small>Official WhatsApp light with doodles</small></span>
+              </label>
+              <label class="theme-option">
+                <input type="radio" name="theme" value="graphite" />
+                <span class="theme-swatch theme-swatch-graphite" aria-hidden="true"></span>
+                <span><strong>Graphite</strong><small>Strong and minimal</small></span>
+              </label>
+              <label class="theme-option">
+                <input type="radio" name="theme" value="midnight" />
+                <span class="theme-swatch theme-swatch-midnight" aria-hidden="true"></span>
+                <span><strong>Midnight</strong><small>Deep blue focus</small></span>
+              </label>
+              <label class="theme-option">
+                <input type="radio" name="theme" value="forest" />
+                <span class="theme-swatch theme-swatch-forest" aria-hidden="true"></span>
+                <span><strong>Forest</strong><small>Grounded green calm</small></span>
+              </label>
+              <label class="theme-option">
+                <input type="radio" name="theme" value="ocean" />
+                <span class="theme-swatch theme-swatch-ocean" aria-hidden="true"></span>
+                <span><strong>Ocean</strong><small>Cool, calm energy</small></span>
+              </label>
+              <label class="theme-option">
+                <input type="radio" name="theme" value="blush" />
+                <span class="theme-swatch theme-swatch-blush" aria-hidden="true"></span>
+                <span><strong>Blush</strong><small>Gentle rose warmth</small></span>
+              </label>
+              <label class="theme-option">
+                <input type="radio" name="theme" value="lavender" />
+                <span class="theme-swatch theme-swatch-lavender" aria-hidden="true"></span>
+                <span><strong>Lavender</strong><small>Soft violet quiet</small></span>
+              </label>
+              <label class="theme-option">
+                <input type="radio" name="theme" value="candy" />
+                <span class="theme-swatch theme-swatch-candy" aria-hidden="true"></span>
+                <span><strong>Candy</strong><small>Playful pastel</small></span>
+              </label>
+              <label class="theme-option">
+                <input type="radio" name="theme" value="aurora" />
+                <span class="theme-swatch theme-swatch-aurora" aria-hidden="true"></span>
+                <span><strong>Aurora</strong><small>Soft pastel spectrum</small></span>
+              </label>
+            </fieldset>
+            <p class="field-note">
+              Preview appears here immediately. Save to apply it to all open chat windows.
+              Dark and Light preserve WhatsApp's complete official interface and doodles.
+              Personality themes change only the conversation wallpaper and hide doodles.
+            </p>
+          </section>
+
+          <section class="settings-panel" data-panel="notifications" hidden>
+            <div class="panel-intro">
+              <p class="eyebrow">Attention</p>
+              <h2>Notifications</h2>
+              <p>Choose how much message detail reaches your desktop.</p>
+            </div>
+            <div class="section-surface setting-list">
+              <label class="switch-row">
+                <span>
+                  <strong>Native notifications</strong>
+                  <small>Show desktop alerts for incoming messages.</small>
+                </span>
+                <input type="checkbox" id="notifications" />
+              </label>
+              <label class="switch-row">
+                <span>
+                  <strong>Show message previews</strong>
+                  <small>Turn this off to show a private generic alert.</small>
+                </span>
+                <input type="checkbox" id="notification_previews" />
+              </label>
+              <label class="duration-row" for="notification_preview_duration_secs">
+                <span>
+                  <strong>Preview duration</strong>
+                  <small>Banner time on screen (15+ seconds uses Windows' extended banner). Toasts also stay in the notification center so you can reopen them later.</small>
+                </span>
+                <span class="duration-control">
+                  <input
+                    type="number"
+                    id="notification_preview_duration_secs"
+                    min="2"
+                    max="30"
+                    step="1"
+                    value="2"
+                    inputmode="numeric"
+                  />
+                  <span>seconds</span>
+                </span>
+              </label>
+              <div class="inline-action">
+                <button type="button" id="test_notification" class="secondary">
+                  Send test notification
+                </button>
+                <span id="test_notification_note" class="muted-note"></span>
+              </div>
+            </div>
+          </section>
+
+          <section class="settings-panel" data-panel="preferences" hidden>
+            <div class="panel-intro">
+              <p class="eyebrow">Desktop</p>
+              <h2>Preferences</h2>
+              <p>Control how WhatsNow stays available while you work.</p>
+            </div>
+            <div class="section-surface setting-list">
+              <label class="switch-row">
+                <span><strong>Close to tray</strong><small>Keep accounts connected in the background.</small></span>
+                <input type="checkbox" id="close_to_tray" />
+              </label>
+              <label class="switch-row">
+                <span><strong>Start minimized</strong><small>Open quietly in the system tray.</small></span>
+                <input type="checkbox" id="start_minimized" />
+              </label>
+              <label class="switch-row">
+                <span><strong>Launch at startup</strong><small>Start WhatsNow after you sign in.</small></span>
+                <input type="checkbox" id="autostart" />
+              </label>
+              <label class="switch-row">
+                <span><strong>Keep chat windows on top</strong><small>Apply to every account window.</small></span>
+                <input type="checkbox" id="always_on_top" />
+              </label>
+              <label class="switch-row">
+                <span><strong>Global show/hide shortcut</strong><small>Bring your active account forward from anywhere.</small></span>
+                <input type="checkbox" id="hotkey_enabled" />
+              </label>
+            </div>
+            <div class="section-surface shortcut-surface">
+              <label class="field" for="hotkey">
+                <span>Shortcut</span>
+                <div class="hotkey-row">
+                  <input type="text" id="hotkey" placeholder="Alt+W" />
+                  <button type="button" id="record_hotkey" class="secondary">Record</button>
+                </div>
+              </label>
+              <div id="hotkey_presets" class="shortcut-presets" aria-label="Suggested shortcuts">
+                <button type="button" class="chip" data-hotkey-preset="platform">Recommended</button>
+                <button type="button" class="chip" data-hotkey-preset="Ctrl+Alt+W">Ctrl + Alt + W</button>
+                <button type="button" class="chip" data-hotkey-preset="CmdOrCtrl+Shift+W">Ctrl/Cmd + Shift + W</button>
+              </div>
+              <p id="hotkey_hint" class="hotkey-hint" hidden></p>
+              <p class="field-note" id="platform_shortcut_note"></p>
+            </div>
+          </section>
+
+          <section class="settings-panel" data-panel="security" hidden>
+            <div class="panel-intro">
+              <p class="eyebrow">Privacy</p>
+              <h2>App lock</h2>
+              <p>Require authentication before any WhatsNow chat is revealed.</p>
+            </div>
+            <div class="section-surface">
+              <div id="lock-disabled">
+                <div class="password-grid">
+                  <label class="field" for="lock_pw1">
+                    <span>Password (minimum 4 characters)</span>
+                    <input type="password" id="lock_pw1" autocomplete="new-password" />
+                  </label>
+                  <label class="field" for="lock_pw2">
+                    <span>Confirm password</span>
+                    <input type="password" id="lock_pw2" autocomplete="new-password" />
+                  </label>
+                </div>
+                <button id="enable_lock">Enable app lock</button>
+              </div>
+
+              <div id="lock-enabled" hidden>
+                <label class="switch-row" id="biometric_row" hidden>
+                  <span><strong id="biometric_label">Use biometric</strong></span>
+                  <input type="checkbox" id="biometric_enabled" />
+                </label>
+                <label class="switch-row">
+                  <span><strong>Lock on launch</strong></span>
+                  <input type="checkbox" id="lock_on_launch" />
+                </label>
+                <label class="switch-row">
+                  <span><strong>Lock when hidden to tray</strong></span>
+                  <input type="checkbox" id="lock_on_hide" />
+                </label>
+                <label class="field compact-field" for="idle_min">
+                  <span>Auto-lock after inactivity (minutes, 0 = off)</span>
+                  <input type="number" id="idle_min" min="0" max="1440" step="1" value="0" />
+                </label>
+                <div class="button-group">
+                  <button id="lock_now">Lock now</button>
+                  <button id="change_pw" class="secondary">Change password</button>
+                  <button id="disable_lock" class="danger">Disable lock</button>
+                </div>
+              </div>
+              <p class="field-note">
+                App lock controls access to WhatsNow windows. It does not encrypt session
+                data on disk; use full-disk encryption for at-rest protection.
+              </p>
+            </div>
+          </section>
+
+          <section class="settings-panel" data-panel="about" hidden>
+            <div class="panel-intro">
+              <p class="eyebrow">Identity</p>
+              <h2>About WhatsNow</h2>
+              <p>A focused desktop workspace for clearer, calmer WhatsApp communication.</p>
+            </div>
+            <div class="section-surface about-card">
+              <img src="app-icon.svg" alt="" aria-hidden="true" />
+              <div class="about-copy">
+                <span class="about-version" data-version-ref>WhatsNow 0.0.0</span>
+                <h3>Designed for productive conversations.</h3>
+                <p>
+                  Thank you for using WhatsNow. It is authored, created, and maintained solely by
+                  <a href="https://github.com/benedictusrey" target="_blank" rel="noreferrer">Benedictus Reynaldo Hartanto (@benedictusrey)</a>.
+                </p>
+                <p class="about-legal">
+                  Copyright (c) 2026 Benedictus Reynaldo Hartanto (@benedictusrey). Released under the MIT License.
+                  WhatsNow is independent and is not affiliated with WhatsApp or Meta.
+                </p>
+              </div>
+            </div>
+          </section>
+        </main>
+
+        <footer class="workspace-footer">
+          <span id="note" class="save-note" role="status"></span>
+          <span data-version-ref>WhatsNow 0.0.0 · <a href="https://github.com/benedictusrey" target="_blank" rel="noreferrer">Benedictus Reynaldo Hartanto (@benedictusrey)</a></span>
+        </footer>
+      </div>
+    </div>
+
+    <script src="theme.js?v=2.6.0"></script>
+    <script src="hotkey.js?v=2.6.0"></script>
+    <script src="main.js?v=2.6.0"></script>
+    <script>
+      // Seamless window: the page draws its own titlebar (drag region + close
+      // button). This wires the close button to the native window (with a
+      // plain window.close() fallback) and auto-closes the Settings pop-up
+      // after 30 seconds without any interaction.
+      (function () {
+        var close = document.getElementById("window-close");
+        var closeWindow = function () {
+          var win =
+            window.__TAURI__ &&
+            window.__TAURI__.window &&
+            window.__TAURI__.window.getCurrentWindow();
+          if (win && win.close) {
+            win.close().catch(function () {
+              window.close();
+            });
+          } else {
+            window.close();
+          }
+        };
+        if (close) {
+          close.addEventListener("click", closeWindow);
+        }
+        var idleMs = 30000;
+        var idleTimer = window.setTimeout(closeWindow, idleMs);
+        var resetIdle = function () {
+          window.clearTimeout(idleTimer);
+          idleTimer = window.setTimeout(closeWindow, idleMs);
+        };
+        ["pointermove", "pointerdown", "keydown", "wheel", "input"].forEach(
+          function (type) {
+            window.addEventListener(type, resetIdle, { passive: true });
+          }
+        );
+      })();
+    </script>
+  </body>
+</html>

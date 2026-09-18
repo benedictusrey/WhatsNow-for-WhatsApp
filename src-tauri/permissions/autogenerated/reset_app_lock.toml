@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-reset-app-lock"
+description = "Enables the reset_app_lock command without any pre-configured scope."
+commands.allow = ["reset_app_lock"]
+
+[[permission]]
+identifier = "deny-reset-app-lock"
+description = "Denies the reset_app_lock command without any pre-configured scope."
+commands.deny = ["reset_app_lock"]

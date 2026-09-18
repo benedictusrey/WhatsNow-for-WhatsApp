@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="https://github.com/benedictusrey/WhatsNow-for-WhatsApp/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/benedictusrey/WhatsNow-for-WhatsApp?display_name=tag&sort=semver"></a>
-  <img alt="Version 2.5.0" src="https://img.shields.io/badge/version-2.5.0-213547">
+  <img alt="Version 2.6.0" src="https://img.shields.io/badge/version-2.6.0-213547">
   <img alt="Platform Windows macOS Linux" src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-168B72">
   <img alt="Built with Tauri v2" src="https://img.shields.io/badge/built%20with-Tauri%20v2-24A6D8">
   <img alt="Built with Rust" src="https://img.shields.io/badge/built%20with-Rust-B7410E">
@@ -19,28 +19,75 @@
   <a href="https://github.com/benedictusrey"><img alt="Author @benedictusrey" src="https://img.shields.io/badge/author-%40benedictusrey-111827"></a>
 </p>
 
-**🎉 WHATSNOW RELEASE: v2.5.0 IS NOW LIVE! 🎉**
+**🎉 WHATSNOW RELEASE: v2.6.0 IS NOW LIVE! 🎉**
 
-After meticulous development, the latest official build of WhatsNow is ready
-for deployment. This is the locked, verified state of the four user-required
-pillars — themes, typing-area emoji, compact toasts, and click-to-chat
-routing — packaged as a fresh release.
+WhatsNow v2.6.0 represents a major evolutionary milestone. Building on the
+rock-solid foundation of the four locked pillars in v2.5.0, v2.6.0 delivers
+native desktop calling windows, seamless WhatsApp-family link routing,
+work-area display clamping, restored official Dark doodles, process freeze
+prevention, and video-audio playback protections across Windows, macOS, and
+Linux.
 
-**What's new in v2.5.0**
+---
 
-- 😀 **Emojis you type are visible in every theme** — the doodle kill-switch
-  no longer wipes WhatsApp's inline emoji sprites, so the same emojis render
-  identically in Dark, Light, and every personality theme
-- 🔔 **Every toast is compact** — the small WhatsNow icon next to the
-  "WhatsNow" name, never the large left-side banner, on the first toast and
-  every one after
-- 🎯 **Click a notification, land in the sender's chat** — toast and
-  notification-center clicks open the exact conversation, even on a cold
-  start, via a real trusted click routed through the host
-- 🎭 **The Reply curtain is gone** — WhatsApp's mask-painted doodles can no
-  longer flash on dark personality themes while the Reply bar slides up
-- 🏷️ **Settings > About always reports the truth** — the version is injected
-  from the compiled binary at runtime, so it can never lag behind the release
+## 🔍 What's Changed: Comparing v2.6.0 with v2.5.0
+
+WhatsNow v2.5.0 locked the four critical behavioral pillars (themes + doodle
+mapping, typing-area emoji rendering, compact notification toasts, and
+trusted-click chat routing). Version 2.6.0 preserves every locked behavior while
+eliminating long-standing webview constraints and integrating deep operating
+system hooks.
+
+### Detailed Comparison Matrix
+
+| Area / Feature | WhatsNow v2.5.0 | WhatsNow v2.6.0 (Latest) |
+| --- | --- | --- |
+| **Official Dark Doodles** | Settings "Dark" theme saved as `system`, which inadvertently disabled doodle wallpapers. | **Restored:** Strict deny-list enables doodles across all official themes (`System`, `Dark`, `Light`) while keeping personality themes clean. |
+| **WhatsApp Calling** | Popups denied; video and voice calls wedged inside cramped in-page web container. | **Real Call Windows:** Dedicated always-on-top, resizable, and maximizable window with session sharing (WebRTC intact). |
+| **Call Media Permissions** | Permission auto-approval attached only to boot windows; popups required re-prompting. | **Automated:** Microphones, cameras, and Window Management (PiP/pop-out) auto-granted for all call windows. |
+| **Window Geometry Clamping** | Fixed 1100×800 chat & 760×820 Settings defaults overflowed 1366×768 or 125%/150% DPI screens. | **Adaptive Clamping:** Window sizes automatically clamp to 96% of the primary display work area with safety floors. |
+| **WhatsApp-Family Links** | External web links only; `wa.me` and other WhatsApp domains opened outside in default browser. | **In-App Family Routing:** 8 WhatsApp hosts stay inside WhatsNow (`wa.me`, `chat.whatsapp.com`, `call.whatsapp.com`, etc.). |
+| **`wa.me` Chat Opening** | Handled in browser or caused disruptive reloads. | **In-Place CDP Routing:** Known contacts open instantly via trusted row click; unknown contacts raise the app cleanly. |
+| **Content Popups** | Did not exist; auxiliary WhatsApp pages forced to external browser. | **Reusable `wa-content` Window:** Pre-created hidden at boot; fast in-place `location.replace` with zero message-pump deadlocks. |
+| **Windows Deep Links** | No OS URI scheme registration; `whatsapp://` links from external apps ignored. | **`whatsapp://` Protocol Handler:** Registered in HKCU per-user at launch; opens composer directly (skipped in portable mode). |
+| **Video Audio Playback** | Unfocused visible windows could enter WebView2 LOW memory target, cutting audio graph on videos. | **Audio Guard:** Visible windows stay at NORMAL memory target; LOW target restricted to minimized/tray-hidden states. |
+| **DOM Fluency & Sweeps** | Promo removal sweeps ran unthrottled during initialization. | **Coalesced Sweeps:** `document`-rooted observer with timer coalescing eliminates mutation storms and UI stutter. |
+| **Locked Pillars** | Fully locked and byte-verified. | **Maintained 100%:** Byte-verified and extended in `backup/v2.6.0-locked/`. |
+
+---
+
+### Highlights of v2.6.0
+
+- 🎨 **Official Doodles Restored Everywhere** — Whether you choose Light, Dark,
+  or System, WhatsApp's beloved doodle wallpaper renders accurately. The eight
+  personality themes (`midnight`, `forest`, `graphite`, `ocean`, `blush`,
+  `lavender`, `candy`, `aurora`) continue to strip doodles across every layer,
+  including composer and reply surfaces.
+- 📞 **True Native Video & Voice Calling** — WhatsApp Web Calling popups
+  (`window.open`) now spawn a dedicated, resizable, always-on-top call window.
+  It shares the opener's webview environment (WebView2 on Windows, WKWebView on
+  macOS, WebKitGTK on Linux), guaranteeing WebRTC media continuity and full
+  account isolation.
+- 🎙️ **Frictionless Media Permissions** — Call windows automatically receive
+  Microphone, Camera, and Window Management permissions without intrusive
+  system permission dialogs interrupting active calls.
+- 🖥️ **Small Screen & High-DPI Friendly** — No more windows spilling past your
+  taskbar. All window defaults intelligently scale to the monitor's usable work
+  area, ensuring full comfort on 1366×768 laptops and scaled displays.
+- 🔗 **Intelligent WhatsApp Link Handling** — Links to `wa.me`, `chat.whatsapp.com`,
+  `call.whatsapp.com`, `api.whatsapp.com`, and `whatsapp.com` stay inside
+  WhatsNow. Known numbers open their chat row seamlessly; external web links
+  continue opening in your favorite web browser.
+- ⚡ **Zero-Freeze Content Architecture** — Pre-created hidden popup hosting
+  prevents WebView2 synchronous construction deadlocks, keeping the app smooth
+  and responsive at all times.
+- 🚀 **Deep-Link URI Scheme (`whatsapp://`)** — Click WhatsApp links across your
+  operating system, browser, or documents to instantly raise WhatsNow and start
+  typing.
+- 🔊 **Uninterrupted Media Audio** — Streamlined memory governance ensures videos
+  and audio clips never go silent when clicking outside the window.
+
+---
 
 **🚀 Welcome to the Future of WhatsApp on Desktop**
 
@@ -161,14 +208,14 @@ to download the latest version for your system.
 
 | Platform | Asset | Notes |
 | --- | --- | --- |
-| Windows 10/11 x64 | `WhatsNow_2.5.0_windows_x64-setup.exe` · `-portable.exe` · `_x64_en-US.msi` | Requires Edge WebView2 Runtime |
-| Linux x64 | `WhatsNow_2.5.0_amd64.AppImage` · `_amd64.deb` | Requires WebKitGTK 2.46.1+ |
-| macOS Apple Silicon | `WhatsNow_2.5.0_aarch64.dmg` · `_aarch64.app.tar.gz` | Requires macOS 12.1+ |
-| macOS Intel | `WhatsNow_2.5.0_x86_64.dmg` · `_x86_64.app.tar.gz` | Requires macOS 12.1+ |
+| Windows 10/11 x64 | `WhatsNow_2.6.0_windows_x64-setup.exe` · `-portable.exe` · `_x64_en-US.msi` | Requires Edge WebView2 Runtime |
+| Linux x64 | `WhatsNow_2.6.0_amd64.AppImage` · `_amd64.deb` | Requires WebKitGTK 2.46.1+ |
+| macOS Apple Silicon | `WhatsNow_2.6.0_aarch64.dmg` · `_aarch64.app.tar.gz` | Requires macOS 12.1+ |
+| macOS Intel | `WhatsNow_2.6.0_x86_64.dmg` · `_x86_64.app.tar.gz` | Requires macOS 12.1+ |
 | Every platform | `checksums.sha256` · `checksums-windows.sha256` | Verify your download against them |
 
 **Windows** — Install the Microsoft Edge WebView2 Runtime if not already
-present. Run `WhatsNow_2.5.0_windows_x64-setup.exe` (or the `.msi` variant for
+present. Run `WhatsNow_2.6.0_windows_x64-setup.exe` (or the `.msi` variant for
 managed deployment, or the portable EXE for a no-installer experience). Link
 your phone: WhatsApp → **Linked devices** → scan the QR code.
 
@@ -176,18 +223,52 @@ your phone: WhatsApp → **Linked devices** → scan the QR code.
 the first launch shows a Gatekeeper prompt, right-click and choose **Open**
 (unsigned builds). Link your phone and scan the QR code.
 
-**Linux** — `chmod +x WhatsNow_2.5.0_amd64.AppImage` and run it, or install
+**Linux** — `chmod +x WhatsNow_2.6.0_amd64.AppImage` and run it, or install
 the `.deb` with your package manager. Some distributions need
 `sudo apt install libwebkit2gtk-4.1-dev`. Link your phone and scan the QR
 code.
 
 Only install assets that are actually attached to a published release. The
 release pipeline builds Windows, Linux, and macOS assets on their respective
-native GitHub Actions runners from the private source repository; this public
-repository stores only the finished binaries and checksums. Read the complete
+native GitHub Actions runners from the source repository; finished packages and
+checksums are attached directly to each release. Read the complete
 [installation guide](docs/INSTALLATION.md) and
 [platform notes](docs/PLATFORM_SUPPORT.md). Windows users can also read the
 [memory-conscious build notes](docs/WINDOWS.md).
+
+**🔨 Build from Source**
+
+Install Rust 1.82 or newer and the Tauri 2 CLI:
+
+```bash
+npm install -g @tauri-apps/cli@^2
+cargo tauri dev
+```
+
+Ubuntu and Debian builders need the Tauri system libraries:
+
+```bash
+sudo apt install -y libwebkit2gtk-4.1-dev build-essential curl wget file \
+  libxdo-dev libdbus-1-dev libssl-dev libayatana-appindicator3-dev \
+  librsvg2-dev libhunspell-dev patchelf
+```
+
+Create native packages with `cargo tauri build` (Windows memory-conscious
+build: `powershell -File scripts/build-windows.ps1`). Run the same checks
+used by continuous integration:
+
+```bash
+node scripts/check-docs.mjs
+node settings-ui/settingsAcl.test.mjs
+node settings-ui/theme.test.mjs
+node settings-ui/comboToAccelerator.test.mjs
+node src-tauri/resources/bridge.test.mjs
+node src-tauri/resources/chat-theme.test.mjs
+cd src-tauri
+cargo fmt --all -- --check
+cargo test --lib
+cargo clippy --locked --all-targets -- -D warnings
+```
 
 **🔒 The four locked pillars**
 
@@ -231,7 +312,11 @@ verify in this order:
   compact layout with the small icon.
 - Click that toast — the sender's chat must open, even from the notification
   center.
-- Open **Settings > About** — it must read `WhatsNow 2.5.0`.
+- Open **Settings > About** — it must read `WhatsNow 2.6.0`.
+- Verify calling: initiate a call popup and confirm it appears in a resizable,
+  always-on-top window.
+- Verify link routing: clicking `wa.me` links opens known contacts in place
+  without reload.
 - Check the tray, taskbar badge, external-link routing, drag-and-drop, and
   App Lock on lock-on-hide.
 
@@ -239,8 +324,10 @@ verify in this order:
 
 | Document | What you'll find |
 | --- | --- |
-| [RELEASE_NOTES.md](RELEASE_NOTES.md) | What's new in v2.5.0 — everything changed since v2.0.0 |
-| [CHANGELOG.md](CHANGELOG.md) | Full version history, one entry per release |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute, report issues, and propose enhancements |
+| [TRADEMARK.md](TRADEMARK.md) | Brand and attribution guidelines |
+| [RELEASE_NOTES.md](RELEASE_NOTES.md) | What's new in v2.6.0 and full version history |
+| [CHANGELOG.md](CHANGELOG.md) | Detailed changelog, one entry per release |
 | [INSTALLATION.md](docs/INSTALLATION.md) | Packages, scripts, updates, portable use, and uninstall |
 | [FEATURES_AND_COMPARISON.md](docs/FEATURES_AND_COMPARISON.md) | Features and app comparison |
 | [PLATFORM_SUPPORT.md](docs/PLATFORM_SUPPORT.md) | Platform support and limitations |
@@ -248,15 +335,17 @@ verify in this order:
 | [SECURITY_AND_VERIFICATION.md](docs/SECURITY_AND_VERIFICATION.md) | Download verification and release signing |
 | [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Common platform and runtime problems |
 | [GITHUB_DESKTOP_PUBLISHING.md](docs/GITHUB_DESKTOP_PUBLISHING.md) | Publish the release with GitHub Desktop |
+| [PUBLISHING.md](docs/PUBLISHING.md) | Complete release publish workflow |
+| [RELEASING.md](docs/RELEASING.md) | Release quality gate: checks, pillars, signing |
 | [SECURITY.md](SECURITY.md) | Private vulnerability reports and security policy |
 | [SUPPORT.md](SUPPORT.md) | Bug reports, feature requests, and diagnostics |
 
 **Author**
 
-WhatsNow is crafted and maintained by
-[@benedictusrey](https://github.com/benedictusrey), released under the
-[MIT License](LICENSE). Required retained-code and dependency notices appear
-in [THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES). The project is intentionally
-independent from WhatsApp LLC and Meta Platforms, Inc. Contributions and
-reproducible bug reports are welcome — provided they do not include
-credentials, private session data, or private chat content.
+WhatsNow is authored, created, and maintained solely by
+**Benedictus Reynaldo Hartanto** ([@benedictusrey](https://github.com/benedictusrey)),
+released under the [MIT License](LICENSE). Required retained-code and dependency
+notices appear in [THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES). See [TRADEMARK.md](TRADEMARK.md)
+for brand and attribution guidelines. The project is intentionally independent from
+WhatsApp LLC and Meta Platforms, Inc. Contributions and reproducible bug reports
+are warmly welcomed!

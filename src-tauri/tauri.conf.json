@@ -1,0 +1,53 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "WhatsNow",
+  "version": "2.6.0",
+  "identifier": "app.whatsnow.desktop",
+  "build": {
+    "frontendDist": "../settings-ui"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["deb", "appimage", "app", "dmg", "nsis", "msi"],
+    "publisher": "Benedictus Reynaldo Hartanto (@benedictusrey)",
+    "homepage": "https://github.com/benedictusrey/WhatsNow-for-WhatsApp",
+    "copyright": "Copyright (c) 2026 Benedictus Reynaldo Hartanto (@benedictusrey). WhatsNow is authored and maintained solely by Benedictus Reynaldo Hartanto (@benedictusrey).",
+    "shortDescription": "WhatsNow",
+    "longDescription": "WhatsNow is a focused, multi-account WhatsApp Web desktop client with native productivity, privacy, notification, app-lock, and personalized theme tools.",
+    "resources": {
+      "../LICENSE": "LICENSE",
+      "../THIRD_PARTY_NOTICES": "THIRD_PARTY_NOTICES"
+    },
+    "windows": {
+      "allowDowngrades": false,
+      "webviewInstallMode": {
+        "type": "embedBootstrapper",
+        "silent": true
+      }
+    },
+    "macOS": {
+      "minimumSystemVersion": "12.1"
+    },
+    "linux": {
+      "deb": {
+        "files": {
+          "/usr/share/polkit-1/actions/app.whatsnow.desktop.policy": "resources/app.whatsnow.desktop.policy"
+        }
+      }
+    },
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}

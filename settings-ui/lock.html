@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta id="theme_color" name="theme-color" content="#0d1512" />
+    <title>WhatsNow — Locked</title>
+    <link rel="stylesheet" href="lock.css?v=1.0.0" />
+  </head>
+  <body>
+    <div class="lock-card">
+      <img class="lock-brand" src="app-icon.svg" alt="" aria-hidden="true" />
+      <div class="lock-glyph" aria-hidden="true">●</div>
+      <h1>WhatsNow is locked</h1>
+      <p class="lock-copy">Unlock to reveal your accounts and message windows.</p>
+      <input type="password" id="password" placeholder="Password" autocomplete="current-password" aria-label="Password" />
+      <button id="unlock">Unlock</button>
+      <button id="biometric" class="secondary" hidden>Use biometric</button>
+      <p id="error" class="error" role="alert"></p>
+      <a id="reset" href="#" class="reset">Forgot password? Reset…</a>
+    </div>
+    <script src="theme.js?v=1.0.0"></script>
+    <script src="lock.js?v=1.0.0"></script>
+  </body>
+</html>

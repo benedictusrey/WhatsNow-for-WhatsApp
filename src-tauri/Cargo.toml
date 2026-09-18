@@ -1,0 +1,87 @@
+[package]
+name = "whatsnow"
+version = "2.6.0"
+edition = "2021"
+rust-version = "1.82"
+authors = ["Benedictus Reynaldo Hartanto (@benedictusrey) <https://github.com/benedictusrey>"]
+description = "A focused, multi-account WhatsApp productivity desktop client with native privacy, notification, and personalization tools."
+homepage = "https://github.com/benedictusrey/WhatsNow-for-WhatsApp"
+repository = "https://github.com/benedictusrey/WhatsNow-for-WhatsApp"
+license = "MIT"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true
+
+[lib]
+name = "whatsnow_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[features]
+# Builds the raw Windows executable without modifying system notification
+# identity or Start-menu shortcuts at runtime.
+portable-mode = []
+# Separate Windows memory-conscious build: ask WebView2 to reclaim inactive
+# renderer memory without suspending scripts or network connections.
+windows-memory = []
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+cc = "1"
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon", "image-png"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+argon2 = { version = "0.5.3", features = ["std"] }  # Argon2id password hashing for the app lock (PHC strings)
+
+[target.'cfg(target_os = "linux")'.dependencies]
+# Version-matched to wry 0.55's webkit2gtk so PlatformWebview::inner() types unify.
+webkit2gtk = "=2.0.2"
+zbus = "5"
+zbus_polkit = "5.0.0"
+
+[target.'cfg(windows)'.dependencies]
+notify-rust = "=4.17.0"
+# Version-matched to wry 0.55 for the WebView2 PermissionRequested mic/camera handler.
+webview2-com = "0.38"
+windows = { version = "0.61", features = [
+  "Data_Xml_Dom",            # native Windows toast XML
+  "UI_Notifications",        # clickable native toast notifications
+  "Win32_Foundation",         # existing
+  "Win32_System_Com",         # existing (webview2 permission handler)
+  "Win32_System_Com_StructuredStorage", # PROPVARIANT for the notification shortcut AUMID
+  "Win32_System_Ole",         # VARIANT/PROPVARIANT conversions
+  "Win32_System_Variant",     # string VARIANT for the notification shortcut AUMID
+  "Security_Credentials_UI",  # UserConsentVerifier + result/availability enums
+  "Win32_System_WinRT",       # IUserConsentVerifierInterop
+  "Foundation",               # async return-type plumbing
+  "Win32_Security",           # SECURITY_ATTRIBUTES (referenced by RegCreateKeyExW)
+  "Win32_System_Registry",    # RegCreateKeyExW/RegSetValueExW: register the toast AUMID in HKCU
+  "Win32_UI_Shell",           # AUMID, Start-menu shortcut, and taskbar identity
+  "Win32_UI_Shell_PropertiesSystem", # IPropertyStore for System.AppUserModel.ID
+] }
+windows-core = "0.61"
+# In windows-rs 0.61 IAsyncOperation moved out of windows::Foundation into the
+# windows-future crate (0.2.1 is already in the tree via the windows stack).
+windows-future = "0.2"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+# macOS < 14 guard for data_store_identifier (per-account isolation). Already at
+# 0.3.2 in Cargo.lock via the dependency graph; the NSProcessInfo feature must be
+# explicit. Inert on Linux/Windows. NSString + NSError added for the Touch ID backend.
+objc2-foundation = { version = "0.3", features = ["NSProcessInfo", "NSString", "NSError"] }
+objc2-local-authentication = { version = "0.3.2", features = ["LAContext", "block2"] }
+objc2 = "0.6"
+block2 = "0.6"
+
+[target.'cfg(any(target_os = "macos", windows, target_os = "linux"))'.dependencies]
+tauri-plugin-notification = "2"
+tauri-plugin-single-instance = "2"
+tauri-plugin-autostart = "2"
+tauri-plugin-global-shortcut = "2"
+tauri-plugin-window-state = "2"
+user-idle = { version = "0.6", default-features = false, features = ["dbus"] }  # system idle time for the idle auto-lock trigger (dbus: no libxss-dev needed)

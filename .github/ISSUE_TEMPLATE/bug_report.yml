@@ -1,0 +1,74 @@
+name: Bug report
+description: Report a reproducible WhatsNow problem
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a WhatsNow problem. Do not include messages, phone numbers, cookies, session tokens, or profile directories.
+  - type: input
+    id: version
+    attributes:
+      label: WhatsNow version
+      placeholder: "1.0.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: package
+    attributes:
+      label: Package
+      options:
+        - Windows NSIS setup
+        - Windows MSI
+        - Windows portable
+        - macOS DMG or app
+        - Linux AppImage
+        - Linux Debian package
+        - Source build
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: Operating system and architecture
+      placeholder: "Windows 11 24H2 x64"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      description: List the shortest sequence that triggers the problem.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Observed result
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostic log or error
+      description: Remove private data before pasting the bounded WhatsNow log.
+      render: text
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Safety checks
+      options:
+        - label: I searched existing issues and tested the newest release.
+          required: true
+        - label: I removed private messages, phone numbers, tokens, and profile data.
+          required: true
+        - label: This report does not describe a security vulnerability.
+          required: true
+

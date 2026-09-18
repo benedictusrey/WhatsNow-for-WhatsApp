@@ -1,0 +1,9 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security report
+    url: https://github.com/benedictusrey/WhatsNow-for-WhatsApp/security/advisories/new
+    about: Report vulnerabilities and privacy problems through the private security channel.
+  - name: Installation and troubleshooting
+    url: https://github.com/benedictusrey/WhatsNow-for-WhatsApp/blob/main/docs/TROUBLESHOOTING.md
+    about: Check common setup, notification, theme, shortcut, and account problems.
+

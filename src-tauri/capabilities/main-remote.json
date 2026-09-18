@@ -1,0 +1,19 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "main-remote",
+  "description": "Grant the remote WhatsApp Web page IPC access only to WhatsNow's notification, same-account toast activation, count-only unread, self-profile title, validated external-link, and diagnostic bridge commands. core:default is intentionally NOT granted so the remote origin cannot emit/listen on internal event channels or introspect the app.",
+  "windows": ["wa-*"],
+  "remote": {
+    "urls": ["https://web.whatsapp.com/*"]
+  },
+  "permissions": [
+    "notification:default",
+    "allow-activate-notification-window",
+    "allow-dlog",
+    "allow-notification-click",
+    "allow-notify",
+    "allow-open-external-url",
+    "allow-set-profile-name",
+    "allow-set-unread-count"
+  ]
+}

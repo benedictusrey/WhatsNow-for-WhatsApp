@@ -50,3 +50,10 @@ Keep Microsoft Edge WebView2 Runtime updated through Windows Update or
 Microsoft Edge Update. WhatsNow uses the installed Evergreen runtime and
 gracefully falls back to standard behavior if an outdated runtime does not
 expose the supported memory-target API.
+
+## Building
+
+The private source builds this variant with the `windows-memory` Cargo
+feature (see `scripts/build-windows.ps1`). The portable variant additionally
+uses `portable-mode`. The output lands in `dist/windows/` with the
+`WhatsNow_2.5.0_windows_x64-*` names and `checksums-windows.sha256`.

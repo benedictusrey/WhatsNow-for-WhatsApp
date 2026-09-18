@@ -15,12 +15,25 @@ release-assets/**/*.tar.gz
 # Local-only staging: unpublished leftovers are never committed or uploaded.
 release-assets/_unpublished/
 
-# Private implementation guard. The public repository is installation-only;
-# never copy the Settings UI or native source tree into it.
-/settings-ui/
-/src-tauri/
-/dist/
+# Rust / Tauri
+/src-tauri/target/
+**/target/
 
+# Node
+node_modules/
+dist/
+backup/
+.freebuff/
 .DS_Store
 Thumbs.db
 *.log
+.env
+.env.*
+!.env.example
+*.key
+*.p12
+*.pfx
+
+# Tauri generated
+/src-tauri/gen/
+/src-tauri/tauri.windows.conf.json
