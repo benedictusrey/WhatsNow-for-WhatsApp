@@ -353,7 +353,7 @@ jobs:
           (cd dist && shasum -a 256 -c checksums.sha256)
 
       - name: Upload draft release assets
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ env.RELEASE_TAG }}
           name: WhatsNow ${{ env.NORMALIZED_VERSION }}
