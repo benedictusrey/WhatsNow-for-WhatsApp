@@ -102,7 +102,7 @@ jobs:
           sha256sum "out/WhatsNow_${NORMALIZED_VERSION}_amd64.AppImage" "out/WhatsNow_${NORMALIZED_VERSION}_amd64.deb" | tee out/checksums-linux.sha256
 
       - name: Upload Linux workflow artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: WhatsNow-${{ env.APP_VERSION }}-linux-amd64
           path: |
@@ -190,7 +190,7 @@ jobs:
             "out/WhatsNow_${NORMALIZED_VERSION}_x86_64.app.tar.gz" | tee out/checksums-macos.sha256
 
       - name: Upload macOS workflow artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: WhatsNow-${{ env.APP_VERSION }}-macos
           path: |
@@ -289,7 +289,7 @@ jobs:
             Set-Content -LiteralPath out/checksums-windows.sha256 -Encoding utf8
 
       - name: Upload Windows workflow artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: WhatsNow-${{ env.APP_VERSION }}-windows-x64
           path: |
