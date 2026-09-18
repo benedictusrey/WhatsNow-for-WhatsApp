@@ -316,7 +316,7 @@ jobs:
           echo "NORMALIZED_VERSION=${RAW_VER}" >> $GITHUB_ENV
 
       - name: Download Linux, Windows, and macOS artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: WhatsNow-${{ env.APP_VERSION }}-*
           path: dist
