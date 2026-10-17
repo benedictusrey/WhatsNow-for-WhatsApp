@@ -1,6 +1,6 @@
 [package]
 name = "whatsnow"
-version = "2.6.0"
+version = "2.6.1"
 edition = "2021"
 rust-version = "1.82"
 authors = ["Benedictus Reynaldo Hartanto (@benedictusrey) <https://github.com/benedictusrey>"]

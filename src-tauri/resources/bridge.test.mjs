@@ -159,6 +159,13 @@ function makeHarness({
         : [];
     },
     querySelector(sel) {
+      if (sel.includes(",")) {
+        for (const part of sel.split(",")) {
+          const found = this.querySelector(part.trim());
+          if (found) return found;
+        }
+        return null;
+      }
       if (sel === "title") return null;
       if (sel === '[data-testid="conversation-panel-body"]') {
         return conversationTarget;
@@ -246,7 +253,7 @@ function makeHarness({
           return this;
         },
         getBoundingClientRect() {
-          return { left: 20, top: 20, width: 300, height: 60 };
+          return { left: 20, top: 20, right: 320, bottom: 80, width: 300, height: 60 };
         },
         dispatchEvent() {
           return true;
@@ -276,6 +283,10 @@ function makeHarness({
     location: {
       origin: "https://web.whatsapp.com",
       href: "https://web.whatsapp.com/",
+      assign(value) {
+        this.href = String(value);
+        if (onNavigate) onNavigate(String(value));
+      },
     },
     // Viewport for trusted-click targeting (the bridge guards clicks to the
     // visible viewport; a real window always has a size).
@@ -818,15 +829,15 @@ async function testWhatsAppFamilyLinksNeverReachTheBrowser() {
   const openValues0 = h.windowOpenCalls.map((entry) => String(entry.value));
   assert(
     openValues0.length === 0,
-    `wa.me click for an unknown number opens nothing (got ${JSON.stringify(openValues0)})`
+    `wa.me click does not spawn a popup (got ${JSON.stringify(openValues0)})`
   );
   assert(
     !openValues0.some((u) => u.startsWith("https://web.whatsapp.com/send")),
-    "no /send URL is opened (proven live: it always bounces home)"
+    "the send entry stays in the account window rather than a popup"
   );
   assert(
     navigations.length === 0,
-    `wa.me click must NOT hard-navigate the chat surface (got ${JSON.stringify(navigations)})`
+    `wa.me never refreshes the chat even if lookup is unavailable (got ${JSON.stringify(navigations)})`
   );
   // A KNOWN number (row in the chat list): opened via a TRUSTED click on
   // the row — the same battle-tested mechanism as toast routing.
@@ -899,9 +910,9 @@ async function testExternalLinksStillReachTheBrowserCommand() {
   );
 }
 
-async function testOpenByPhoneRoutesRowOrNothing() {
+async function testOpenByPhoneRoutesRowOrNavigation() {
   console.log(
-    "open-by-phone: known number trusted-clicks its chat row; unknown deliberately does nothing"
+    "open-by-phone: visible row is seamless; an unavailable lookup never reloads"
   );
   // Source contract first (the live-app delivery path):
   assert(
@@ -913,8 +924,8 @@ async function testOpenByPhoneRoutesRowOrNothing() {
     "no interstitial popup request is ever built (revert decision 2026-09-17)"
   );
   assert(
-    bridgeSrc.includes('done("no-row")'),
-    "unknown numbers resolve no-row: the app rose, nothing further happens"
+    !bridgeSrc.includes('window.location.assign(sendUrl.href)'),
+    "phone routing has no document-navigation fallback"
   );
 
   // KNOWN number: the harness chat list carries a row whose data-id embeds
@@ -932,15 +943,18 @@ async function testOpenByPhoneRoutesRowOrNothing() {
     "the row is opened with a TRUSTED click, not a synthetic one"
   );
 
-  // UNKNOWN number: no matching row exists → resolve "no-row" and open
-  // NOTHING — no popup, no window.open, no navigation (deliberate revert:
-  // no second-window quirks; the app has already risen and focused).
+  // This small mock has no native New chat surface. Missing lookup must
+  // preserve the document; the browser suite exercises successful lookup.
   const h2 = makeHarness({ invokeLog: [] });
   const r2 = await h2.window.__whatsnowOpenChatByPhone("628999999999");
-  assert(r2 === "no-row", `unknown number resolves no-row (got ${r2})`);
+  assert(r2 === "not-found", `missing native lookup resolves safely (got ${r2})`);
+  assert(
+    h2.window.location.href === "https://web.whatsapp.com/",
+    "an unavailable native lookup never reloads the account",
+  );
   assert(
     h2.windowOpenCalls.length === 0,
-    `unknown number opens nothing (got ${JSON.stringify(
+    `unlisted number opens no popup (got ${JSON.stringify(
       h2.windowOpenCalls.map((e) => String(e.value))
     )})`
   );
@@ -950,6 +964,9 @@ async function testOpenByPhoneRoutesRowOrNothing() {
   const r3 = await h3.window.__whatsnowOpenChatByPhone("");
   assert(r3 === "failed", "empty phone resolves failed without opening anything");
   assert(h3.windowOpenCalls.length === 0, "empty phone opens nothing");
+
+  // Draft, delayed lookup and supersession are exercised with real browser
+  // editing and trusted CDP input by scripts/phone-routing.test.mjs.
 }
 
 async function testOfficialAppPromoProbeIsNarrow() {
@@ -1197,7 +1214,7 @@ const tests = [
   testNotificationWarmupSuppressesRestoredHistory,
   testDropFallbackNeverOpensNativePicker,
   testPromoSweepIsCoalescedAndSurvivesEarlyInit,
-  testOpenByPhoneRoutesRowOrNothing,
+  testOpenByPhoneRoutesRowOrNavigation,
 ];
 
 for (const t of tests) {

@@ -95,6 +95,15 @@ jobs:
           node --check scripts/check-docs.mjs
           node scripts/check-docs.mjs
 
+      - name: Phone routing with trusted Chromium input
+        if: matrix.name == 'linux-x64'
+        run: |
+          npm install --no-save --package-lock=false playwright@1.63.0
+          npx playwright install --with-deps chromium
+          node scripts/phone-routing.test.mjs
+          node scripts/settings-contrast.test.mjs
+          node scripts/settings-attribution.test.mjs
+
       - name: POSIX installer syntax
         if: matrix.name == 'linux-x64'
         run: sh -n install.sh scripts/install-linux.sh scripts/install-macos.sh

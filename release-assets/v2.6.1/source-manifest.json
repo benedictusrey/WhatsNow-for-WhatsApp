@@ -1,0 +1,570 @@
+{
+  "application": "WhatsNow",
+  "version": "2.6.1",
+  "revision": "attribution",
+  "audit_date": "2026-10-17",
+  "status": "local-candidate-awaiting-live-retest",
+  "distribution_base_revision": "5c8dd158553c1a5ba6a4d8fbe1885d2d451df480",
+  "working_tree_changes": true,
+  "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+  "files": [
+    {
+      "path": "LICENSE",
+      "sha256": "5e0aa1bd510b303b508449b7de909bcea34bd0c3625734d42b5563c51cdfe32e"
+    },
+    {
+      "path": "THIRD_PARTY_NOTICES",
+      "sha256": "0e088ffd4becc102bc78f55a23fb4c43f309def63ffa63b026486066261cdb02"
+    },
+    {
+      "path": "settings-ui/app-icon.svg",
+      "sha256": "a83d1ca44d51da6f113c038d0557f69ab2a0b51ef1bd1175cf0b4126655ce7d4"
+    },
+    {
+      "path": "settings-ui/comboToAccelerator.test.mjs",
+      "sha256": "503086362dd67dc103e9d0b7e9d38fcabdc31e2181bd847e03725f708ac3dea3"
+    },
+    {
+      "path": "settings-ui/hotkey.js",
+      "sha256": "3959a86a025891ee9799e3a985ba5d0397facee72134474c9b4493cf529b2ffd"
+    },
+    {
+      "path": "settings-ui/index.html",
+      "sha256": "d3de340b18332bde4f1ba62e777277b5bd3c0841ffad336daa1bc71c8c871bcb"
+    },
+    {
+      "path": "settings-ui/lock.css",
+      "sha256": "5a87f9da2dc802ec83596203dfcc6505df903f4bdd3398d147bc91d11552639d"
+    },
+    {
+      "path": "settings-ui/lock.html",
+      "sha256": "213d1b297b495e5d6592ba6335b34fffc01fae5d880a0594431724bde25286ed"
+    },
+    {
+      "path": "settings-ui/lock.js",
+      "sha256": "9b60fe55b0695c4802d0e911525c4e804c6b3eea791861940953b7ab529dd2de"
+    },
+    {
+      "path": "settings-ui/main.js",
+      "sha256": "fa0a3488c165311ae4d61af8cb142058346984cd50e6969a8c0bc226794ac6b9"
+    },
+    {
+      "path": "settings-ui/settingsAcl.test.mjs",
+      "sha256": "a6f31e328e548ec5bf1126c0b8895f1157ed7bfcf915ae6d65563e068f02fc12"
+    },
+    {
+      "path": "settings-ui/style.css",
+      "sha256": "77971530bf9fe0dc49a9bb6eb254acc705666d32625d54e71924c1211b21c501"
+    },
+    {
+      "path": "settings-ui/theme.js",
+      "sha256": "0e0ad957a37011f80c28a4cc1a27adce43a576b4af332e271e42c2061a181655"
+    },
+    {
+      "path": "settings-ui/theme.test.mjs",
+      "sha256": "19d38e9bee2c4cc09a0a38bebee0e53c1e3e470c078a0d8b806ac972abaf9bab"
+    },
+    {
+      "path": "src-tauri/Cargo.lock",
+      "sha256": "83e0e3866930f54dc3301ac18cd7e3ee36085b6981129ad6017cf3f5bf21643e"
+    },
+    {
+      "path": "src-tauri/Cargo.toml",
+      "sha256": "9fefc3262b4c54051f183c2d4c5dbda4987048e35ec8f69df7b4637e187d4c8f"
+    },
+    {
+      "path": "src-tauri/Info.plist",
+      "sha256": "60fdc09ab5c9d600083dc2e21108fe1b7c2e0442505e74223b1b88e35dc101c7"
+    },
+    {
+      "path": "src-tauri/build.rs",
+      "sha256": "a0753ea1b4479572d96cba6b75c388f5a904869013e759abe23da3be7e85676f"
+    },
+    {
+      "path": "src-tauri/capabilities/lock.json",
+      "sha256": "652bfcb3895a4f5e930aff68419ffc94f3936b8b2fc548bd109aa344ac690673"
+    },
+    {
+      "path": "src-tauri/capabilities/main-remote.json",
+      "sha256": "b3bd057b63b0f420ae7426c06651588aa4e66e9a43a91f70de2b577e79efd91b"
+    },
+    {
+      "path": "src-tauri/capabilities/settings.json",
+      "sha256": "7c4292dda2dce3cf198f4e7c67852725e4f0c2075bdca833629f67b23a9113a6"
+    },
+    {
+      "path": "src-tauri/icons/128x128.png",
+      "sha256": "194137ce2bda2a2349467ba4c23ffca83c7ee3b2df9a094a30135644d3b3a1ac"
+    },
+    {
+      "path": "src-tauri/icons/128x128@2x.png",
+      "sha256": "005b5cc855046ca3fa0d3f902528b09d308f3b6b870598e9eb0e831c6cdbc597"
+    },
+    {
+      "path": "src-tauri/icons/32x32.png",
+      "sha256": "52f3c61bfa02e079cbbda4f5ac581a22a573ee927dfc1648e43a8aa4ea42356a"
+    },
+    {
+      "path": "src-tauri/icons/64x64.png",
+      "sha256": "bb804a1156a1435f2b64ebc35195dcc92541a59f1c08fbdeef6acca59fadc840"
+    },
+    {
+      "path": "src-tauri/icons/Square107x107Logo.png",
+      "sha256": "f42a90ed3dbe3cb56dab6c8140c2a79f1fb172f620e62af125f2c062de5b4d08"
+    },
+    {
+      "path": "src-tauri/icons/Square142x142Logo.png",
+      "sha256": "43ff2475a036c332c919903d5cef5a485e33189f5aace44de959eb302935b195"
+    },
+    {
+      "path": "src-tauri/icons/Square150x150Logo.png",
+      "sha256": "4002f2778ea3785fb683fddab797579747bbfdb1a6cb70cd2c4cbcf5c2ae43f6"
+    },
+    {
+      "path": "src-tauri/icons/Square284x284Logo.png",
+      "sha256": "076e4b05b7e08633e9ea3be6d1cdd5bf134d5bcb77c2e0c087517a4cbb9e7cb9"
+    },
+    {
+      "path": "src-tauri/icons/Square30x30Logo.png",
+      "sha256": "5d255c2d7191877e14dbfee95bfef15507700dde89578e3280256938aa64fcd5"
+    },
+    {
+      "path": "src-tauri/icons/Square310x310Logo.png",
+      "sha256": "3fe8e97ba159049e53d97edf25210b4b32fd4b6d29743d25f5b1237b1f1e292c"
+    },
+    {
+      "path": "src-tauri/icons/Square44x44Logo.png",
+      "sha256": "4073ea8b9032258f0fa3ef67e10c45264f272a20b3b44591259b45cbd8dfc692"
+    },
+    {
+      "path": "src-tauri/icons/Square71x71Logo.png",
+      "sha256": "81be5eb7941af022ae78751aa7bfac9a024694b06fef6c633cf6b3e140aeb469"
+    },
+    {
+      "path": "src-tauri/icons/Square89x89Logo.png",
+      "sha256": "b502dcdfb925a1a9507d38273db6efeb65537517c805d1da7a33f7632271cc9c"
+    },
+    {
+      "path": "src-tauri/icons/StoreLogo.png",
+      "sha256": "1e768f82325614438e4b16ee1827e044610890417d7c537eda598427e9ff3383"
+    },
+    {
+      "path": "src-tauri/icons/android/mipmap-anydpi-v26/ic_launcher.xml",
+      "sha256": "760d4b8a06bf7163dd010c33ad2cac9e4a75fa0177afaba042f83e311eef0c3e"
+    },
+    {
+      "path": "src-tauri/icons/android/mipmap-hdpi/ic_launcher.png",
+      "sha256": "09ce52f079700dbf6f96eb266dc70d0584b2c4a7421b34052b385f6a61b5bd40"
+    },
+    {
+      "path": "src-tauri/icons/android/mipmap-hdpi/ic_launcher_foreground.png",
+      "sha256": "b3d60998a3f258443a3d0f5274811769ec71e13333a1c227b1e155d6cac1d02b"
+    },
+    {
+      "path": "src-tauri/icons/android/mipmap-hdpi/ic_launcher_round.png",
+      "sha256": "1d0b2bd9823d556cbcf4d1469cc0c80355999f016f5884fc06161a13237b534d"
+    },
+    {
+      "path": "src-tauri/icons/android/mipmap-mdpi/ic_launcher.png",
+      "sha256": "1c86c29274e3f691a185db052a358b3900177cab047987049aba830b58e69eef"
+    },
+    {
+      "path": "src-tauri/icons/android/mipmap-mdpi/ic_launcher_foreground.png",
+      "sha256": "352a97b1f4555b4fa29968bda2adf1cde22b7a657236e349fa0b44ad73bab493"
+    },
+    {
+      "path": "src-tauri/icons/android/mipmap-mdpi/ic_launcher_round.png",
+      "sha256": "129d9d94868684ccbe5eeeae3c55ed63907919173c56854a52359faf5b598151"
+    },
+    {
+      "path": "src-tauri/icons/android/mipmap-xhdpi/ic_launcher.png",
+      "sha256": "b5d69344fe1cdc30d8b1d69267278877ef9ad101fe47a4a7d511e6df17bd7ced"
+    },
+    {
+      "path": "src-tauri/icons/android/mipmap-xhdpi/ic_launcher_foreground.png",
+      "sha256": "e4160e66a3e63dd32606b38b153c40b2be4bdeffa9c953109eb3bafbd7fa2de7"
+    },
+    {
+      "path": "src-tauri/icons/android/mipmap-xhdpi/ic_launcher_round.png",
+      "sha256": "fce6f198b7d6cfabf1e58d3a15615483ede4c9aaad452bd76e87fc280f1e66aa"
+    },
+    {
+      "path": "src-tauri/icons/android/mipmap-xxhdpi/ic_launcher.png",
+      "sha256": "0e322fd47ca4739fcbddf96ffd245ec99781ac62582b1909e777da31c331feb9"
+    },
+    {
+      "path": "src-tauri/icons/android/mipmap-xxhdpi/ic_launcher_foreground.png",
+      "sha256": "b28b445883682a8a7a3f3bca4ecad024a9c741c9b8b6ad2dc820850f2f536ddd"
+    },
+    {
+      "path": "src-tauri/icons/android/mipmap-xxhdpi/ic_launcher_round.png",
+      "sha256": "18460faa2bf700c8f2f85214943b91cdecc667c45fdd5028c6a21c02db74f4c8"
+    },
+    {
+      "path": "src-tauri/icons/android/mipmap-xxxhdpi/ic_launcher.png",
+      "sha256": "62e27a2c58efdc068d4e31a5e8ea01d2ce92dc54aed89deab37b64db629df480"
+    },
+    {
+      "path": "src-tauri/icons/android/mipmap-xxxhdpi/ic_launcher_foreground.png",
+      "sha256": "4fbe709c1d912cb1be5d534efb18526adb368c04e6d66f7d7b406e949254103f"
+    },
+    {
+      "path": "src-tauri/icons/android/mipmap-xxxhdpi/ic_launcher_round.png",
+      "sha256": "546781678111383930b7f242ff6605fa06ad9660cb58824ca4a63eaeb781de10"
+    },
+    {
+      "path": "src-tauri/icons/android/values/ic_launcher_background.xml",
+      "sha256": "0687336f0ccc6f7ee09c7c95110667c63b75931238df779a21af401fb864cd34"
+    },
+    {
+      "path": "src-tauri/icons/app-icon.svg",
+      "sha256": "a83d1ca44d51da6f113c038d0557f69ab2a0b51ef1bd1175cf0b4126655ce7d4"
+    },
+    {
+      "path": "src-tauri/icons/icon.icns",
+      "sha256": "5432c3609e3a3920086655688ebb34338952c1760ad9e8345ec188994649b1c4"
+    },
+    {
+      "path": "src-tauri/icons/icon.ico",
+      "sha256": "b6091a3a0a3e0796a0567585f08fa049912d1e12991187bb1b4d54bf53e426c6"
+    },
+    {
+      "path": "src-tauri/icons/icon.png",
+      "sha256": "f9d9e408a30342c0b5d7c5f91f7d488979122205b174330376297839503e0a15"
+    },
+    {
+      "path": "src-tauri/icons/ios/AppIcon-20x20@1x.png",
+      "sha256": "a4218fd1091801de545dcac830f11b0379b9fff5e6679257f866ce7b360720b0"
+    },
+    {
+      "path": "src-tauri/icons/ios/AppIcon-20x20@2x-1.png",
+      "sha256": "c4dba1fed639a21edb4a71489310d5ef3d0052ce125081fbcf5b01a98a08f998"
+    },
+    {
+      "path": "src-tauri/icons/ios/AppIcon-20x20@2x.png",
+      "sha256": "c4dba1fed639a21edb4a71489310d5ef3d0052ce125081fbcf5b01a98a08f998"
+    },
+    {
+      "path": "src-tauri/icons/ios/AppIcon-20x20@3x.png",
+      "sha256": "bf11b2b5ba2b0b3ea6d16f6648da9a70ef64298b40a1f0c705b710d5649134c0"
+    },
+    {
+      "path": "src-tauri/icons/ios/AppIcon-29x29@1x.png",
+      "sha256": "7978051d5237583d2e807d4823a7054c5d7e69c5b6f5bb36100179dfde429c45"
+    },
+    {
+      "path": "src-tauri/icons/ios/AppIcon-29x29@2x-1.png",
+      "sha256": "c1c97ea29137f963a765a6581e8207c07944794a6eedb8fc194df413214c4883"
+    },
+    {
+      "path": "src-tauri/icons/ios/AppIcon-29x29@2x.png",
+      "sha256": "c1c97ea29137f963a765a6581e8207c07944794a6eedb8fc194df413214c4883"
+    },
+    {
+      "path": "src-tauri/icons/ios/AppIcon-29x29@3x.png",
+      "sha256": "1a1f62c566341117827a61afd1d480f880ea6ed00fcb596caae9e746afa9bf65"
+    },
+    {
+      "path": "src-tauri/icons/ios/AppIcon-40x40@1x.png",
+      "sha256": "c4dba1fed639a21edb4a71489310d5ef3d0052ce125081fbcf5b01a98a08f998"
+    },
+    {
+      "path": "src-tauri/icons/ios/AppIcon-40x40@2x-1.png",
+      "sha256": "306b9461ca3d0c4266624b271b64f1a374e5f4b8c248c019f623c7387123ec94"
+    },
+    {
+      "path": "src-tauri/icons/ios/AppIcon-40x40@2x.png",
+      "sha256": "306b9461ca3d0c4266624b271b64f1a374e5f4b8c248c019f623c7387123ec94"
+    },
+    {
+      "path": "src-tauri/icons/ios/AppIcon-40x40@3x.png",
+      "sha256": "74e04947c624de3dc225d9db9ff8bc76984ec3fa21c8530aa30b945c9101dfab"
+    },
+    {
+      "path": "src-tauri/icons/ios/AppIcon-512@2x.png",
+      "sha256": "a741eb8e7d9d0c25400b99ac50dbd98c5acfd45096ab8ec0cd19d1135decac68"
+    },
+    {
+      "path": "src-tauri/icons/ios/AppIcon-60x60@2x.png",
+      "sha256": "74e04947c624de3dc225d9db9ff8bc76984ec3fa21c8530aa30b945c9101dfab"
+    },
+    {
+      "path": "src-tauri/icons/ios/AppIcon-60x60@3x.png",
+      "sha256": "72c0402e024e32b3ef631e0bb89f9cfab834d0cd05d4634f60cd08e527151261"
+    },
+    {
+      "path": "src-tauri/icons/ios/AppIcon-76x76@1x.png",
+      "sha256": "52cf91a1f3012acd7be2226de711de817a6980b8c20014b6f814aadeda632774"
+    },
+    {
+      "path": "src-tauri/icons/ios/AppIcon-76x76@2x.png",
+      "sha256": "c5ec8340665a4edb0dba4c857896c310ad8fa154b10ddb354f9b7a7b89068146"
+    },
+    {
+      "path": "src-tauri/icons/ios/AppIcon-83.5x83.5@2x.png",
+      "sha256": "681cf54cc7d9642ab098e50ea96dc66e880b5fedd047d4a6659a1f6d4e770450"
+    },
+    {
+      "path": "src-tauri/icons/toast-icon.png",
+      "sha256": "e81e7bce3d5c310de230c749530e3f07ce1a4e23f18a4e59a5afa4a46ec399be"
+    },
+    {
+      "path": "src-tauri/icons/tray-unread.png",
+      "sha256": "719b3bd40063eb1eb5ab1089e3780413de42a06431bddbdba5f054160ddca6c7"
+    },
+    {
+      "path": "src-tauri/icons/tray.png",
+      "sha256": "194137ce2bda2a2349467ba4c23ffca83c7ee3b2df9a094a30135644d3b3a1ac"
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/activate_notification_window.toml",
+      "sha256": "91bd5033a6d00d3e06c07fa280cec7ae21c7e5cfc11ceed8cebd0b440c2c9bc2"
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/add_account.toml",
+      "sha256": "4f4ee954cdb489da11958c00eab429c3ac6af505826ccd56bbf99c655490193b"
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/change_app_lock_password.toml",
+      "sha256": "f49715104c23150f0c1e1d93e03f5d1039757db566e03cee4c4b272c86815a6f"
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/disable_app_lock.toml",
+      "sha256": "5103250a833b0703ccbcd6abaf3f4709d6121f835c772a6583587c44031ff044"
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/dlog.toml",
+      "sha256": "b915a44879442b65641affea64ac36b0fd0c5c9537e5e8324e156601af2f8102"
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/get_lock_status.toml",
+      "sha256": "f72c4c646b163e6a08e02b716048ee972d3db3ac74d899797022ef9abe14c236"
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/get_productivity_status.toml",
+      "sha256": "1141f8574a1b99115077251bfdb50bc53c80734c86b030d03d04b934179de902"
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/get_settings.toml",
+      "sha256": "a424981fc925815ae430319367518e098b2f3f85c4d58d42cd171e5cb568a628"
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/get_theme.toml",
+      "sha256": "6617d686ec83f68b66e2acb1fea885f555bae5866992d8deb6a0f5d0b4b701c1"
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/list_accounts.toml",
+      "sha256": "3636a80fd5fcaebb528431fe8e67e23afb5e9fc70289ace40ac08492eb50c625"
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/lock_app.toml",
+      "sha256": "27b6952e8a94edb8209415d0d73fcc9e061272db9e3770b48140862d6b369ca3"
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/notification_click.toml",
+      "sha256": "d722a4af2c816df75506fc1759eca304763c1b97b3aa968c68bfb164f35c4a2d"
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/notify.toml",
+      "sha256": "63d2af587f7fd574f5d40c4a30a86dc40455a7f961a49c35a23dd83c043a90df"
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/open_account.toml",
+      "sha256": "6ac50836bcbd6602733567e0cc37983fc591abb6efb8544329652f7bda9b1340"
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/open_external_url.toml",
+      "sha256": "57cd94d25d306502a2b43ee0aa2d3f843cd894f8f96c9305d0aca438b5bd4261"
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/open_settings.toml",
+      "sha256": "e948d39dbac58692d12b72a7f5da1af851cddeb1e25d6b4f68070783cb5d4624"
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/prepare_theme_reload.toml",
+      "sha256": "2ed9636717c661c1b061d8dfe93fb22121103a49767213f1a1c9165c425fda3b"
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/remove_account.toml",
+      "sha256": "9d5adfef3602709f19aae19cc62f7bf2eb4a2218ab1d68eeaaef1710fb27d5c4"
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/rename_account.toml",
+      "sha256": "0e673c0e185531f073f5f7ac614b4feb46f5271ca2deaa2abf4ea749ccc23305"
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/reset_app_lock.toml",
+      "sha256": "369abc112ceff0bd8f371376bf08e90445ee116bbf68e44684492496ccd99f78"
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/set_account_notifications.toml",
+      "sha256": "4783a65c8a12e2165aac4770e841d361ca0a54dc50fc1d5cc320d68d7616902a"
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/set_app_lock_options.toml",
+      "sha256": "931121003fc6f9eabb5b996c1eda961ac2b17b96a6bd250f8c9a9e35e4ea5d23"
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/set_app_lock_password.toml",
+      "sha256": "b11e19e4fb99fe7cac1baa0cc43d63735805b26228ccfa2972b0d258301c2ebf"
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/set_biometric_enabled.toml",
+      "sha256": "f00460b3fc229debb0e381ba128201d41102234ec344cd8b2c970b2fe408777f"
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/set_focus_mode.toml",
+      "sha256": "e42f07c1028510e075b1e0ad2abeee082cc25169c1f15f396767749864abcdde"
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/set_profile_name.toml",
+      "sha256": "eda25b27e42a81af67885534b625012fcc20de5f5b2a104e39400075b5433002"
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/set_settings.toml",
+      "sha256": "221b346e1154c2e2e19655f500a12875add474d0f7b5015a2d9e6a579a800b3e"
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/set_unread.toml",
+      "sha256": "41d774fb143c3d26eb8df20d5f7cbae08b9fd82f6cb7d29b8c5256b61f5f7f73"
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/set_unread_count.toml",
+      "sha256": "73018fffead24c3df01e5f4f84ec4a840e146fc6425125922fe49729e55fc85d"
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/test_notification.toml",
+      "sha256": "790fd9abf6cfe3dde22a70cfef95de1db517181dbe474ebbde19ed41eae3c877"
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/unlock_biometric.toml",
+      "sha256": "d63d637e68852517f712d29065f7973ec799857ba1476a90d7fe07166a1ea2ff"
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/unlock_password.toml",
+      "sha256": "57c540863d9acb4f6f7d1c81e089a6be625c86f526f0235878b38201176ae5c6"
+    },
+    {
+      "path": "src-tauri/resources/app.whatsnow.desktop.policy",
+      "sha256": "b8fcb42c627f7c90d9cd902f9831a6f5c8ee15c808bca760f4bee111d6839e19"
+    },
+    {
+      "path": "src-tauri/resources/bridge.js",
+      "sha256": "3d2e9efcf308a6f17e4ef9a972173ad98f432c2c2319af3ea864d64fd65cab13"
+    },
+    {
+      "path": "src-tauri/resources/bridge.test.mjs",
+      "sha256": "9e03fd940e5861904165c44644e8c509b17f6641ce893549dcc6d9b8bbbe8ebc"
+    },
+    {
+      "path": "src-tauri/resources/chat-theme.js",
+      "sha256": "144c043a39d2caab622977c2ef04c566d25f99f4d5d13f3680135ccaa1ace1f1"
+    },
+    {
+      "path": "src-tauri/resources/chat-theme.test.mjs",
+      "sha256": "e83f0966502ddba454330a9a8c24fc61b119c395d612fd3c3b93b61f480ac118"
+    },
+    {
+      "path": "src-tauri/resources/toast-route.test.mjs",
+      "sha256": "a7d696fb344947d217b5ecacdeb1231cb4a7e2875049184215bd163bf16964a8"
+    },
+    {
+      "path": "src-tauri/src/accounts.rs",
+      "sha256": "8a72b9de3dde3c7cc3b26038ad307cd39f8e7f28af5aecb3b526c1fced428dd1"
+    },
+    {
+      "path": "src-tauri/src/applock.rs",
+      "sha256": "7e555faceff708ed22c3705526fa7278d47b0bf6fb782bcfe30ba433b08d2e3e"
+    },
+    {
+      "path": "src-tauri/src/aumid.rs",
+      "sha256": "211a07edb067ba1585232216f022212f52ca0301af3e1c2f5821d0b0c8efef55"
+    },
+    {
+      "path": "src-tauri/src/biometric/linux.rs",
+      "sha256": "75ce914692202430ca6849727fb4b5635b938aac05aa5d870390b763f3f298c0"
+    },
+    {
+      "path": "src-tauri/src/biometric/macos.rs",
+      "sha256": "0c67c760cca2d59a829084bfba286b3c6b97084ece713e3049063cf7d2f67be4"
+    },
+    {
+      "path": "src-tauri/src/biometric/mod.rs",
+      "sha256": "f5c078dff59ba792d3ee03337af77d9fe838b16219de12f5f4718257547baddf"
+    },
+    {
+      "path": "src-tauri/src/biometric/windows.rs",
+      "sha256": "822f2b519fd7c40203606b230b9ca9f3073fbd358ce235982b1674f75dd4f468"
+    },
+    {
+      "path": "src-tauri/src/commands.rs",
+      "sha256": "ab906a3ddf751741f6fa692cde2f72812fe8b8d96d01c4a3e17fcde3fd898368"
+    },
+    {
+      "path": "src-tauri/src/dlog.rs",
+      "sha256": "7cf31be1994e4b14a155b52bae6e83a6a639c814f6eff4d210d0a7dcdb82809e"
+    },
+    {
+      "path": "src-tauri/src/lib.rs",
+      "sha256": "f3752a60c5a3e0556456e735fd6c74ea3c6b9987ff102b60854f82926dbced3d"
+    },
+    {
+      "path": "src-tauri/src/lock.rs",
+      "sha256": "443edc451fd6301817f3119a3edfc5a4f8ab8c500a2be5e90e44195fe0461004"
+    },
+    {
+      "path": "src-tauri/src/main.rs",
+      "sha256": "5c448eaca58dbaff5f89e43bce82e629d3b55385387ba1ae321e82334b842586"
+    },
+    {
+      "path": "src-tauri/src/notify.rs",
+      "sha256": "8310275933d5b75f4f1354f79857e7f178e94ea8f372cc34a67171c74357c270"
+    },
+    {
+      "path": "src-tauri/src/protocol.rs",
+      "sha256": "eceb078b9c653f62d55f14fd9e7ec848599340e49e7142f5bd9b44c8770db2f3"
+    },
+    {
+      "path": "src-tauri/src/settings.rs",
+      "sha256": "dfe8ed7af93b3ac6dc1890abf4dce29dda7bf640f216f39e46bfced495b286d9"
+    },
+    {
+      "path": "src-tauri/src/tray.rs",
+      "sha256": "dbf3b11e17972f5b066559560aa663ea93b7c2d1f7b37b1af61e9039ec828088"
+    },
+    {
+      "path": "src-tauri/src/unread.rs",
+      "sha256": "2e0eea43385385d30310a9463ef97878597f317997a8ddfb047a3303c233fc07"
+    },
+    {
+      "path": "src-tauri/src/window.rs",
+      "sha256": "2e664154699dd5ff4468ce4753aa837eb22a07b1d1a1de234291dc3ad296164c"
+    },
+    {
+      "path": "src-tauri/tauri.conf.json",
+      "sha256": "5fcac88b56a5c4abbdeda9e3fa3af37cbd6bd9feccc2fc9c9998b34a868afc48"
+    }
+  ],
+  "regression_files": [
+    {
+      "path": "scripts/phone-routing.test.mjs",
+      "sha256": "4bc5c5377eda17621a74ffe8526622b5508a375e67cb8048516a48974a9f1a80"
+    },
+    {
+      "path": ".github/workflows/check.yml",
+      "sha256": "9e446f6c0b783adfcf3dd566979aa73d3e548ddce218e84637816ff3a39d36f0"
+    },
+    {
+      "path": ".github/workflows/release.yml",
+      "sha256": "41fe0558582e7e02e425640ff5c327fae7003c38610def7d7bd6857095704bc9"
+    },
+    {
+      "path": "scripts/settings-contrast.test.mjs",
+      "sha256": "f6f4fc17745a994e303d75aa35e9bc5e59904a8daeeff80deb6d5b13811eaa69"
+    },
+    {
+      "path": "scripts/settings-attribution.test.mjs",
+      "sha256": "2de3e1409aad031e7c5c4caca132b704c4bc8a846883ec6df271b188bb22b674"
+    }
+  ]
+}

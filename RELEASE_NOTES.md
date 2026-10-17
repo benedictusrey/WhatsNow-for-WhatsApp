@@ -1,41 +1,99 @@
-# WhatsNow 2.6.0 release notes
+# WhatsNow 2.6.1 release notes
 
-WhatsNow is authored, created, and maintained solely by
-**Benedictus Reynaldo Hartanto** ([@benedictusrey](https://github.com/benedictusrey)).
-
-Official Repository: [`https://github.com/benedictusrey/WhatsNow-for-WhatsApp`](https://github.com/benedictusrey/WhatsNow-for-WhatsApp)  
-Copyright (c) 2026 Benedictus Reynaldo Hartanto (@benedictusrey). Released under the [MIT License](LICENSE).
+_Prepared 2026-10-17 · WhatsNow is authored and maintained by Benedictus Reynaldo Hartanto ([@benedictusrey](https://github.com/benedictusrey))._
 
 ---
 
-## What's in 2.6.0
+## 📋 Release overview
 
-Version 2.6.0 builds upon the four locked pillars established in v2.5.0 and introduces full WhatsApp-family link routing, dedicated calling windows, resolution-safe geometry, freeze-safe popup architectures, and restored official dark doodles:
+![WhatsNow desktop workspace concept artwork](https://raw.githubusercontent.com/benedictusrey/WhatsNow-for-WhatsApp/v2.6.1/docs/assets/WhatsNow%20hero.png)
 
-1. **Dark Doodles Restored Across Official Themes:**
-   - In 2.5.0, the Settings "Dark" theme was persisted as `system`, which inadvertently triggered the doodle kill-switch.
-   - `settings.rs` now enforces an explicit deny-list of the 8 personality themes (`midnight`, `forest`, `graphite`, `ocean`, `blush`, `lavender`, `candy`, `aurora`). All official themes (`System`, `Light`, `Dark`) reliably render WhatsApp's doodle wallpaper.
-2. **Native WhatsApp Web Calling Windows:**
-   - WhatsApp Web Calling (2026) `window.open` requests now spawn a real, independent, resizable, and maximizable window set to always-on-top.
-   - The call window shares the opener's webview session (`with_environment` on Windows, `with_webview_configuration` on macOS, `with_related_view` on Linux), keeping WebRTC media streams and per-account isolation intact.
-3. **Popup Media & Window Management Permissions:**
-   - Microphones, cameras, and window management (PiP / pop-out controls) are automatically granted for call popups created after startup.
-4. **Resolution-Safe Window Geometry Clamping:**
-   - Default dimensions for Chat (1100×800) and Settings (760×820) are automatically clamped to 96% of the primary display's work area, preventing off-screen controls on compact laptops (1366×768) and high-DPI scaling configurations.
-5. **Seamless WhatsApp-Family Link Routing:**
-   - 8 verified WhatsApp hosts (`web.whatsapp.com`, `wa.me`, `chat.whatsapp.com`, `call.whatsapp.com`, `www.whatsapp.com`, `whatsapp.com`, `api.whatsapp.com`, `event.whatsapp.com`, `v.whatsapp.com`) remain inside WhatsNow.
-   - `wa.me/<phone>` navigates directly to the contact in place via trusted CDP click; `chat.whatsapp.com` group invites navigate in place; other family URLs open in the reusable `wa-content` popup; call URLs open in dedicated call windows. Foreign domains and look-alike hosts route to the external default browser.
-6. **Freeze-Proof Reusable Content Popup:**
-   - The reusable content popup is pre-created hidden at startup. Popup requests execute an instant `location.replace` and show command, eliminating synchronous WebView2 construction deadlocks inside `NewWindowRequested`.
-7. **Windows `whatsapp://` Protocol Handler:**
-   - `protocol.rs` registers `HKCU\Software\Classes\whatsapp` at every launch (skipped in portable mode; safe no-op on macOS/Linux), allowing desktop-wide `whatsapp://send?phone=...` deep links to seamlessly raise WhatsNow and open chats.
-8. **Video/Audio Memory Target Guard:**
-   - WebView2's LOW memory target is strictly restricted to hidden or minimized states, preventing audio graph discard while watching videos in unfocused windows.
-9. **UI Fluency & Promo Coalescing:**
-   - Mutation observer rooted at `document` with coalesced sweep timers ensures zero UI stutter during rapid DOM changes.
+*Illustrative artwork, not a pixel-exact UI or benchmark. The refreshed README
+uses four new supplied images; see its captions for feature and memory limits.*
 
----
+A maintenance update focused on phone-link delivery, dedicated calling-window
+geometry, and clearer Settings. Existing chat themes, doodle mapping, emoji
+protection, compact native notifications, account tools, Focus, App Lock, and
+drag-and-drop behavior are retained.
 
-## Complete Historical Changelog
+The full implementation record is [CHANGELOGS_v2.6.1.md](CHANGELOGS_v2.6.1.md).
+Explore all current features in [WhatsNow_latest.md](WhatsNow_latest.md).
 
-For the complete chronological version history from v1.0.0 through v2.6.0, please refer to [CHANGELOG.md](CHANGELOG.md).
+## 🔧 Changes
+
+- Open phone targets through a trusted visible-row click or native New chat
+  lookup without a document-refresh fallback.
+- Preserve conflicting drafts; insert supplied link text only into an empty
+  composer and never send it automatically.
+- Cancel lookup with Escape and supersede older requests with newer links.
+- Ignore nonmodal dialog-role shells and hidden/off-screen panels instead of
+  incorrectly refusing requests as busy; protect actual active editing panels.
+- Queue handoffs until the intended account bridge is ready.
+- Route both `call.whatsapp.com` and supported `web.whatsapp.com/call` stages
+  into a dedicated decorated, resizable, minimizable, maximizable call window.
+- Fit initial call geometry to the opener's monitor, DPI, work area, and native
+  borders; prevent stale per-call saved positions from overriding the fit.
+- Improve Settings action text, selected icons, badges, keyboard focus, and small
+  copy. Tested normal-text contrast pairs meet 4.5:1 across ten resolved palettes.
+- Use the concise Benedictus RH identity in Settings, with working GitHub profile
+  links preserved when the compiled app version is inserted.
+- Add regression gates for phone routing, Settings contrast, and attribution links.
+
+## ✅ Validation status
+
+Local Windows setup, MSI, and portable packages are built and checksum-verified.
+The final attribution source passed 110 installer-mode Rust tests. Browser
+regressions cover routing, protected drafts, no-refresh behavior, notifications,
+attachments, Settings navigation, themes/doodles, and author links. Earlier
+portable-mode and strict Clippy results are retained in the [audit](docs/AUDIT_2.6.1.md).
+
+**Before public release:** complete final installed live phone-link acceptance,
+a real two-party video call with resize/maximize/media checks, incoming-toast
+activation, and native Linux/macOS build and installation acceptance. Controlled
+browser fixtures do not prove WhatsApp service behavior. Do not remove this
+status section until those checks are actually completed.
+
+## 📦 Packages
+
+| Platform | Planned release files |
+| --- | --- |
+| Windows x64 | `WhatsNow_2.6.1_windows_x64-setup.exe`, `WhatsNow_2.6.1_windows_x64_en-US.msi`, `WhatsNow_2.6.1_windows_x64-portable.exe` |
+| Linux x64 | `WhatsNow_2.6.1_amd64.AppImage`, `WhatsNow_2.6.1_amd64.deb` |
+| macOS Apple Silicon | `WhatsNow_2.6.1_aarch64.dmg`, `WhatsNow_2.6.1_aarch64.app.tar.gz` |
+| macOS Intel | `WhatsNow_2.6.1_x86_64.dmg`, `WhatsNow_2.6.1_x86_64.app.tar.gz` |
+| Integrity | `checksums.sha256` for the completed same-revision package set |
+
+Only files actually attached to this release are available downloads. Linux/macOS
+packages are not established by the local Windows build. Build all release
+platforms from one immutable source revision; do not mix earlier candidates.
+
+## 🔐 Security and compatibility
+
+The current local Windows candidates are **unsigned**. Signing/notarization
+status must be rechecked for the final release assets. SHA-256 comparison checks
+integrity, not publisher identity or malware absence. Keep antivirus protection
+enabled; do not add broad exclusions. See [Security](SECURITY.md) and [Privacy](PRIVACY.md).
+
+Windows needs an updated Microsoft Edge WebView2 runtime. Multiple WebView2
+processes are normal; there is no fixed RAM guarantee. Native toast duration
+remains OS-controlled even when a preferred duration is configured.
+
+An external HTTPS `wa.me` link first opens the browser. Choose its **Open
+WhatsApp** action for an installed Windows handoff. Portable mode deliberately
+does not register that protocol. Calling availability depends on WhatsApp Web,
+account eligibility, hardware, permissions, and the platform webview.
+
+## 🔄 Upgrade
+
+Fully **Quit WhatsNow from the tray** before installing or replacing a portable
+binary. A same-version development candidate requires reinstalling the new
+package; the running process does not acquire newly built code automatically.
+Per-user sessions and preferences normally remain. Do not delete application
+data as a routine upgrade step.
+
+Use the [installation guide](docs/INSTALLATION.md) and follow the
+[release preparation checklist](docs/RELEASE_PREPARATION_2.6.1.md).
+
+WhatsNow is independent and not affiliated with WhatsApp or Meta.
+Copyright (c) 2026 Benedictus Reynaldo Hartanto. See [MIT](LICENSE) and
+[retained notices](THIRD_PARTY_NOTICES).

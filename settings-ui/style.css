@@ -11,8 +11,9 @@
   --surface-raised: #ffffff;
   --border: #d7e4df;
   --text: #15231e;
-  --muted: #63756e;
+  --muted: #5c6e66;
   --accent: #087a60;
+  --on-accent: #ffffff;
   --accent-strong: #05634e;
   --accent-soft: #d9eee7;
   --danger: #b62d43;
@@ -33,6 +34,7 @@
   --text: #eef6f2;
   --muted: #acbdb5;
   --accent: #55d2aa;
+  --on-accent: #09271e;
   --accent-strong: #77e2bf;
   --accent-soft: #153f32;
   --danger: #ff8b9c;
@@ -53,6 +55,7 @@
   --text: #f0f6ff;
   --muted: #adc0d7;
   --accent: #44d6c7;
+  --on-accent: #09271e;
   --accent-strong: #70e8dc;
   --accent-soft: #103d44;
   --danger: #ff91a1;
@@ -73,6 +76,7 @@
   --text: #eff9f3;
   --muted: #aac7b5;
   --accent: #4bd394;
+  --on-accent: #09271e;
   --accent-strong: #72e2ae;
   --accent-soft: #15452f;
   --danger: #ff8fa0;
@@ -93,6 +97,7 @@
   --text: #f3f5f6;
   --muted: #b5bec5;
   --accent: #64d2b3;
+  --on-accent: #09271e;
   --accent-strong: #84dfc5;
   --accent-soft: #1b4037;
   --danger: #ff8ca0;
@@ -113,6 +118,7 @@
   --text: #f0fbfd;
   --muted: #a9cad1;
   --accent: #4dd9e5;
+  --on-accent: #09271e;
   --accent-strong: #75e6ee;
   --accent-soft: #12444b;
   --danger: #ff91a1;
@@ -192,7 +198,7 @@
   --border: #dfd6eb;
   --text: #30293a;
   --muted: #706779;
-  --accent: #7864a8;
+  --accent: #715b9f;
   --accent-strong: #62508f;
   --accent-soft: #e8e0f3;
   --danger: #aa2c49;
@@ -293,7 +299,8 @@ input {
 
 button:focus-visible,
 input:focus-visible {
-  outline: none;
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
   box-shadow: var(--focus-ring);
 }
 
@@ -403,7 +410,7 @@ button:disabled {
 
 .nav-item.active .nav-icon {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .rail-status {
@@ -487,7 +494,7 @@ button:disabled {
   padding: 9px 14px;
   border-radius: 9px;
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   cursor: pointer;
   font-weight: 700;
   box-shadow: 0 8px 18px color-mix(in srgb, var(--accent) 25%, transparent);
@@ -812,7 +819,7 @@ button:disabled {
   padding: 2px 6px;
   border-radius: 999px;
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   font-size: 10px;
   font-weight: 750;
   text-align: center;
@@ -1146,7 +1153,7 @@ button.danger:hover {
 
 .about-copy .about-legal {
   max-width: 620px;
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .workspace-footer {
@@ -1158,7 +1165,7 @@ button.danger:hover {
   padding: 7px 28px;
   border-top: 1px solid var(--border);
   color: var(--muted);
-  font-size: 9px;
+  font-size: 11px;
 }
 
 .save-note {

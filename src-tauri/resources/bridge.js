@@ -68,7 +68,7 @@
   function waMeSendUrl(url) {
     if (url.hostname.toLowerCase() !== "wa.me") return null;
     var phone = String(url.pathname || "").replace(/^\/+/, "").replace(/\/+$/, "");
-    if (!phone || !/^[A-Za-z0-9]{5,20}$/.test(phone)) return null;
+    if (!phone || !/^\d{5,15}$/.test(phone)) return null;
     var query = String(url.search || "").replace(/^\?/, "");
     return (
       "https://web.whatsapp.com/send?phone=" +
@@ -230,17 +230,14 @@
           event.stopPropagation();
           if (event.stopImmediatePropagation) event.stopImmediatePropagation();
           // wa.me carries a PHONE: open the contact through the same
-          // open-by-phone flow as browser deep links (known contact →
-          // row match → trusted click, chat opens in place; unknown →
-          // deliberately nothing, the app just rose). Live forensics
-          // (2026-09-17) proved /send?phone has NO in-app route — the URL
-          // always bounces home — so in-place routing is dead on arrival.
+          // open-by-phone flow as browser deep links. Visible contacts use a
+          // trusted row click; other numbers use the official document entry.
           if (host === "wa.me" && waMeSendUrl(resolved)) {
             var digits = String(resolved.pathname || "")
               .replace(/^\/+/, "")
               .replace(/\/+$/, "");
             if (/^[A-Za-z0-9]{5,20}$/.test(digits)) {
-              window.__whatsnowOpenChatByPhone(digits);
+              window.__whatsnowOpenChatByPhone(digits, resolved.searchParams.get("text"));
               return;
             }
           }
@@ -300,12 +297,7 @@
             isWhatsAppFamilyHost(family.hostname)
           ) {
             // wa.me carries a PHONE: open the contact through the same
-            // open-by-phone flow as browser deep links (known contact →
-            // row match → trusted click, chat opens in place; unknown →
-            // deliberately nothing, the app just rose). Live forensics
-            // (2026-09-17) proved /send?phone has NO in-app route — the
-            // URL always bounces home — so soft-routing it is dead on
-            // arrival.
+            // open-by-phone flow as browser deep links, including draft text.
             if (
               family.hostname.toLowerCase() === "wa.me" &&
               waMeSendUrl(family)
@@ -314,7 +306,7 @@
                 .replace(/^\/+/, "")
                 .replace(/\/+$/, "");
               if (/^[A-Za-z0-9]{5,20}$/.test(phone)) {
-                window.__whatsnowOpenChatByPhone(phone);
+                window.__whatsnowOpenChatByPhone(phone, family.searchParams.get("text"));
                 return null;
               }
             }
@@ -1082,84 +1074,211 @@
     if (typeof input.blur === "function") input.blur();
   }
 
-  // DEEP-LINK OPEN BY PHONE (whatsapp://send?phone=X / wa.me links). Live
-  // forensics (2026-09-17, CDP against the real app) proved: WhatsApp Web
-  // keeps chats OUT of the URL — /send?phone exists only as the api
-  // interstitial hand-off, and even a trusted click on a real chat row never
-  // changes location. So a deep link can only open a chat through the app's
-  // own UI primitives:
-  //   1. KNOWN contact: find the chat-list row carrying this number (jid or
-  //      href) and trusted-click it (the battle-tested toast-routing path).
-  //      The chat opens IN PLACE, instantly — no navigation, no reload.
-  //   2. UNKNOWN number: deliberately NOTHING (revert decision 2026-09-17:
-  //      the api.whatsapp.com interstitial popup and the New-chat search
-  //      choreography were both rejected as "messy second window" quirks,
-  //      and a direct store-API open is impossible on current WhatsApp Web —
-  //      no window.Store, no module registry from the page). The deep link's
-  //      contract for unknown numbers is: WhatsNow rises and focuses, full
-  //      stop. The user can paste the number into WhatsApp's own search.
-  // Resolves "row" | "no-row" | "failed" so Rust can log the branch.
-  window.__whatsnowOpenChatByPhone = function (phone) {
+  // Phone links use WhatsApp's own UI. No document navigation, router
+  // events, popup interstitial, or automatic message sending is involved.
+  var phoneRequestSequence = 0;
+  window.__whatsnowOpenChatByPhone = async function (phone, text) {
     var digits = String(phone || "").replace(/\D/g, "");
-    if (!digits) return Promise.resolve("failed");
-    return new Promise(function (resolve) {
-      var attempts = 0;
-      var finished = false;
-      var done = function (result) {
-        if (finished) return;
-        finished = true;
-        invoke("dlog", { msg: "deep link: open by phone " + result });
-        resolve(result);
+    if (!/^\+?[\d\s()-]+$/.test(String(phone || "")) || !/^\d{5,15}$/.test(digits))
+      return "failed";
+    var sequence = ++phoneRequestSequence;
+    var deadline = Date.now() + 12000;
+    var cancelled = false;
+    var panel = null;
+    var search = null;
+    var openedPanel = false;
+    var queried = false;
+    var onEscape = function (event) { if (event.key === "Escape") cancelled = true; };
+    document.addEventListener("keydown", onEscape, true);
+    function active() { return !cancelled && sequence === phoneRequestSequence; }
+    function visible(element) {
+      if (!element || !element.getBoundingClientRect) return false;
+      if (typeof element.checkVisibility === "function" &&
+          !element.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true })) return false;
+      var rect = element.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0 && rect.bottom > 0 && rect.right > 0 &&
+        rect.top < window.innerHeight && rect.left < window.innerWidth;
+    }
+    function nativePhonePanel() {
+      // A dialog role alone does not mean a blocking modal: WhatsApp retains
+      // dialog-role application shells. Only real visible drawers/modals own
+      // the UI; ignore off-screen and CSS-hidden mounted containers.
+      var panels = document.querySelectorAll(
+        "[data-testid='drawer-left'], [role='dialog'][aria-modal='true']");
+      for (var found of panels) {
+        if (visible(found)) return found;
+      }
+      // Current WhatsApp builds sometimes omit test IDs. Recover the left
+      // pane from its native search field, never from the conversation tree.
+      var fields = document.querySelectorAll("input[aria-label*='Search name' i], " +
+        "[role='textbox'][aria-label*='Search name' i], input[placeholder*='Search name' i]");
+      var main = document.querySelector("#main");
+      for (var field of fields) {
+        if (!visible(field) || (main && main.contains(field))) continue;
+        var root = field;
+        while (root.parentElement && root.parentElement !== document.body &&
+          !(main && root.parentElement.contains(main))) root = root.parentElement;
+        if (root !== field) return root;
+      }
+      return null;
+    }
+    async function waitFor(probe, milliseconds) {
+      var until = Math.min(deadline, Date.now() + milliseconds);
+      while (active() && Date.now() < until) {
+        var result = probe();
+        if (result) return result;
+        await new Promise(function (resolve) { window.setTimeout(resolve, 120); });
+      }
+      return null;
+    }
+    function phoneMatches(element, resultText) {
+      if (!element) return false;
+      var jid = new RegExp("(^|[^0-9])" + digits + "@(c\\.us|s\\.whatsapp\\.net)([^a-z0-9_.]|$)", "i");
+      for (var name of ["data-id", "data-jid", "data-chat-id", "href"]) {
+        var identity = element.getAttribute && element.getAttribute(name) || "";
+        if (/@(g\.us|broadcast)(?:[^a-z0-9_.]|$)/i.test(identity)) return false;
+        if (jid.test(identity) || identity === digits) return true;
+      }
+      // Chat-preview text can contain somebody else's phone or wa.me URL.
+      // Only the row's primary title is identity; free text is allowed solely
+      // inside the native New chat results, never the ordinary chat list.
+      var title = element.querySelector && element.querySelector("span[title]");
+      var values = [title && title.getAttribute("title") || ""];
+      if (resultText) values.push(element.textContent || "");
+      else if (/^\+?[\d\s().-]+$/.test(element.textContent || "")) values.push(element.textContent);
+      return values.some(function (value) {
+        if (!resultText && !/^\+?[\d\s().-]+$/.test(value)) return false;
+        var numbers = String(value).match(/\+?\d[\d\s().-]{4,}/g) || [];
+        return numbers.some(function (number) { return number.replace(/\D/g, "") === digits; });
+      });
+    }
+    function targetRow(root, resultText) {
+      if (!root) return null;
+      var rows = root.querySelectorAll(
+        "[data-testid='cell-frame-container'], [role='row'], [role='listitem'], " +
+        "[data-testid='contact-list-item'], [data-id]"
+      );
+      var best = null, bestArea = Infinity;
+      var chats = resultText && notificationChatList();
+      for (var row of rows) {
+        if (chats && chats !== root && chats.contains(row)) continue;
+        if (!visible(row) || !phoneMatches(row, resultText)) continue;
+        var rect = row.getBoundingClientRect();
+        var area = rect.width * rect.height;
+        if (area < bestArea) { best = row; bestArea = area; }
+      }
+      return best;
+    }
+    function header() {
+      return document.querySelector("[data-testid='conversation-header'], " +
+        "[data-testid='conversation-info-header'], #main > header, header[data-tab]");
+    }
+    async function selectRow(row) {
+      if (!active()) return false;
+      var title = row.querySelector && row.querySelector("span[title]");
+      var route = { chatId: digits, chatTitle: title ? title.getAttribute("title") : "" };
+      // No synthetic-click fallback: a refused native click is a failure.
+      if (!await requestTrustedClick(row, null)) return false;
+      return !!await waitFor(function () {
+        var current = header();
+        return current && (phoneMatches(current) ||
+          (route.chatTitle && routeValueMatches(current, "", route.chatTitle)));
+      }, 2500);
+    }
+    async function fillDraft() {
+      if (typeof text !== "string" || !text.length) return true;
+      var editor = await waitFor(function () {
+        var main = document.querySelector("#main");
+        return main && main.querySelector("footer [contenteditable='true'][role='textbox'], " +
+          "[data-testid='conversation-compose-box-input'][contenteditable='true']");
+      }, 2000);
+      if (!editor || !active()) return false;
+      var draftValue = function () {
+        return (typeof editor.innerText === "string" ? editor.innerText : editor.textContent || "")
+          .replace(/\r\n?/g, "\n");
       };
-      var tryRow = function () {
-        if (finished) return;
-        attempts++;
-        var route = { chatId: digits, chatTitle: "" };
-        var row = findNotificationChatRow(route);
-        if (row) {
-          clickNotificationChatRow(row).then(function (clicked) {
-            if (finished) return;
-            if (!clicked) {
-              if (attempts < 6) {
-                window.setTimeout(tryRow, 500);
-              } else {
-                done("failed");
+      var expected = text.replace(/\r\n?/g, "\n");
+      var existing = draftValue();
+      if (existing === expected) return true;
+      // Preserve a user's existing draft. Browser editing operations feed the
+      // native editor's input pipeline; replacing its DOM would desynchronize it.
+      if (existing.trim()) return false;
+      if (!await requestTrustedClick(editor, null) || !active()) return false;
+      editor.focus();
+      var selection = window.getSelection();
+      var range = document.createRange();
+      range.selectNodeContents(editor);
+      selection.removeAllRanges();
+      selection.addRange(range);
+      if (!document.execCommand("insertText", false, text)) return false;
+      return !!await waitFor(function () { return draftValue() === expected; }, 1000);
+    }
+    var outcome = "not-found";
+    try {
+      var userPanel = nativePhonePanel();
+      if (visible(userPanel) && !userPanel.getAttribute("data-whatsnow-phone-request")) {
+        outcome = "busy";
+        return outcome;
+      }
+      var row = targetRow(notificationChatList());
+      if (phoneMatches(header()) || (row && await selectRow(row))) {
+        outcome = await fillDraft() ? "row" : "draft-conflict";
+      } else if (active()) {
+        var existingPanel = nativePhonePanel();
+        // An already open drawer can contain unsaved edits. Do not repurpose it.
+        var reusePanel = visible(existingPanel) && existingPanel.getAttribute("data-whatsnow-phone-request");
+        if (visible(existingPanel) && !reusePanel) {
+          outcome = "busy";
+        } else {
+          var button = reusePanel ? null : await waitFor(function () {
+            var candidate = document.querySelector("button[aria-label='New chat'], " +
+              "[role='button'][aria-label='New chat'], [data-testid='chat-list-new-chat'], " +
+              "[data-icon='new-chat-outline'], [data-icon='new-chat'], [data-icon='chat-new']");
+            return candidate && ((candidate.closest && candidate.closest("button, [role='button']")) || candidate);
+          }, 3000);
+          if (active() && (reusePanel || (button && await requestTrustedClick(button, null)))) {
+            openedPanel = true;
+            panel = reusePanel ? existingPanel : await waitFor(function () {
+              var found = nativePhonePanel();
+              return visible(found) && found;
+            }, 3000);
+            if (panel) {
+              panel.setAttribute("data-whatsnow-phone-request", String(sequence));
+              search = await waitFor(function () {
+                var found = panel.querySelector("input[type='text'], input[type='search'], " +
+                  "input:not([type]), [contenteditable='true'][role='textbox']");
+                return visible(found) && found;
+              }, 2000);
+              if (search && active()) {
+                queried = setNotificationSearchValue(search, "+" + digits);
+                row = await waitFor(function () { return targetRow(panel, true); }, 5000);
+                if (row && active() && await selectRow(row))
+                  outcome = await fillDraft() ? "search" : "draft-conflict";
               }
-              return;
             }
-            // Verify the conversation actually switched (header matches the
-            // number); the row click is trusted but the router can still lag.
-            var started = Date.now();
-            (function pollHeader() {
-              if (finished) return;
-              if (currentConversationMatches(route)) {
-                done("row");
-                return;
-              }
-              if (Date.now() - started >= 2500) {
-                if (attempts < 6) {
-                  window.setTimeout(tryRow, 400);
-                } else {
-                  done("failed");
-                }
-                return;
-              }
-              window.setTimeout(pollHeader, 150);
-            })();
-          });
-          return;
+          }
         }
-        // The chat list hydrates lazily on a cold start; give it ~3s total
-        // before concluding the number is unknown.
-        if (attempts < 6) {
-          window.setTimeout(tryRow, 500);
-          return;
+      }
+    } catch (error) {
+      outcome = "failed";
+    } finally {
+      if (!active()) outcome = cancelled ? "cancelled" : "superseded";
+      // Close only the search drawer this request opened, only if it still
+      // contains our query. A failed lookup keeps the existing chat and draft.
+      if (active() && openedPanel && visible(panel) && !["row", "search", "draft-conflict"].includes(outcome)) {
+        var value = search && (typeof search.value === "string" ? search.value : search.textContent);
+        if (!queried || String(value || "").replace(/\D/g, "") === digits) {
+          var back = panel.querySelector("button[aria-label='Back'], [role='button'][aria-label='Back'], " +
+            "button[aria-label='Close'], [data-icon='back'], [data-icon='x']");
+          if (back) await requestTrustedClick((back.closest && back.closest("button, [role='button']")) || back, null);
         }
-        // Unknown (or list not hydrated): by design, nothing further.
-        done("no-row");
-      };
-      tryRow();
-    });
+      }
+      if (document.removeEventListener) document.removeEventListener("keydown", onEscape, true);
+      if (panel && outcome !== "superseded" && panel.getAttribute("data-whatsnow-phone-request") === String(sequence))
+        panel.removeAttribute("data-whatsnow-phone-request");
+      invoke("dlog", { msg: "deep link: native phone lookup " + outcome });
+    }
+    return outcome;
   };
 
   window.__whatsnowOpenNotificationTarget = function (route) {

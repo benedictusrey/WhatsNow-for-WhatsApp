@@ -23,7 +23,26 @@ builds here only after local platform validation.
 | `v2.0.0/` | `checksums.sha256`, `WhatsNow_2.0.0_x64-setup.exe`, `WhatsNow_2.0.0_x64_en-US.msi`, plus `_amd64.AppImage` / `_amd64.deb` (Linux) and `_aarch64.dmg` / `_aarch64.app.tar.gz` (macOS) | 2 Windows binaries |
 | `v2.5.0/` | `checksums.sha256`, `WhatsNow_2.5.0_windows_x64-setup.exe`, `WhatsNow_2.5.0_windows_x64_en-US.msi`, `WhatsNow_2.5.0_windows_x64-portable.exe`, plus Linux and macOS packages | 3 Windows binaries + `checksums-windows.sha256` + `checksums.sha256` |
 
-## Current release (v2.5.0)
+## v2.6.1 candidate
+
+The final local candidate includes the Settings attribution-link correction.
+Its consolidated history is [CHANGELOGS_v2.6.1.md](../CHANGELOGS_v2.6.1.md);
+follow [release preparation](../docs/RELEASE_PREPARATION_2.6.1.md) for exact hashes,
+same-source native builds, and remaining acceptance gates.
+
+`v2.6.1/` contains the locally built Windows setup executable, MSI, portable
+executable, and their SHA-256 manifest. The v2.6.1 candidate fixes phone-link
+delivery and call-window classification while preserving themes and native
+notification behavior. See [the audit](../docs/AUDIT_2.6.1.md) and
+[publishing guide](../docs/PUBLISHING.md). Local staging does not publish a
+GitHub Release; complete the live checks and CI before publication.
+
+The revised v2.6.1 candidate removes the document-refresh fallback and adds
+monitor/DPI-aware call geometry. Its new checksums supersede the earlier
+v2.6.1 candidate. Fully quit the tray application and use the updated setup
+installer when replacing that same-version build.
+
+## Historical local release (v2.5.0)
 
 - `WhatsNow_2.5.0_windows_x64-setup.exe` — NSIS installer
 - `WhatsNow_2.5.0_windows_x64_en-US.msi` — MSI package (managed deployment)

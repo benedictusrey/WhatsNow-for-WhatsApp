@@ -8,8 +8,8 @@
 //   1. The anchor click path: clicking an <a href="https://wa.me/<phone>">
 //      calls __whatsnowOpenChatByPhone — a KNOWN number is opened via a
 //      trusted chat-row click (the fake page models the row + header);
-//      an UNKNOWN number deliberately does nothing beyond the app rise
-//      (revert decision 2026-09-17: no popup, no search choreography).
+//      an unlisted number opens through native New chat search, with zero
+//      document loads. phone-routing.test.mjs separately drives real CDP input.
 //   2. The programmatic path: window.open("https://wa.me/<phone>") takes
 //      the same open-by-phone flow — never the browser, never a dead end.
 //   3. api.whatsapp.com content links are hosted in the popup — never the
@@ -119,7 +119,7 @@ a{position:relative;z-index:2;color:#53bdeb}
   <a id="api-anchor" style="position:absolute;left:16px;top:32px" href="https://api.whatsapp.com/send/?phone=6281234567890&text&type=phone_number&app_absent=0">api link</a>
   <a id="ext-anchor" style="position:absolute;left:16px;top:56px" href="https://example.com/article">external link</a>
   <button id="new-chat" aria-label="New chat" style="position:absolute;left:50px;top:80px;width:40px;height:40px">+</button>
-  <div id="search-panel" style="display:none;position:absolute;left:0;top:0;width:360px;height:640px;background:#111b21;z-index:5">
+  <div id="search-panel" data-testid="drawer-left" style="display:none;position:absolute;left:0;top:0;width:360px;height:640px;background:#111b21;z-index:5">
     <button id="panel-close" aria-label="Close" style="position:absolute;left:20px;top:20px;width:32px;height:32px">x</button>
     <input id="panel-input" type="text" aria-label="Search name, number or @username" placeholder="Search name, number or @username" style="position:absolute;left:70px;top:25px;width:240px;height:30px">
   </div>
@@ -341,21 +341,20 @@ a{position:relative;z-index:2;color:#53bdeb}
   });
 
   // ---------------------------------------------------------------------------
-  section("Programmatic window.open(wa.me): UNKNOWN number does NOTHING beyond the app rise (revert decision)");
+  section("Programmatic window.open(wa.me): native lookup opens the unlisted chat without reload");
   // ---------------------------------------------------------------------------
   const popupsBefore = popupRequests.length;
   await page.evaluate(() => window.open("https://wa.me/628999999999"));
-  // Unknown (not in the chat list): the flow resolves "no-row" and STOPS —
-  // no popup, no New-chat search choreography, no navigation, no browser.
-  // The app has already risen and focused; that is the whole contract.
+  // Unlisted phone: native search selects the number in place, without a
+  // popup, browser handoff, or document navigation.
   await sleep(6000);
   check(
     popupRequests.length === popupsBefore,
     `no popup of any kind for the unknown number (got ${JSON.stringify(popupRequests.slice(popupsBefore))})`,
   );
   check(
-    hardNavigations === 0,
-    "window.open(wa.me) caused no reload of the chat surface",
+    hardNavigations === 0 && await page.locator("#conversation-header").getAttribute("data-id") === "628999999999@c.us",
+    "unlisted number opens in place through native chat search with zero document loads",
   );
   check(
     !(await page.evaluate(

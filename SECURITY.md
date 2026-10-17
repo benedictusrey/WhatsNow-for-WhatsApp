@@ -9,11 +9,13 @@ Copyright (c) 2026 @benedictusrey. Released under the [MIT License](LICENSE).
 
 | Version | Security updates |
 | --- | --- |
-| 1.0.x | Supported |
-| Earlier development builds | Unsupported |
+| Latest published release | Preferred baseline for reports |
+| 2.6.1 candidate | Under validation; not a completed security audit |
+| Older releases | Upgrade recommended; no separate maintenance promise |
 
-Install the newest signed release before reporting a problem that may already
-have a fix.
+Check the newest published release before reporting a problem that may already
+have a fix. The current local v2.6.1 Windows candidates are unsigned; do not
+assume a certificate or independent security certification exists.
 
 ## Report a vulnerability
 
@@ -43,6 +45,7 @@ The remote page receives a narrow command allowlist for:
 - profile-based native window titles;
 - validated HTTP and HTTPS links;
 - bounded diagnostic messages.
+- a scoped trusted-click request used to select notification/link targets.
 
 Remote account windows cannot call account management, general Settings, Focus,
 or app-lock commands. Local Settings and lock windows have separate Tauri
@@ -68,15 +71,16 @@ Treat a release as trusted after you verify:
 
 1. the download came from
    `https://github.com/benedictusrey/WhatsNow-for-WhatsApp/releases`;
-2. its SHA-256 digest matches GitHub's release digest;
-3. Windows Authenticode or macOS code signing names the expected publisher;
+2. its SHA-256 digest matches the release asset's published checksum;
+3. signing/notarization status matches the release disclosure; if signed,
+   Windows Authenticode or macOS code signing names the expected publisher;
 4. the package version and application identifier match WhatsNow.
 
 Windows verification:
 
 ```powershell
-Get-FileHash .\WhatsNow_1.0.0_x64-setup.exe -Algorithm SHA256
-Get-AuthenticodeSignature .\WhatsNow_1.0.0_x64-setup.exe |
+Get-FileHash .\WhatsNow_2.6.1_windows_x64-setup.exe -Algorithm SHA256
+Get-AuthenticodeSignature .\WhatsNow_2.6.1_windows_x64-setup.exe |
   Format-List Status,StatusMessage,SignerCertificate
 ```
 
@@ -93,9 +97,10 @@ disabled. The script reports a detection without deleting the release artifact.
 
 ## Windows signing
 
-Public Windows tags require one identity-validated Authenticode certificate.
-Use the same publisher identity for each release so Windows can build publisher
-reputation.
+Identity-validated Authenticode signing is recommended for public Windows
+releases. The current local packages report `NotSigned`. A matching checksum
+detects byte changes; it does not identify a publisher or prove software safe.
+If signing is configured, use one consistent publisher identity.
 
 Import the PFX into the current user's certificate store, then generate the
 ignored local Tauri signing configuration:
@@ -110,9 +115,10 @@ cargo tauri build
 Never commit the PFX, its password, or
 `src-tauri/tauri.windows.conf.json`.
 
-The release workflow signs the application executable, NSIS setup, MSI, and
-the separate portable executable. It verifies each signature before upload.
-WhatsNow does not edit executable bytes after signing.
+Do not assume the release workflow has signed anything merely because it
+contains an optional signing step. Validate that path and verify the installed
+application, setup, MSI, and portable signatures before claiming signed delivery.
+Generate final checksums after signing; never edit signed executable bytes.
 
 ## Antivirus false positives
 
@@ -130,10 +136,10 @@ release gating. Scan the signed package through Avast's application and use
 Avast's official false-positive submission form for a reproducible incorrect
 detection.
 
-Portable mode avoids installer-style AUMID and Start menu registration at
-startup. It uses WhatsNow's in-app notification fallback when Windows cannot
-provide native toast identity. NSIS and MSI installations keep native
-notification registration.
+Portable mode avoids installer-style AUMID, Start menu, and protocol registration
+at startup. Native toast reliability can therefore depend on existing OS
+identity/registration. There is no separate floating notification window fallback.
+Prefer NSIS/MSI installation for Windows desktop integration.
 
 ## Logs and sensitive data
 

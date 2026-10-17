@@ -30,22 +30,24 @@ Authenticode publisher.
 ### NSIS setup
 
 1. Download the x64 setup executable.
-2. Open **Properties > Digital Signatures** and confirm the expected publisher.
+2. Check the SHA-256 checksum and inspect **Properties > Digital Signatures**
+   when a signature is present. The current local v2.6.1 candidates are unsigned;
+   a missing signature must not be described as a verified publisher.
 3. Run the setup and start WhatsNow from the Start menu.
 
 PowerShell can display the signature and hash:
 
 ```powershell
-Get-AuthenticodeSignature .\WhatsNow_2.5.0_windows_x64-setup.exe |
+Get-AuthenticodeSignature .\WhatsNow_2.6.1_windows_x64-setup.exe |
   Format-List Status,StatusMessage,SignerCertificate
-Get-FileHash .\WhatsNow_2.5.0_windows_x64-setup.exe -Algorithm SHA256
+Get-FileHash .\WhatsNow_2.6.1_windows_x64-setup.exe -Algorithm SHA256
 ```
 
 The repository installer accepts a local package:
 
 ```powershell
 .\scripts\install-windows.ps1 `
-  -Source .\WhatsNow_2.5.0_windows_x64-setup.exe `
+  -Source .\WhatsNow_2.6.1_windows_x64-setup.exe `
   -ExpectedSha256 'RELEASE_SHA256'
 ```
 
@@ -60,7 +62,7 @@ It can also select the newest compatible GitHub release:
 Use the MSI for managed deployment:
 
 ```powershell
-msiexec.exe /i .\WhatsNow_2.5.0_windows_x64_en-US.msi
+msiexec.exe /i .\WhatsNow_2.6.1_windows_x64_en-US.msi
 ```
 
 Your deployment system can pass its normal `msiexec` user-interface and logging
@@ -84,9 +86,10 @@ Portable mode stores account sessions and Settings in Windows per-user
 application-data directories. Replacing the executable does not remove your
 sessions.
 
-Portable builds register the per-user Windows notification identity required
-for native toast delivery. WhatsNow does not create a separate notification
-window.
+Portable builds skip installer-style Windows notification identity and protocol
+registration. Native notification reliability depends on the OS's existing
+identity state; use NSIS/MSI for desktop integration. WhatsNow does not create
+a separate notification window.
 
 ### Windows requirement
 
@@ -102,7 +105,7 @@ Install a downloaded DMG:
 
 ```bash
 sh ./scripts/install-macos.sh \
-  --source ./WhatsNow_2.5.0_aarch64.dmg \
+  --source ./WhatsNow_2.6.1_aarch64.dmg \
   --sha256 RELEASE_SHA256
 ```
 
@@ -126,7 +129,7 @@ Install an AppImage:
 
 ```bash
 sh ./scripts/install-linux.sh \
-  --source ./WhatsNow_2.5.0_amd64.AppImage \
+  --source ./WhatsNow_2.6.1_amd64.AppImage \
   --sha256 RELEASE_SHA256
 ```
 
@@ -145,7 +148,7 @@ The AppImage installer creates:
 Install a Debian package with:
 
 ```bash
-sh ./scripts/install-linux.sh --source ./WhatsNow_2.5.0_amd64.deb
+sh ./scripts/install-linux.sh --source ./WhatsNow_2.6.1_amd64.deb
 ```
 
 The script uses `apt-get` or `dpkg` and asks for `sudo` only for the Debian

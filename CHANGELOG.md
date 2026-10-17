@@ -7,6 +7,45 @@ Copyright (c) 2026 @benedictusrey. Released under the [MIT License](LICENSE).
 
 All notable project changes are recorded here. This project follows
 
+## [2.6.1] - 2026-10-17
+
+Complete implementation history and validation boundaries:
+[CHANGELOGS_v2.6.1.md](CHANGELOGS_v2.6.1.md).
+
+### Fixed
+
+- Refreshed v2.6.1 presentation with four supplied images, an updated feature
+  guide, and explicit artwork/performance-measurement caveats.
+- Settings uses the concise name Benedictus RH in the footer and About card.
+  Both profile mentions link to GitHub; version insertion preserves the footer
+  anchor instead of replacing the entire container with plain text.
+- Phone routing no longer mistakes an ordinary dialog-role application shell,
+  CSS-hidden modal, or off-screen drawer for an active editing panel. Genuine
+  visible modals and user-owned drawers remain protected.
+- Settings primary actions, selected navigation icons, and unread badges use
+  contrasting foregrounds across every palette. Secondary light-theme text,
+  Aurora links, keyboard focus outlines, and small footer/legal text are clearer.
+- Browser-originated `whatsapp://send` and in-app `wa.me` links now open
+  unlisted numbers through WhatsApp's native New chat search without reloading.
+  Visible chats keep their trusted-click path. Existing drafts are preserved;
+  link text is inserted only into an empty editor and never sent automatically.
+  Escape cancels lookup, and newer link requests cancel older retries.
+- Call-stage URLs on `web.whatsapp.com/call[/...]` now receive the dedicated
+  native call window, alongside `call.whatsapp.com` URLs. The window explicitly
+  requests native decorations and resize/maximize controls, sharing its opener
+  session for calling.
+- Call geometry now uses the opener's monitor and DPI, preserves negative
+  display origins, and fits native frame allowances. Tests exercise the
+  actual sizing helper rather than a copied formula.
+- Mixed-case `whatsapp://` schemes and phone parameter names are accepted.
+
+### Verification
+
+- Existing theme/doodle/emoji styling and notification delivery are preserved.
+- Regression tests cover unlisted targets, draft text, invalid input, and
+  superseded link requests; the browser smoke matrix covers all 11 themes.
+- See [v2.6.1 audit](docs/AUDIT_2.6.1.md) for checks and runtime limitations.
+
 ## [2.6.0] - 2026-09-15
 
 ### Fixed

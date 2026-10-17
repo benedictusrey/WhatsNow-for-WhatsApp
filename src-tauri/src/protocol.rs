@@ -53,10 +53,11 @@ pub fn deep_link_in_args(args: &[String]) -> Option<String> {
 /// opaque hierarchical schemes) must be accepted as `send`, not refused.
 /// Pure and unit-tested with the OS-normalized shape.
 pub fn deep_link_url(raw: &str) -> Option<String> {
-    let rest = raw
-        .strip_prefix("whatsapp://")
-        .or_else(|| raw.strip_prefix("WHATSAPP://"))
-        .or_else(|| raw.strip_prefix("WhatsApp://"))?;
+    let prefix = raw.get(..11)?;
+    if !prefix.eq_ignore_ascii_case("whatsapp://") {
+        return None;
+    }
+    let rest = &raw[11..];
     if rest.is_empty() {
         return None;
     }
@@ -240,6 +241,10 @@ mod tests {
 
     #[test]
     fn send_links_convert_to_web_whatsapp_com() {
+        assert_eq!(
+            deep_link_url("wHaTsApP://send/?phone=15551234567").as_deref(),
+            Some("https://web.whatsapp.com/send?phone=15551234567")
+        );
         assert_eq!(
             deep_link_url("whatsapp://send?phone=15551234567").as_deref(),
             Some("https://web.whatsapp.com/send?phone=15551234567")

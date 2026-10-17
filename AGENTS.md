@@ -32,6 +32,32 @@ or modifying this codebase:
 
 ## LOCKED BEHAVIOR — do not change (user-specified, repeatedly verified)
 
+### v2.6.1 link and call update (2026-10-17)
+
+The user explicitly requested working browser-originated wa.me chat delivery
+and maximizable call windows. This release supersedes the older section 4
+unknown-number no-op contract: visible chats retain the trusted-row fast path;
+unlisted/virtualized numbers use WhatsApp's native New chat search in the same
+account. Preserve existing drafts; insert link text only into an empty editor
+through browser editing operations, and never send it automatically. Newer
+links supersede older retries, and Escape cancels the lookup. Failed searches
+keep the current conversation and never navigate/reload the document. This
+supersedes the first v2.6.1 candidate's `/send` document fallback, rejected by
+the user after live testing. Synthetic SPA routes, popstate and interstitial
+popups remain inappropriate. `scripts/phone-routing.test.mjs` uses real
+Chromium trusted input and counts document loads; it must stay at zero for
+known, unlisted, text-bearing and failed requests. `bridge.test.mjs` and
+`scripts/smoke-links.mjs` also pin this contract. Call stages on both
+`https://call.whatsapp.com/...` and `https://web.whatsapp.com/call[/...]` use
+the dedicated decorated, resizable, maximizable call window and opener session.
+Initial geometry uses the opener's monitor work area and scale, including
+negative monitor origins. Keep native frame allowances, small-screen-safe
+minimum dimensions, and no maximum-size constraint. The production geometry
+helper is unit-tested directly; do not substitute a mirrored test formula.
+Transient `wa-call-*` windows are excluded from window-state restoration so
+cached geometry cannot override that fit; other windows keep their state rules.
+Themes and notifications retain the v2.6.0 contracts below.
+
 The user has iterated on these behaviors across many rounds and explicitly
 requires they stay EXACTLY as described. Changing any of them is a regression.
 This applies to human developers AND AI coding agents alike: do not "improve",

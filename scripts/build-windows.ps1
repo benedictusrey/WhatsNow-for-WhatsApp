@@ -10,12 +10,12 @@ $ErrorActionPreference = "Stop"
 $sourceRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $manifestPath = Join-Path $sourceRoot "src-tauri\Cargo.toml"
 $targetDirectory = Join-Path $sourceRoot ".workspace\target-windows"
-$installerSource = Join-Path $targetDirectory "release\bundle\nsis\WhatsNow_2.6.0_x64-setup.exe"
-$msiSource = Join-Path $targetDirectory "release\bundle\msi\WhatsNow_2.6.0_x64_en-US.msi"
+$installerSource = Join-Path $targetDirectory "release\bundle\nsis\WhatsNow_2.6.1_x64-setup.exe"
+$msiSource = Join-Path $targetDirectory "release\bundle\msi\WhatsNow_2.6.1_x64_en-US.msi"
 $portableSource = Join-Path $targetDirectory "release\whatsnow.exe"
-$installerOutput = Join-Path $OutputDirectory "WhatsNow_2.6.0_windows_x64-setup.exe"
-$msiOutput = Join-Path $OutputDirectory "WhatsNow_2.6.0_windows_x64_en-US.msi"
-$portableOutput = Join-Path $OutputDirectory "WhatsNow_2.6.0_windows_x64-portable.exe"
+$installerOutput = Join-Path $OutputDirectory "WhatsNow_2.6.1_windows_x64-setup.exe"
+$msiOutput = Join-Path $OutputDirectory "WhatsNow_2.6.1_windows_x64_en-US.msi"
+$portableOutput = Join-Path $OutputDirectory "WhatsNow_2.6.1_windows_x64-portable.exe"
 
 New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
 

@@ -6,6 +6,8 @@ import path from "node:path";
 const repositoryRoot = path.resolve(import.meta.dirname, "..");
 const ignoredDirectories = new Set([
   ".git",
+  ".workspace",
+  ".freebuff",
   "backup",
   "dist",
   "node_modules",

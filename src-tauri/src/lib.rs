@@ -131,6 +131,9 @@ pub fn run() {
                 // frameless (decorations(false) in its builder), and a stale saved
                 // state from an older build must not re-attach the native title bar.
                 tauri_plugin_window_state::Builder::default()
+                    // Call stages are transient: stale saved geometry must not
+                    // override their opener-monitor fit on the next call.
+                    .with_filter(|label| !label.starts_with("wa-call-"))
                     .with_state_flags(
                         tauri_plugin_window_state::StateFlags::all()
                             & !tauri_plugin_window_state::StateFlags::VISIBLE

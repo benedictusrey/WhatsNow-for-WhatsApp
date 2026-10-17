@@ -471,6 +471,9 @@ try {
     { theme: "dark", doodles: true, label: "Dark (doodles ON)" },
     { theme: "graphite", doodles: false, label: "Graphite (personality, doodles OFF)" },
     { theme: "candy", doodles: false, label: "Candy (personality, doodles OFF)" },
+    ...["midnight", "forest", "ocean", "blush", "lavender", "aurora"].map(
+      (theme) => ({ theme, doodles: false, label: `${theme} (personality, doodles OFF)` }),
+    ),
   ];
   for (const entry of doodleMatrix) {
     await waPage.evaluate(({ theme, doodles }) => {

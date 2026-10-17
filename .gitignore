@@ -21,8 +21,11 @@ release-assets/_unpublished/
 
 # Node
 node_modules/
+.workspace/
+scripts/smoke-shots/
 dist/
 backup/
+versions/
 .freebuff/
 .DS_Store
 Thumbs.db

@@ -6,12 +6,12 @@ on:
       app_version:
         description: "Application version used in release filenames"
         required: true
-        default: "2.6.0"
+        default: "2.6.1"
         type: string
       release_tag:
         description: "GitHub Release tag"
         required: true
-        default: "v2.6.0"
+        default: "v2.6.1"
         type: string
       publish_release:
         description: "Create a draft GitHub Release after all builds pass"
@@ -30,12 +30,48 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  APP_VERSION: ${{ github.event.inputs.app_version || vars.WHATSNOW_APP_VERSION || '2.6.0' }}
+  APP_VERSION: ${{ github.event_name == 'push' && github.ref_name || github.event.inputs.app_version || '2.6.1' }}
   RELEASE_TAG: ${{ github.event.inputs.release_tag || github.ref_name }}
 
 jobs:
+  verify:
+    name: Version and behavior gates
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install pinned browser regression runtime
+        run: |
+          npm install --no-save --package-lock=false playwright@1.63.0
+          npx playwright install --with-deps chromium
+      - name: Verify release identity and regression suites
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import assert from 'node:assert/strict';
+          const version = JSON.parse(fs.readFileSync('src-tauri/tauri.conf.json')).version;
+          assert.equal(fs.readFileSync('VERSION', 'utf8').trim(), version);
+          assert.equal(process.env.APP_VERSION.replace(/^v/, ''), version);
+          assert.equal(process.env.RELEASE_TAG, `v${version}`);
+          JS
+          node src-tauri/resources/bridge.test.mjs
+          node src-tauri/resources/chat-theme.test.mjs
+          node src-tauri/resources/toast-route.test.mjs
+          node settings-ui/theme.test.mjs
+          node settings-ui/settingsAcl.test.mjs
+          node settings-ui/comboToAccelerator.test.mjs
+          node scripts/check-docs.mjs
+          node scripts/phone-routing.test.mjs
+          node scripts/settings-contrast.test.mjs
+          node scripts/settings-attribution.test.mjs
+
   build-linux:
     name: Linux x64 bundles
+    needs: verify
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
@@ -113,7 +149,8 @@ jobs:
 
   build-macos:
     name: macOS bundles (Apple Silicon + Intel)
-    runs-on: macos-14
+    needs: verify
+    runs-on: macos-15
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -203,6 +240,7 @@ jobs:
 
   build-windows:
     name: Windows x64 bundles (NSIS + MSI + portable)
+    needs: verify
     runs-on: windows-latest
     steps:
       - name: Checkout repository
@@ -357,6 +395,7 @@ jobs:
         with:
           tag_name: ${{ env.RELEASE_TAG }}
           name: WhatsNow ${{ env.NORMALIZED_VERSION }}
+          target_commitish: ${{ github.sha }}
           body_path: RELEASE_NOTES.md
           draft: true
           prerelease: false

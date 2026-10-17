@@ -95,8 +95,14 @@ fn whatsapp_popup_allowed(url: &tauri::Url) -> bool {
 /// their dedicated always-on-top window (the 2.6.0 fix); every other family
 /// URL shares the reusable content popup. Pure and unit-tested.
 fn is_whatsapp_call_url(url: &tauri::Url) -> bool {
-    url.host_str()
-        .is_some_and(|host| host.eq_ignore_ascii_case("call.whatsapp.com"))
+    if url.scheme() != "https" {
+        return false;
+    }
+    url.host_str().is_some_and(|host| {
+        host.eq_ignore_ascii_case("call.whatsapp.com")
+            || (host.eq_ignore_ascii_case("web.whatsapp.com")
+                && (url.path() == "/call" || url.path().starts_with("/call/")))
+    })
 }
 
 /// Open a validated web URL through the operating system.
@@ -278,6 +284,7 @@ fn open_account_window_inner(
 
     let navigation_app = app.clone();
     let new_window_app = app.clone();
+    let new_window_opener_label = label.clone();
     // Reveal the window only after its first page load paints, so the white
     // "launch flash" never shows (the user's eyes will thank us). start_hidden
     // (autostart/tray) keeps the window invisible indefinitely.
@@ -411,10 +418,38 @@ fn open_account_window_inner(
                 // Size from the popup's requested dimensions (WhatsApp's own
                 // call-stage proportions), clamped to the monitor work area so
                 // small screens never get an oversized window.
-                let (width, height) = match features.size() {
-                    Some(size) => clamped_logical_size(&new_window_app, size.width, size.height),
-                    None => clamped_logical_size(&new_window_app, 940.0, 640.0),
+                let requested_size = features
+                    .size()
+                    .map(|size| (size.width, size.height))
+                    .unwrap_or((940.0, 640.0));
+                let call_geometry = if is_call {
+                    let monitor = new_window_app
+                        .get_webview_window(&new_window_opener_label)
+                        .and_then(|opener| opener.current_monitor().ok().flatten())
+                        .or_else(|| new_window_app.primary_monitor().ok().flatten());
+                    monitor.map(|monitor| {
+                        let work = monitor.work_area();
+                        fit_call_geometry(
+                            requested_size,
+                            features.position().map(|position| (position.x, position.y)),
+                            (
+                                work.position.x as f64,
+                                work.position.y as f64,
+                                work.size.width as f64,
+                                work.size.height as f64,
+                            ),
+                            monitor.scale_factor(),
+                        )
+                    })
+                } else {
+                    None
                 };
+                let (width, height) = call_geometry
+                    .as_ref()
+                    .map(|geometry| (geometry.width, geometry.height))
+                    .unwrap_or_else(|| {
+                        clamped_logical_size(&new_window_app, requested_size.0, requested_size.1)
+                    });
                 let mut builder = WebviewWindowBuilder::new(
                     &new_window_app,
                     &label,
@@ -427,6 +462,7 @@ fn open_account_window_inner(
                 .maximizable(true)
                 .minimizable(true)
                 .closable(true)
+                .decorations(true)
                 .visible(true)
                 .focused(true)
                 .user_agent(CHROME_UA);
@@ -456,7 +492,13 @@ fn open_account_window_inner(
                     });
                     return tauri::webview::NewWindowResponse::Deny;
                 }
-                if let Some(position) = features.position() {
+                if let Some(geometry) = call_geometry {
+                    builder = builder
+                        .position(geometry.x, geometry.y)
+                        .min_inner_size(geometry.min_width, geometry.min_height);
+                } else if is_call {
+                    builder = builder.center();
+                } else if let Some(position) = features.position() {
                     builder = builder.position(position.x.max(0.0), position.y.max(0.0));
                 }
                 // Session sharing (CRITICAL for WebRTC): on Windows the popup
@@ -506,6 +548,15 @@ fn open_account_window_inner(
             tauri::webview::NewWindowResponse::Deny
         })
         .on_page_load(move |window, payload| {
+            if payload.event() == PageLoadEvent::Started {
+                if let Some(loaded) = window.app_handle().try_state::<LoadedWindows>() {
+                    loaded
+                        .0
+                        .lock()
+                        .unwrap_or_else(|error| error.into_inner())
+                        .remove(window.label());
+                }
+            }
             if payload.event() == PageLoadEvent::Finished {
                 // The bridge is now injected in this window: remember it so
                 // queued toast routes can apply, and drain anything waiting.
@@ -1290,6 +1341,65 @@ fn clamped_logical_size(app: &AppHandle, width: f64, height: f64) -> (f64, f64) 
 /// REQUIRES the popup to share the opener's webview environment/session.
 static CALL_WINDOW_SEQ: AtomicU64 = AtomicU64::new(0);
 
+/// Initial call geometry only: no maximum size is imposed, so native maximize
+/// remains available. Wry popup positions are relative to the monitor work area.
+#[derive(Debug)]
+struct CallGeometry {
+    x: f64,
+    y: f64,
+    width: f64,
+    height: f64,
+    min_width: f64,
+    min_height: f64,
+}
+
+fn fit_call_geometry(
+    requested: (f64, f64),
+    position: Option<(f64, f64)>,
+    work: (f64, f64, f64, f64),
+    scale: f64,
+) -> CallGeometry {
+    let scale = if scale.is_finite() && scale > 0.0 {
+        scale
+    } else {
+        1.0
+    };
+    let available_w = (work.2 / scale).max(1.0);
+    let available_h = (work.3 / scale).max(1.0);
+    // Reserve native borders/title bar as well as taskbar/work-area exclusions.
+    let max_w = (available_w * 0.96).min(available_w - 16.0).max(1.0);
+    let max_h = (available_h * 0.96).min(available_h - 48.0).max(1.0);
+    let min_width = 320.0_f64.min(max_w);
+    let min_height = 240.0_f64.min(max_h);
+    let finite_size = |value: f64, fallback: f64| {
+        if value.is_finite() && value > 0.0 {
+            value
+        } else {
+            fallback
+        }
+    };
+    let width = finite_size(requested.0, 940.0).clamp(min_width, max_w);
+    let height = finite_size(requested.1, 640.0).clamp(min_height, max_h);
+    let right = (available_w - width - 16.0).max(0.0);
+    let bottom = (available_h - height - 48.0).max(0.0);
+    let finite_offset = |value: f64, maximum: f64| {
+        if value.is_finite() {
+            value.clamp(0.0, maximum)
+        } else {
+            maximum / 2.0
+        }
+    };
+    let (x, y) = position.unwrap_or((right / 2.0, bottom / 2.0));
+    CallGeometry {
+        x: work.0 / scale + finite_offset(x, right),
+        y: work.1 / scale + finite_offset(y, bottom),
+        width,
+        height,
+        min_width,
+        min_height,
+    }
+}
+
 /// The REUSE script for an existing content popup: a JSON-quoted
 /// `location.replace` wrapped in try/catch. Unit-pinned (see tests) because
 /// the emission contract is what broke silently before (IIFE SyntaxError —
@@ -1707,6 +1817,13 @@ pub fn queue_pending_navigation(app: &AppHandle, url: &str) {
 /// Drain queued URLs for one account window (page is loaded). Applied in
 /// order; the LAST URL wins if several arrived (the user's newest intent).
 fn drain_pending_navigations(app: &AppHandle, label: &str) {
+    // A secondary account finishing its startup must not consume links meant
+    // for the active account. Reloading pages also wait for their new bridge.
+    if let Some(active) = app.try_state::<ActiveAccount>() {
+        if *active.lock().unwrap_or_else(|error| error.into_inner()) != label {
+            return;
+        }
+    }
     let urls: Vec<String> = match app.try_state::<PendingNavigations>() {
         Some(pending) => {
             let mut list = pending.0.lock().unwrap_or_else(|error| error.into_inner());
@@ -1740,24 +1857,24 @@ fn drain_pending_navigations_into(app: &AppHandle, label: &str, urls: &[String])
             // failed), and (2) live CDP forensics proved WhatsApp Web keeps
             // chats OUT of the URL entirely — /send?phone has no in-app
             // route, so no in-page navigation trick can open a contact.
-            // The delivery now goes through the bridge's
-            // __whatsnowOpenChatByPhone: a KNOWN number is opened with a
-            // trusted chat-list row click (verified against the header); an
-            // UNKNOWN number deliberately does nothing further (revert
-            // decision 2026-09-17 — the interstitial popup and search
-            // choreography were rejected as "messy second window" quirks,
-            // and a direct store-API open is impossible on current
-            // WhatsApp Web).
+            // v2.6.1 keeps the trusted-row fast path and resolves unlisted
+            // numbers/draft text through the native New chat UI, without reload.
             let phone = parsed
                 .query_pairs()
-                .find(|(k, _)| k == "phone")
+                .find(|(k, _)| k.eq_ignore_ascii_case("phone"))
                 .map(|(_, v)| v.to_string())
                 .unwrap_or_default();
             if phone.is_empty() {
                 crate::dlog::log("navigation: deep link without phone param ignored");
                 continue;
             }
-            let script = deep_link_open_by_phone_script(&phone);
+            let text = parsed
+                .query_pairs()
+                .find(|(key, _)| {
+                    key.eq_ignore_ascii_case("text") || key.eq_ignore_ascii_case("body")
+                })
+                .map(|(_, value)| value.into_owned());
+            let script = deep_link_open_by_phone_script(&phone, text.as_deref());
             match window.eval(&script) {
                 Ok(()) => crate::dlog::log(
                     "navigation: deep link handed to account window (open by phone)",
@@ -1803,14 +1920,15 @@ fn whatsapp_soft_navigation_script(url: &str) -> String {
 }
 
 /// The script that drives a deep link through the bridge's open-by-phone
-/// flow (row match → trusted click; unknown number → deliberately nothing,
-/// the app just rose). Kept next to the fallback builder so both delivery
+/// flow (row match → trusted click; unlisted number → native New chat search).
+/// Kept next to the fallback builder so both delivery
 /// contracts stay unit-pinned side by side.
-fn deep_link_open_by_phone_script(phone: &str) -> String {
+fn deep_link_open_by_phone_script(phone: &str, text: Option<&str>) -> String {
     let phone_json = serde_json::to_string(phone).unwrap_or_else(|_| "\"\"".into());
+    let text_json = serde_json::to_string(&text).unwrap_or_else(|_| "null".into());
     format!(
         "Promise.resolve(window.__whatsnowOpenChatByPhone ? \
-         window.__whatsnowOpenChatByPhone({phone_json}) : 'no-bridge')\
+         window.__whatsnowOpenChatByPhone({phone_json}, {text_json}) : 'no-bridge')\
          .catch(function(){{return 'no-bridge';}});"
     )
 }
@@ -2082,7 +2200,12 @@ fn settings_version_bootstrap(version: &str) -> String {
   const apply = () => {{
     const refs = document.querySelectorAll("[data-version-ref]");
     for (const el of refs) {{
-      el.textContent = el.textContent.replace(/WhatsNow [0-9.]+/, "WhatsNow " + version);
+      // Update only text nodes; replacing the container would erase author links.
+      for (const node of el.childNodes) {{
+        if (node.nodeType === Node.TEXT_NODE) {{
+          node.nodeValue = node.nodeValue.replace(/WhatsNow [0-9.]+/, "WhatsNow " + version);
+        }}
+      }}
     }}
   }};
   apply();
@@ -2199,8 +2322,8 @@ mod tests {
             "no hardcoded 2.0.1 remains in the settings page"
         );
         assert!(
-            html.contains("?v=2.6.0"),
-            "settings assets cache-bust on 2.6.0"
+            html.contains("?v=2.6.1"),
+            "settings assets cache-bust on 2.6.1"
         );
     }
 
@@ -2252,9 +2375,10 @@ mod tests {
         // __whatsnowOpenChatByPhone (row match → trusted click; unknown →
         // deliberately nothing). The eval script must call it with the JSON
         // phone.
-        let script = deep_link_open_by_phone_script("6281234567890");
+        let script = deep_link_open_by_phone_script("6281234567890", Some("Hello & welcome"));
         assert!(script.contains("__whatsnowOpenChatByPhone"));
         assert!(script.contains("\"6281234567890\""));
+        assert!(script.contains("\"Hello & welcome\""));
         // Absent bridge degrades to a logged no-op string, not a throw.
         assert!(script.contains("'no-bridge'"));
         // The promise chain swallows rejections (no unhandled rejection).
@@ -2357,6 +2481,18 @@ mod tests {
 
     #[test]
     fn call_urls_keep_their_dedicated_window() {
+        assert!(is_whatsapp_call_url(
+            &tauri::Url::parse("https://web.whatsapp.com/call/ABC123").unwrap()
+        ));
+        assert!(is_whatsapp_call_url(
+            &tauri::Url::parse("https://web.whatsapp.com/call").unwrap()
+        ));
+        assert!(!is_whatsapp_call_url(
+            &tauri::Url::parse("https://web.whatsapp.com/callback").unwrap()
+        ));
+        assert!(!is_whatsapp_call_url(
+            &tauri::Url::parse("http://call.whatsapp.com/abc").unwrap()
+        ));
         // Call stages are the one family URL with special window behavior
         // (always-on-top, dedicated per-call window — the 2.6.0 fix).
         assert!(is_whatsapp_call_url(
@@ -2422,30 +2558,45 @@ mod tests {
 
     #[test]
     fn call_window_size_clamps_to_the_work_area() {
-        // Pure clamp math mirrored from clamped_logical_size (the helper takes
-        // an AppHandle, which tests cannot construct): physical work area /
-        // scale factor = logical ceiling; never below the 320px floor.
-        let clamp = |w: f64, h: f64, work_w: f64, work_h: f64, scale: f64| {
-            let aw = work_w / scale * 0.96;
-            let ah = work_h / scale * 0.96;
-            (w.min(aw).max(320.0), h.min(ah).max(320.0))
-        };
-        // 1080p at 100%: WhatsApp's typical 940x640 call stage fits untouched.
-        assert_eq!(clamp(940.0, 640.0, 1920.0, 1040.0, 1.0), (940.0, 640.0));
-        // 1366x768 laptop at 100%: the 1100x800 default chat shrinks to fit.
-        let (w, h) = clamp(1100.0, 800.0, 1366.0, 728.0, 1.0);
-        assert!(
-            w <= 1366.0 * 0.96 && h <= 728.0 * 0.96,
-            "must fit the work area"
+        let fit = super::fit_call_geometry;
+        let normal = fit((940.0, 640.0), None, (0.0, 0.0, 1920.0, 1040.0), 1.0);
+        assert_eq!((normal.width, normal.height), (940.0, 640.0));
+        for scale in [1.0, 1.25, 1.5, 2.0] {
+            let geometry = fit(
+                (5000.0, 5000.0),
+                Some((99999.0, 99999.0)),
+                (0.0, 0.0, 1366.0, 728.0),
+                scale,
+            );
+            assert!(geometry.x >= 0.0 && geometry.y >= 0.0);
+            assert!(geometry.x + geometry.width + 16.0 <= 1366.0 / scale + 0.001);
+            assert!(geometry.y + geometry.height + 48.0 <= 728.0 / scale + 0.001);
+            assert!(geometry.min_width <= geometry.width);
+            assert!(geometry.min_height <= geometry.height);
+        }
+        // Negative-origin secondary monitor: keep the call on the opener's
+        // display rather than clamping it onto the primary monitor.
+        let secondary = fit(
+            (940.0, 640.0),
+            Some((20.0, 30.0)),
+            (-1920.0, -300.0, 1920.0, 1040.0),
+            1.5,
         );
-        // 125% DPI on 1920x1080: logical size is 1536x864 — the old fixed
-        // 1100x800 fit, but a maximized-request 1400x900 popup must clamp.
-        let (w, h) = clamp(1400.0, 900.0, 1920.0, 1040.0, 1.25);
-        assert!(w <= 1920.0 / 1.25 * 0.96 && h <= 1040.0 / 1.25 * 0.96);
-        // Absurd tiny monitor: each axis clamps to min(available*0.96, floor
-        // 320 reversed: max(available*0.96, 320)) — width 384 = 400*0.96 stays
-        // above the floor, height 288 floors up to 320 so it stays usable.
-        assert_eq!(clamp(940.0, 640.0, 400.0, 300.0, 1.0), (384.0, 320.0));
+        assert_eq!(secondary.x, -1260.0);
+        assert!(secondary.y >= -200.0);
+        assert!(secondary.y + secondary.height + 48.0 <= 740.0 / 1.5 + 0.001);
+        // Tiny work area: minimum dimensions themselves must shrink to fit.
+        let tiny = fit((940.0, 640.0), None, (0.0, 0.0, 200.0, 150.0), 1.0);
+        assert_eq!((tiny.width, tiny.height), (184.0, 102.0));
+        assert!(tiny.min_width <= tiny.width && tiny.min_height <= tiny.height);
+        let malformed = fit(
+            (f64::NAN, f64::INFINITY),
+            Some((f64::NAN, f64::NEG_INFINITY)),
+            (0.0, 0.0, 1920.0, 1040.0),
+            0.0,
+        );
+        assert!(malformed.x.is_finite() && malformed.y.is_finite());
+        assert_eq!((malformed.width, malformed.height), (940.0, 640.0));
     }
 
     #[test]
