@@ -296,6 +296,17 @@
             /^(https?):$/.test(family.protocol) &&
             isWhatsAppFamilyHost(family.hostname)
           ) {
+            // Web Calling checks the returned WindowProxy and uses it for
+            // opener/child communication. Returning null after opening the
+            // native window falsely reports a blocked popup to WhatsApp.
+            // Preserve its target/features as well as the real return value.
+            if (family.protocol === "https:" && (
+              family.hostname.toLowerCase() === "call.whatsapp.com" ||
+              (family.hostname.toLowerCase() === "web.whatsapp.com" &&
+                /^\/call(?:\/|$)/.test(family.pathname))
+            )) {
+              return nativeWindowOpen.call(window, value, target, features);
+            }
             // wa.me carries a PHONE: open the contact through the same
             // open-by-phone flow as browser deep links, including draft text.
             if (

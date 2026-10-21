@@ -82,6 +82,7 @@ function makeHarness({
   readyState = "complete",
   onNavigate,
   invokeLog,
+  nativeOpenResult = null,
   // Chat-list rows the open-by-phone / toast-routing flow can find. Each
   // entry maps to a fake row element carrying the given attributes.
   chatListRows = [],
@@ -326,7 +327,7 @@ function makeHarness({
     // link tests assert what reached the real window.open.
     open(value, target, features) {
       windowOpenCalls.push({ value, target, features });
-      return null;
+      return nativeOpenResult;
     },
     Event: class {
       constructor(type, options = {}) {
@@ -1192,7 +1193,29 @@ async function testPromoSweepIsCoalescedAndSurvivesEarlyInit() {
   );
 }
 
+async function testCallPopupReturnsNativeWindowProxy() {
+  console.log("call popup preserves WindowProxy, target, and requested features");
+  const proxy = { closed: false, focus() {}, postMessage() {} };
+  const h = makeHarness({ nativeOpenResult: proxy });
+  for (const url of [
+    "https://web.whatsapp.com/call/ABC123",
+    "https://web.whatsapp.com/call?source=web",
+    "https://call.whatsapp.com/ABC123",
+  ]) {
+    const features = "popup,width=940,height=640";
+    const result = h.window.open(url, "whatsapp-call", features);
+    assert(result === proxy, "caller receives the native WindowProxy, not null");
+    const last = h.windowOpenCalls.at(-1);
+    assert(last.target === "whatsapp-call", "call target name stays intact");
+    assert(last.features === features, "call dimensions stay intact");
+  }
+  const blocked = makeHarness();
+  assert(blocked.window.open("https://web.whatsapp.com/call") === null,
+    "a real blocked popup still returns null; no fabricated success");
+}
+
 const tests = [
+  testCallPopupReturnsNativeWindowProxy,
   testMixedDropLosesNothing,
   testPureMediaGoesToMediaInput,
   testDistinctSameNamedFilesBothAttach,

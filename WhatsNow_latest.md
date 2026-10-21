@@ -1,6 +1,6 @@
 # WhatsNow — current feature guide
 
-_v2.6.1 prepared source baseline · 2026-10-17 · Created and maintained by Benedictus Reynaldo Hartanto ([@benedictusrey](https://github.com/benedictusrey))._
+_v2.6.2 release preparation · 2026-10-21 · Created and maintained by Benedictus Reynaldo Hartanto ([@benedictusrey](https://github.com/benedictusrey))._
 
 ---
 
@@ -9,10 +9,10 @@ workspace, with account management, Focus tools, local App Lock, native alerts,
 and personalized appearance. It is an independent project, not an official
 WhatsApp or Meta product.
 
-**“Latest” here means the current documented candidate**, not a guarantee that
-v2.6.1 is already published or fully platform-validated. Download only assets
+**“Latest” here means the current documented source**, not a guarantee that
+v2.6.2 is already published or validated on every platform. Download only assets
 actually attached to the [official releases](https://github.com/benedictusrey/WhatsNow-for-WhatsApp/releases).
-See [v2.6.1 changes](CHANGELOGS_v2.6.1.md) and [release status](docs/RELEASE_PREPARATION_2.6.1.md).
+See [v2.6.2 changes](docs/IMPLEMENTATION_v2.6.2.md) and [release status](docs/RELEASE_PREPARATION_2.6.2.md).
 
 ## 💬 Messaging and media
 
@@ -124,8 +124,10 @@ does not add macOS/Linux protocol registration.
 Supported call-stage URLs open a separate native window with resize, minimize,
 maximize, opener-session continuity, and monitor/DPI-aware initial geometry.
 Calling itself remains dependent on WhatsApp Web, OS permissions, hardware, and
-account eligibility. A real two-party call and media-continuity acceptance test
-are still required before declaring v2.6.1 fully verified.
+account eligibility. In 2.6.2, the maintainer confirmed working Windows calling
+after the popup/opener repair. The camera prefers full-frame capture where
+supported; the receiving phone controls display cropping. Native fixtures cover
+maximize, restore, and resize; Linux/macOS runtime calling remains unconfirmed.
 
 ## 🔐 Privacy and local protection
 
@@ -149,7 +151,7 @@ Read [Privacy](PRIVACY.md) and [Security](SECURITY.md).
 
 ## 📦 Platforms and installation
 
-| Platform | Package formats | Current v2.6.1 preparation |
+| Platform | Package formats | Current v2.6.2 preparation |
 | --- | --- | --- |
 | Windows x64 | Setup EXE, MSI, portable EXE | Built locally; unsigned |
 | Linux x64 | AppImage, DEB | Native build/validation pending |

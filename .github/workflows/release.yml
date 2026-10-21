@@ -6,12 +6,12 @@ on:
       app_version:
         description: "Application version used in release filenames"
         required: true
-        default: "2.6.1"
+        default: "2.6.2"
         type: string
       release_tag:
         description: "GitHub Release tag"
         required: true
-        default: "v2.6.1"
+        default: "v2.6.2"
         type: string
       publish_release:
         description: "Create a draft GitHub Release after all builds pass"
@@ -30,7 +30,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  APP_VERSION: ${{ github.event_name == 'push' && github.ref_name || github.event.inputs.app_version || '2.6.1' }}
+  APP_VERSION: ${{ github.event_name == 'push' && github.ref_name || github.event.inputs.app_version || '2.6.2' }}
   RELEASE_TAG: ${{ github.event.inputs.release_tag || github.ref_name }}
 
 jobs:
@@ -59,6 +59,7 @@ jobs:
           assert.equal(process.env.RELEASE_TAG, `v${version}`);
           JS
           node src-tauri/resources/bridge.test.mjs
+          node src-tauri/resources/call-media.test.mjs
           node src-tauri/resources/chat-theme.test.mjs
           node src-tauri/resources/toast-route.test.mjs
           node settings-ui/theme.test.mjs
@@ -66,6 +67,7 @@ jobs:
           node settings-ui/comboToAccelerator.test.mjs
           node scripts/check-docs.mjs
           node scripts/phone-routing.test.mjs
+          node scripts/call-popup.test.mjs
           node scripts/settings-contrast.test.mjs
           node scripts/settings-attribution.test.mjs
 

@@ -9,13 +9,18 @@ param(
 $ErrorActionPreference = "Stop"
 $sourceRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $manifestPath = Join-Path $sourceRoot "src-tauri\Cargo.toml"
+$appVersion = (Get-Content -LiteralPath (Join-Path $sourceRoot "src-tauri\tauri.conf.json") -Raw | ConvertFrom-Json).version
+if ($appVersion -notmatch '^\d+\.\d+\.\d+$' -or
+    (Get-Content -LiteralPath (Join-Path $sourceRoot "VERSION") -Raw).Trim() -ne $appVersion) {
+    throw "Application version declarations do not match."
+}
 $targetDirectory = Join-Path $sourceRoot ".workspace\target-windows"
-$installerSource = Join-Path $targetDirectory "release\bundle\nsis\WhatsNow_2.6.1_x64-setup.exe"
-$msiSource = Join-Path $targetDirectory "release\bundle\msi\WhatsNow_2.6.1_x64_en-US.msi"
+$installerSource = Join-Path $targetDirectory "release\bundle\nsis\WhatsNow_${appVersion}_x64-setup.exe"
+$msiSource = Join-Path $targetDirectory "release\bundle\msi\WhatsNow_${appVersion}_x64_en-US.msi"
 $portableSource = Join-Path $targetDirectory "release\whatsnow.exe"
-$installerOutput = Join-Path $OutputDirectory "WhatsNow_2.6.1_windows_x64-setup.exe"
-$msiOutput = Join-Path $OutputDirectory "WhatsNow_2.6.1_windows_x64_en-US.msi"
-$portableOutput = Join-Path $OutputDirectory "WhatsNow_2.6.1_windows_x64-portable.exe"
+$installerOutput = Join-Path $OutputDirectory "WhatsNow_${appVersion}_windows_x64-setup.exe"
+$msiOutput = Join-Path $OutputDirectory "WhatsNow_${appVersion}_windows_x64_en-US.msi"
+$portableOutput = Join-Path $OutputDirectory "WhatsNow_${appVersion}_windows_x64-portable.exe"
 
 New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
 
@@ -32,7 +37,7 @@ try {
         Copy-Item -LiteralPath $installerSource -Destination $installerOutput -Force
         Copy-Item -LiteralPath $msiSource -Destination $msiOutput -Force
 
-        cargo build --release --manifest-path $manifestPath `
+        cargo build --locked --release --manifest-path $manifestPath `
             --features "windows-memory,portable-mode"
         if ($LASTEXITCODE -ne 0) {
             throw "Windows portable build failed."

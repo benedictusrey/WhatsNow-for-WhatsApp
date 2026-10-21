@@ -77,6 +77,7 @@ jobs:
         run: |
           node --check src-tauri/resources/bridge.js
           node src-tauri/resources/bridge.test.mjs
+          node src-tauri/resources/call-media.test.mjs
           node --check src-tauri/resources/chat-theme.js
           node src-tauri/resources/chat-theme.test.mjs
 
@@ -101,6 +102,7 @@ jobs:
           npm install --no-save --package-lock=false playwright@1.63.0
           npx playwright install --with-deps chromium
           node scripts/phone-routing.test.mjs
+          node scripts/call-popup.test.mjs
           node scripts/settings-contrast.test.mjs
           node scripts/settings-attribution.test.mjs
 

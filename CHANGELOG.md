@@ -5,7 +5,22 @@ WhatsNow is authored and maintained solely by
 
 Copyright (c) 2026 @benedictusrey. Released under the [MIT License](LICENSE).
 
-All notable project changes are recorded here. This project follows
+All notable project changes are recorded here.
+
+## [2.6.2] - release preparation (2026-10-21)
+
+- Preserve the real WindowProxy, target name, and popup features for WhatsApp
+  call stages so WhatsApp does not mistake an opened call window for a blocked popup.
+- Start call children at `about:blank` before the engine attaches their opener.
+- Prefer full-frame camera capture where supported, without changing screen
+  sharing, selected devices, or audio constraints. The recipient controls phone display cropping.
+- Add browser opener-handshake and native Windows maximize/restore/resize tests.
+- See the [repair record](docs/CALL_WINDOW_FIX_2026-10-21.md) for evidence and live-test limits.
+- The maintainer confirmed successful Windows calling after installing 2.6.2.
+- See [implementation and validation](docs/IMPLEMENTATION_v2.6.2.md) for the complete update record.
+
+The published v2.6.1 packages remain unchanged. Version 2.6.2 is being prepared
+as a draft with fresh native builds; Linux/macOS runtime acceptance remains separate.
 
 ## [2.6.1] - 2026-10-17
 

@@ -44,6 +44,12 @@ fn refine_windows_resource() {
         return;
     }
 
+    // Cargo examples do not inherit Tauri's main-binary manifest resource.
+    // The native popup fixture needs Common Controls v6 (TaskDialogIndirect).
+    // Scope these link arguments to examples; release app metadata is unchanged.
+    println!("cargo:rustc-link-arg-examples=/MANIFEST:EMBED");
+    println!("cargo:rustc-link-arg-examples=/MANIFESTDEPENDENCY:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'");
+
     // Tauri intentionally uses productName for FileDescription. Refine its
     // generated resource and recompile it in place, preserving the one resource
     // link directive that tauri-build already emitted.

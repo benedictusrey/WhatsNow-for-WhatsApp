@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="https://github.com/benedictusrey/WhatsNow-for-WhatsApp/releases"><img alt="GitHub releases" src="https://img.shields.io/github/v/release/benedictusrey/WhatsNow-for-WhatsApp?display_name=tag"></a>
-  <img alt="Release candidate 2.6.1" src="https://img.shields.io/badge/candidate-2.6.1-087a60">
+  <img alt="Release preparation 2.6.2" src="https://img.shields.io/badge/preparing-2.6.2-087a60">
   <img alt="Windows macOS Linux targets" src="https://img.shields.io/badge/targets-Windows%20%7C%20macOS%20%7C%20Linux-213547">
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-6B9E3A"></a>
   <a href="https://github.com/benedictusrey"><img alt="Author benedictusrey" src="https://img.shields.io/badge/author-%40benedictusrey-111827"></a>
@@ -21,7 +21,7 @@
   <a href="https://github.com/benedictusrey/WhatsNow-for-WhatsApp/releases">Downloads</a> ·
   <a href="WhatsNow_latest.md">All features</a> ·
   <a href="docs/INSTALLATION.md">Installation</a> ·
-  <a href="CHANGELOGS_v2.6.1.md">v2.6.1 changes</a> ·
+  <a href="docs/IMPLEMENTATION_v2.6.2.md">v2.6.2 changes</a> ·
   <a href="SECURITY.md">Security</a>
 </p>
 
@@ -31,28 +31,27 @@ native notifications. It is created and maintained by Benedictus Reynaldo
 Hartanto ([@benedictusrey](https://github.com/benedictusrey)) and is not affiliated
 with WhatsApp or Meta.
 
-> **v2.6.1 is being prepared as a draft.** Automated checks do not replace the
-> remaining live phone-link, two-party call, and platform installation checks.
+> **v2.6.2 release preparation:** the maintainer confirmed that calling works
+> smoothly on the Windows candidate. Native cross-platform builds and final
+> release-asset checks are tracked separately from that live test.
 > Download only files actually attached to a published release.
 > The artwork is illustrative, not a pixel-exact screenshot or a security certification.
 
-## 📋 What's new in v2.6.1
+## 📋 What's new in v2.6.2
 
-- **Phone links without a refresh fallback:** trusted chat selection or native
-  New chat lookup, protected drafts, cancellation, and superseded-request handling
-- **More reliable panel detection:** nonmodal containers and hidden/off-screen
-  panels no longer incorrectly block lookup as busy
-- **Call-window controls:** dedicated resize/minimize/maximize windows for
-  supported call stages, fitted to the opener's monitor and DPI
-- **Clearer Settings:** improved action-label contrast, selected icons, focus
-  outlines, and small text across the available palettes
-- **Concise attribution:** Benedictus RH in About/footer, with GitHub links that
-  survive runtime version insertion
-- **Regression coverage:** phone routing, Settings contrast, and attribution-link
-  checks alongside the existing attachment, theme, and notification tests
+- **Working call handoff:** repair the blank call window and false blocked-popup
+  prompt by preserving the native popup handle and opener connection
+- **Usable call windows:** native resize, maximize, minimize, and restore controls,
+  with monitor/DPI-aware initial sizing
+- **Full-frame camera preference:** reduce browser-side cropping where supported;
+  the receiving phone still controls its own fit/fill layout
+- **Regression protection:** native Windows and browser popup/camera tests, alongside
+  existing theme, notification, attachment, phone-link, and Settings checks
+- **Preserved workspace tools:** themes, Focus, App Lock, accounts, native alerts,
+  no-refresh phone links, and Settings clarity remain part of WhatsNow
 
-Read the [full implementation record](CHANGELOGS_v2.6.1.md),
-[release notes](RELEASE_NOTES.md), and [audit](docs/AUDIT_2.6.1.md).
+Read the [2.6.2 implementation record](docs/IMPLEMENTATION_v2.6.2.md),
+[release notes](RELEASE_NOTES.md), and [previous changes](CHANGELOGS_v2.6.1.md).
 Live service behavior is still subject to WhatsApp Web changes.
 
 ## 💬 Your conversations, with room to focus
@@ -108,7 +107,7 @@ the complete process tree under a comparable workload. See [Windows notes](docs/
 
 ## 📦 Choose your package
 
-| Platform | v2.6.1 package targets | Requirement |
+| Platform | v2.6.2 package targets | Requirement |
 | --- | --- | --- |
 | Windows x64 | Setup EXE, MSI, portable EXE | Updated Microsoft Edge WebView2 |
 | Linux x64 | AppImage, DEB | Compatible WebKitGTK distribution |
@@ -161,7 +160,7 @@ Start with [Contributing](CONTRIBUTING.md) and the platform prerequisites in
 `cargo tauri build`; Windows installer/portable packaging is also available
 through `scripts/build-windows.ps1`.
 
-For release work, follow [the acceptance checklist](docs/RELEASE_PREPARATION_2.6.1.md).
+For release work, follow [the acceptance checklist](docs/RELEASE_PREPARATION_2.6.2.md).
 The workflow builds all platform packages from one revision and creates a
 **draft**, not an automatically published release. Preserve the pending live
 checks until they are actually confirmed.

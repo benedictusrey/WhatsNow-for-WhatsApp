@@ -105,6 +105,12 @@ fn is_whatsapp_call_url(url: &tauri::Url) -> bool {
     })
 }
 
+/// A new-window child must not navigate before the engine attaches its opener.
+/// See Tauri's on_new_window example and WebView2 SetNewWindow requirements.
+fn call_popup_initial_url() -> tauri::Url {
+    crate::call_window::initial_url()
+}
+
 /// Open a validated web URL through the operating system.
 ///
 /// This delegates browser selection to Windows/macOS/Linux. When no default
@@ -450,22 +456,11 @@ fn open_account_window_inner(
                     .unwrap_or_else(|| {
                         clamped_logical_size(&new_window_app, requested_size.0, requested_size.1)
                     });
-                let mut builder = WebviewWindowBuilder::new(
-                    &new_window_app,
-                    &label,
-                    WebviewUrl::External(url.clone()),
-                )
-                .title("WhatsNow — Call")
-                .inner_size(width, height)
-                .min_inner_size(320.0, 240.0)
-                .resizable(true)
-                .maximizable(true)
-                .minimizable(true)
-                .closable(true)
-                .decorations(true)
-                .visible(true)
-                .focused(true)
-                .user_agent(CHROME_UA);
+                // The shared builder starts pristine at about:blank. The
+                // engine supplies the requested URL after attaching the opener.
+                let mut builder = crate::call_window::builder(&new_window_app, &label)
+                    .inner_size(width, height)
+                    .user_agent(CHROME_UA);
                 if !is_call {
                     // Content popup: NEVER build inside this callback (see
                     // freeze note above). The popup is pre-created hidden at
@@ -2322,8 +2317,8 @@ mod tests {
             "no hardcoded 2.0.1 remains in the settings page"
         );
         assert!(
-            html.contains("?v=2.6.1"),
-            "settings assets cache-bust on 2.6.1"
+            html.contains(&format!("?v={}", env!("CARGO_PKG_VERSION"))),
+            "settings assets cache-bust on the compiled version"
         );
     }
 
@@ -2513,6 +2508,11 @@ mod tests {
                 "{link}"
             );
         }
+    }
+
+    #[test]
+    fn call_child_starts_blank_until_the_engine_attaches_the_opener() {
+        assert_eq!(super::call_popup_initial_url().as_str(), "about:blank");
     }
 
     #[test]

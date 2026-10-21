@@ -4,13 +4,14 @@ import { readFile } from "node:fs/promises";
 import { chromium } from "playwright";
 
 const root = new URL("../", import.meta.url);
+const version = (await readFile(new URL("VERSION", root), "utf8")).trim();
 const html = await readFile(new URL("settings-ui/index.html", root), "utf8");
 const host = await readFile(new URL("src-tauri/src/window.rs", root), "utf8");
 const main = await readFile(new URL("settings-ui/main.js", root), "utf8");
 const bootstrap = host.slice(host.indexOf("fn settings_version_bootstrap("))
   .match(/r#"([\s\S]*?)"#/)[1]
   .replace(/\{\{/g, "{").replace(/\}\}/g, "}")
-  .replace("{version}", JSON.stringify("2.6.1"));
+  .replace("{version}", JSON.stringify(version));
 const links = main.slice(main.indexOf("function wireExternalLinks()"), main.indexOf("async function load()"));
 const browser = await chromium.launch();
 try {
@@ -25,7 +26,7 @@ try {
   await page.evaluate(bootstrap);
   await page.evaluate(bootstrap); // Repeated version application must preserve anchors.
   assert.equal((await page.locator(".workspace-footer [data-version-ref]").innerText()).replace(/\s+/g, " "),
-    "WhatsNow 2.6.1 · Benedictus RH (@benedictusrey)");
+    `WhatsNow ${version} · Benedictus RH (@benedictusrey)`);
   assert.equal(await page.locator(".workspace-footer a").count(), 1,
     "version insertion must not erase the footer hyperlink");
   assert.equal(await page.locator(".about-copy").innerText().then(text => text.includes("Benedictus Reynaldo Hartanto")), false);

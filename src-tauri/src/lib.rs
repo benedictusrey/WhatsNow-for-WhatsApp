@@ -7,6 +7,8 @@ mod accounts;
 mod applock;
 mod aumid;
 mod biometric;
+#[doc(hidden)]
+pub mod call_window;
 mod commands;
 mod dlog;
 mod lock;
