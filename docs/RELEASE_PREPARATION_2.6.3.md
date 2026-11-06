@@ -21,6 +21,8 @@ guides are updated together. Historical implementation records remain intact.
   [implementation record](IMPLEMENTATION_v2.6.3.md) for evidence and limits.
 - Local Windows candidates have matching version metadata and verified SHA-256
   manifests. They are not the cloud-built release assets.
+- Release review restricted the Windows audio-identity module to Windows and
+  test builds, avoiding unused platform-only helpers in Linux/macOS builds.
 
 ## Publication gate
 

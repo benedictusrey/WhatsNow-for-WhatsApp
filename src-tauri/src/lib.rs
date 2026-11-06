@@ -5,6 +5,7 @@
 
 mod accounts;
 mod applock;
+#[cfg(any(windows, test))]
 #[doc(hidden)]
 pub mod audio_identity;
 mod aumid;
