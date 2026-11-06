@@ -18,6 +18,11 @@ fn wait_for(mut predicate: impl FnMut() -> bool) -> bool {
 }
 
 fn main() {
+    #[cfg(windows)]
+    let identity = whatsnow_lib::audio_identity::AudioSessionIdentityGuard::start()
+        .expect("audio identity worker");
+    #[cfg(windows)]
+    let registrar = identity.registrar();
     let listener = TcpListener::bind("127.0.0.1:0").expect("fixture listener");
     let address = listener.local_addr().unwrap();
     let (sender, receiver) = mpsc::channel();
@@ -64,6 +69,11 @@ fn main() {
                     .window_features(features)
                     .data_directory(profile_for_opener.clone());
                 let window = builder.build().expect("call child creation");
+                #[cfg(windows)]
+                {
+                    let registrar = registrar.clone();
+                    window.with_webview(move |webview| registrar.attach(&webview).expect("call environment membership")).expect("call webview registration");
+                }
                 tauri::webview::NewWindowResponse::Create { window }
             })
             .build()?;

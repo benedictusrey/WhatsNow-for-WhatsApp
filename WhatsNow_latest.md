@@ -1,6 +1,6 @@
 # WhatsNow — current feature guide
 
-_v2.6.2 release preparation · 2026-10-21 · Created and maintained by Benedictus Reynaldo Hartanto ([@benedictusrey](https://github.com/benedictusrey))._
+_v2.6.3 · 2026-11-07 · Created and maintained by Benedictus Reynaldo Hartanto ([@benedictusrey](https://github.com/benedictusrey))._
 
 ---
 
@@ -9,10 +9,18 @@ workspace, with account management, Focus tools, local App Lock, native alerts,
 and personalized appearance. It is an independent project, not an official
 WhatsApp or Meta product.
 
-**“Latest” here means the current documented source**, not a guarantee that
-v2.6.2 is already published or validated on every platform. Download only assets
+**“Latest” here means the current documented version**, not a guarantee of
+validation on every platform. Download only assets
 actually attached to the [official releases](https://github.com/benedictusrey/WhatsNow-for-WhatsApp/releases).
-See [v2.6.2 changes](docs/IMPLEMENTATION_v2.6.2.md) and [release status](docs/RELEASE_PREPARATION_2.6.2.md).
+See [v2.6.3 changes and acceptance status](docs/IMPLEMENTATION_v2.6.3.md).
+
+The Windows build retains NORMAL memory priority for background account/call
+webviews. Ongoing sound is not deliberately silenced by tray hiding or App Lock.
+Manual pause/mute and OS controls remain in force; background RAM may increase.
+Extended live WhatsApp playback and real two-party calls on this update remain unverified.
+Owned Windows audio sessions also receive WhatsNow's name, existing icon, and
+app-specific mixer grouping. This does not install an audio driver, force unmute,
+or establish independent persisted-mute behavior without two-app live testing.
 
 ## 💬 Messaging and media
 
@@ -151,7 +159,7 @@ Read [Privacy](PRIVACY.md) and [Security](SECURITY.md).
 
 ## 📦 Platforms and installation
 
-| Platform | Package formats | Current v2.6.2 preparation |
+| Platform | Package formats | Current v2.6.3 targets |
 | --- | --- | --- |
 | Windows x64 | Setup EXE, MSI, portable EXE | Built locally; unsigned |
 | Linux x64 | AppImage, DEB | Native build/validation pending |
@@ -171,10 +179,10 @@ add broad exclusions to run a package you have not verified.
 
 ## ⚡ Performance expectations and support
 
-Windows memory-conscious builds request WebView2's supported low-memory target
-only for hidden/minimized windows. Visible windows stay normal even when
-unfocused, protecting media playback. Background scripts and connections are
-not deliberately suspended. Multiple engine processes are expected.
+The 2.6.3 Windows build keeps all account/call webviews at NORMAL memory
+priority while visible, unfocused, minimized, tray-hidden, or App Locked.
+This reliability-first policy may increase background RAM. Background scripts
+and connections are not deliberately suspended. Multiple engine processes are expected.
 
 There is **no fixed RAM promise**, no single-process trick, and no verified
 universal advantage over Microsoft's official client. Measure the complete

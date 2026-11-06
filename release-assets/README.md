@@ -23,7 +23,17 @@ builds here only after local platform validation.
 | `v2.0.0/` | `checksums.sha256`, `WhatsNow_2.0.0_x64-setup.exe`, `WhatsNow_2.0.0_x64_en-US.msi`, plus `_amd64.AppImage` / `_amd64.deb` (Linux) and `_aarch64.dmg` / `_aarch64.app.tar.gz` (macOS) | 2 Windows binaries |
 | `v2.5.0/` | `checksums.sha256`, `WhatsNow_2.5.0_windows_x64-setup.exe`, `WhatsNow_2.5.0_windows_x64_en-US.msi`, `WhatsNow_2.5.0_windows_x64-portable.exe`, plus Linux and macOS packages | 3 Windows binaries + `checksums-windows.sha256` + `checksums.sha256` |
 
-## v2.6.1 candidate
+## Current release: v2.6.3
+
+Download packages from the official GitHub release, not from historical staging
+folders. The release workflow builds nine packages from one source revision and
+attaches a combined `checksums.sha256`. See [Publishing](../docs/PUBLISHING.md)
+and [v2.6.3 implementation](../docs/IMPLEMENTATION_v2.6.3.md).
+
+Local `dist/v2.6.3-candidate/` files are test builds and are not substitutes for
+the verified CI release assets. Package binaries remain ignored by Git.
+
+## Historical v2.6.1 candidate
 
 The final local candidate includes the Settings attribution-link correction.
 Its consolidated history is [CHANGELOGS_v2.6.1.md](../CHANGELOGS_v2.6.1.md);

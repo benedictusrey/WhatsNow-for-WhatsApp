@@ -69,6 +69,15 @@ jobs:
         working-directory: src-tauri
         run: cargo fmt --all -- --check
 
+      - name: Windows background-media feature checks
+        if: matrix.name == 'windows-x64'
+        working-directory: src-tauri
+        run: |
+          cargo test --locked --features windows-memory,portable-mode
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cargo clippy --locked --all-targets --features windows-memory,portable-mode -- -D warnings
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20

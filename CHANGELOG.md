@@ -7,6 +7,27 @@ Copyright (c) 2026 @benedictusrey. Released under the [MIT License](LICENSE).
 
 All notable project changes are recorded here.
 
+## [2.6.3] - 2026-11-07
+
+- Add WhatsNow-only Windows audio-session identity: existing app icon, app name,
+  and separate mixer grouping, without changing mute or volume.
+- Bind metadata writes to actual owned WebView2 environment membership and process
+  lifetime; isolate unavailable endpoints and bound worker queues/shutdown.
+- Preserve TubeNow unchanged. Cross-app persisted-mute isolation still requires
+  live acceptance; this release does not install or replace an audio driver.
+
+- Keep Windows account and call webviews at NORMAL memory priority while
+  minimized, hidden to tray, unfocused, or hidden behind App Lock.
+- Remove visibility-driven LOW transitions and their event listeners.
+- Preserve user pause, mute, volume, hang-up, and Quit controls. App Lock
+  conceals the UI; it intentionally does not silence ongoing media.
+- Add an isolated native WebView2 media/lifecycle fixture and Windows feature
+  checks. Existing themes, notifications, phone links, and call handoff are unchanged.
+- This reliability-first policy may increase background RAM. Extended live
+  WhatsApp media/call checks remain unverified; native synthetic tests passed.
+
+See [implementation and test boundaries](docs/IMPLEMENTATION_v2.6.3.md).
+
 ## [2.6.2] - release preparation (2026-10-21)
 
 - Preserve the real WindowProxy, target name, and popup features for WhatsApp

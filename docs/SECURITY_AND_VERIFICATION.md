@@ -18,10 +18,10 @@ casual access to the visible app, but it does not encrypt profile files.
 From PowerShell:
 
 ```powershell
-Get-FileHash .\WhatsNow_2.5.0_windows_x64-setup.exe -Algorithm SHA256
-Get-AuthenticodeSignature .\WhatsNow_2.5.0_windows_x64-setup.exe |
+Get-FileHash .\WhatsNow_2.6.3_windows_x64-setup.exe -Algorithm SHA256
+Get-AuthenticodeSignature .\WhatsNow_2.6.3_windows_x64-setup.exe |
   Format-List Status,StatusMessage,SignerCertificate
-Get-FileHash .\WhatsNow_2.5.0_windows_x64-portable.exe -Algorithm SHA256
+Get-FileHash .\WhatsNow_2.6.3_windows_x64-portable.exe -Algorithm SHA256
 ```
 
 Compare the hash character-for-character with `checksums.sha256` on the same
@@ -32,13 +32,13 @@ The bundled verification helper checks local Windows assets:
 
 ```powershell
 .\scripts\verify-windows-release.ps1 `
-  -Path .\release-assets\v2.5.0
+  -Path .\release-assets\v2.6.3
 ```
 
 ## Verify macOS downloads
 
 ```bash
-shasum -a 256 WhatsNow_2.5.0_aarch64.dmg
+shasum -a 256 WhatsNow_2.6.3_aarch64.dmg
 codesign --verify --deep --strict --verbose=2 /Applications/WhatsNow.app
 spctl --assess --type execute --verbose=2 /Applications/WhatsNow.app
 ```
@@ -46,8 +46,8 @@ spctl --assess --type execute --verbose=2 /Applications/WhatsNow.app
 ## Verify Linux downloads
 
 ```bash
-sha256sum WhatsNow_2.5.0_amd64.AppImage
-sha256sum WhatsNow_2.5.0_amd64.deb
+sha256sum WhatsNow_2.6.3_amd64.AppImage
+sha256sum WhatsNow_2.6.3_amd64.deb
 ```
 
 ## Antivirus and reputation warnings

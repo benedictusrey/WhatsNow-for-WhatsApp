@@ -1,20 +1,35 @@
-# WhatsNow 2.6.2
+# WhatsNow 2.6.3 — background audio improvements
 
-Calling now works smoothly in the maintainer's Windows test. This update fixes the blank call window and false “Allow pop-ups” prompt.
+This update favors reliable background sound over aggressive memory reclamation.
 
 ## Improvements
 
-- Open calls in a connected native window with resize, maximize, minimize, and restore controls.
-- Prefer the full camera frame where supported, while preserving device selection, audio settings, and screen sharing.
-- Keep existing themes, notifications, multi-account support, Focus, App Lock, and drag-and-drop behavior.
-- Add native Windows and browser regression checks for popup handling and camera capture.
+- Identify owned Windows audio sessions as WhatsNow with the existing app icon
+  and app-specific mixer grouping, while preserving user mute and volume.
+
+- Keep Windows account and call webviews at normal memory priority when minimized
+  or hidden to tray, including behind App Lock.
+- Preserve manual pause, mute, volume, hang-up, and Quit behavior.
+- Retain existing themes, native notifications, account isolation, and call-window repairs.
+
+Background RAM may increase. App Lock hides content but does not silence ongoing
+audio. OS mute, permissions, sleep, and WhatsApp's own media behavior still apply.
+
+Native Windows audio/video lifecycle, audio-session identity, and call-window
+tests passed. Extended WhatsApp playback, real two-party calls on this update,
+and independent mute persistence alongside other WebView2 apps remain unverified.
+This update does not replace WebView2 or install an audio driver.
 
 ## Installation and compatibility
 
 Fully quit WhatsNow from the tray before upgrading. Verify your download against `checksums.sha256`.
 
-Windows builds are unsigned. Calling depends on WhatsApp Web availability, account eligibility, permissions, hardware, and the platform runtime. The recipient's phone controls its display crop. Successful Windows testing does not establish Linux/macOS calling support.
+Packages cover Windows x64, Linux x64, and macOS Apple Silicon/Intel. Windows
+builds are unsigned; macOS builds are not Developer ID signed or notarized.
+Calling depends on WhatsApp Web availability, account eligibility, permissions,
+hardware, and the platform runtime. Linux/macOS calling and live media behavior
+have not been validated. The recipient's phone controls its display crop.
 
 Created and maintained by [@benedictusrey](https://github.com/benedictusrey).
 
-[Implementation and validation](https://github.com/benedictusrey/WhatsNow-for-WhatsApp/blob/v2.6.2/docs/IMPLEMENTATION_v2.6.2.md)
+[Implementation and acceptance checklist](docs/IMPLEMENTATION_v2.6.3.md)

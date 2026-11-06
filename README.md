@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="https://github.com/benedictusrey/WhatsNow-for-WhatsApp/releases"><img alt="GitHub releases" src="https://img.shields.io/github/v/release/benedictusrey/WhatsNow-for-WhatsApp?display_name=tag"></a>
-  <img alt="Release preparation 2.6.2" src="https://img.shields.io/badge/preparing-2.6.2-087a60">
+  <img alt="Version 2.6.3" src="https://img.shields.io/badge/version-2.6.3-087a60">
   <img alt="Windows macOS Linux targets" src="https://img.shields.io/badge/targets-Windows%20%7C%20macOS%20%7C%20Linux-213547">
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-6B9E3A"></a>
   <a href="https://github.com/benedictusrey"><img alt="Author benedictusrey" src="https://img.shields.io/badge/author-%40benedictusrey-111827"></a>
@@ -21,7 +21,7 @@
   <a href="https://github.com/benedictusrey/WhatsNow-for-WhatsApp/releases">Downloads</a> ·
   <a href="WhatsNow_latest.md">All features</a> ·
   <a href="docs/INSTALLATION.md">Installation</a> ·
-  <a href="docs/IMPLEMENTATION_v2.6.2.md">v2.6.2 changes</a> ·
+  <a href="docs/IMPLEMENTATION_v2.6.3.md">v2.6.3 changes</a> ·
   <a href="SECURITY.md">Security</a>
 </p>
 
@@ -31,13 +31,26 @@ native notifications. It is created and maintained by Benedictus Reynaldo
 Hartanto ([@benedictusrey](https://github.com/benedictusrey)) and is not affiliated
 with WhatsApp or Meta.
 
-> **v2.6.2 release preparation:** the maintainer confirmed that calling works
-> smoothly on the Windows candidate. Native cross-platform builds and final
-> release-asset checks are tracked separately from that live test.
+> **v2.6.3:** Windows background media now takes priority over aggressive memory
+> reclamation. Native lifecycle tests passed; extended live playback, two-party
+> calls on this update, and cross-app mute persistence remain unverified.
+> App Lock hides the UI but leaves ongoing sound audible.
 > Download only files actually attached to a published release.
 > The artwork is illustrative, not a pixel-exact screenshot or a security certification.
 
-## 📋 What's new in v2.6.2
+## 📋 What's new in v2.6.3
+
+- **Reliability-first background policy:** keep Windows account/call webviews at
+  normal memory priority while minimized, hidden to tray, or behind App Lock
+- **User controls preserved:** no forced playback or unmute; pause, mute,
+  volume, hang-up, and Quit remain authoritative
+- **Windows audio identity:** owned sessions receive WhatsNow's name, existing icon,
+  and app-specific mixer grouping; independent cold-start mute behavior still
+  requires live testing alongside other WebView2 apps
+- **Focused diagnostics:** isolated native audio/video lifecycle tests;
+  background RAM may increase. See [validation boundaries](docs/IMPLEMENTATION_v2.6.3.md).
+
+### Retained from v2.6.2
 
 - **Working call handoff:** repair the blank call window and false blocked-popup
   prompt by preserving the native popup handle and opener connection
@@ -100,14 +113,14 @@ figure does **not** establish WhatsNow's total memory use; WebView2 browser,
 renderer, GPU, and utility processes may appear elsewhere. This is not a
 controlled benchmark or proof of a universal advantage over Edge or the official app.
 
-Windows builds use WebView2's supported low-memory target for hidden/minimized
-windows while keeping visible windows normal—even when unfocused—to protect
-media playback. Background connections are not deliberately suspended. Measure
+The 2.6.3 Windows build keeps WebView2 at normal memory priority even when
+hidden/minimized, favoring background media over RAM reclamation. Background
+connections are not deliberately suspended. Measure
 the complete process tree under a comparable workload. See [Windows notes](docs/WINDOWS.md).
 
 ## 📦 Choose your package
 
-| Platform | v2.6.2 package targets | Requirement |
+| Platform | v2.6.3 package targets | Requirement |
 | --- | --- | --- |
 | Windows x64 | Setup EXE, MSI, portable EXE | Updated Microsoft Edge WebView2 |
 | Linux x64 | AppImage, DEB | Compatible WebKitGTK distribution |
@@ -140,7 +153,7 @@ registration; prefer setup/MSI for desktop link and notification integration.
   OS history. Disable previews on shared devices.
 - The preview preference defaults to 2 seconds, but **Windows controls actual
   banner timing**. Exact-second dismissal is not guaranteed.
-- Current local Windows candidates are **unsigned**. Checksums establish byte
+- Windows release packages are **unsigned**. Checksums establish byte
   integrity, not publisher identity, malware clearance, or independent security review.
 - Keep antivirus and OS protections enabled; do not add broad exclusions.
 
@@ -160,7 +173,7 @@ Start with [Contributing](CONTRIBUTING.md) and the platform prerequisites in
 `cargo tauri build`; Windows installer/portable packaging is also available
 through `scripts/build-windows.ps1`.
 
-For release work, follow [the acceptance checklist](docs/RELEASE_PREPARATION_2.6.2.md).
+For release work, follow [the acceptance checklist](docs/IMPLEMENTATION_v2.6.3.md).
 The workflow builds all platform packages from one revision and creates a
 **draft**, not an automatically published release. Preserve the pending live
 checks until they are actually confirmed.

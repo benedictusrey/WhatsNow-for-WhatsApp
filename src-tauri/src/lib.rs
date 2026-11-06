@@ -5,7 +5,11 @@
 
 mod accounts;
 mod applock;
+#[doc(hidden)]
+pub mod audio_identity;
 mod aumid;
+#[doc(hidden)]
+pub mod background_media;
 mod biometric;
 #[doc(hidden)]
 pub mod call_window;
@@ -207,6 +211,14 @@ pub fn run() {
             // console. See dlog.rs.
             dlog::init();
 
+            #[cfg(windows)]
+            match audio_identity::AudioSessionIdentityGuard::start() {
+                Ok(identity) => {
+                    handle.manage(identity);
+                }
+                Err(error) => dlog::log(&format!("audio identity: startup unavailable ({error})")),
+            }
+
             // Windows: register our AppUserModelID so WinRT toast notifications
             // actually render for the installed app (no-op elsewhere). Must run
             // before any account window can fire a notification. See aumid.rs.
@@ -322,6 +334,14 @@ pub fn run() {
         .build(tauri::generate_context!())
         .expect("error while building WhatsNow")
         .run(|app_handle, event| {
+            #[cfg(windows)]
+            if matches!(&event, tauri::RunEvent::Exit) {
+                if let Some(identity) =
+                    app_handle.try_state::<audio_identity::AudioSessionIdentityGuard>()
+                {
+                    identity.stop();
+                }
+            }
             // macOS: clicking the dock icon after hide-to-tray re-shows the window
             // (otherwise the app is only reachable via the menu-bar tray icon).
             #[cfg(target_os = "macos")]

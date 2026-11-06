@@ -1608,114 +1608,30 @@ fn enable_media_windows(webview: tauri::webview::PlatformWebview) {
     }
 }
 
-/// Windows low-memory build: keep an active chat fully responsive, but ask
-/// WebView2 to reclaim inactive renderer memory when the window is genuinely
-/// out of sight. Unlike TrySuspend, this preserves WhatsApp's scripts and
-/// network connection, so background messages and native notifications keep
-/// working.
-///
-/// Media-audio guard (the "video plays with no sound" bug): the LOW target is
-/// a best-effort reclaim that "could potentially cause memory for some WebView
-/// browser processes to be swapped out to disk" (ICoreWebView2_19 docs). While
-/// a window is VISIBLE and not minimized — focus or not — its media pipeline
-/// must stay at NORMAL: clicking play inside a video does not re-raise
-/// WindowEvent::Focused (the window was already focused), so a focus-only
-/// policy left the webview at LOW and the swapped-out audio graph played
-/// silence while the video kept painting (verified live, 2026-09-15). LOW now
-/// applies only to windows the user cannot currently watch: minimized, or
-/// hidden (tray/another virtual desktop). Pure predicate in
-/// [`windows_memory_low`] with a unit test in the tests module.
-#[cfg(all(target_os = "windows", feature = "windows-memory"))]
+/// Keep background playback and calls at normal priority, including hidden windows.
+#[cfg(target_os = "windows")]
 fn register_windows_memory_target(win: &WebviewWindow) {
-    use std::sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc,
-    };
-
-    let tracked = win.clone();
-    let minimized = Arc::new(AtomicBool::new(win.is_minimized().unwrap_or(false)));
-    let minimized_for_event = Arc::clone(&minimized);
-    win.on_window_event(move |event| match event {
-        tauri::WindowEvent::Focused(_) => sync_account_memory_target(&tracked),
-        tauri::WindowEvent::Resized(_) => {
-            let now_minimized = tracked.is_minimized().unwrap_or(false);
-            if minimized_for_event.swap(now_minimized, Ordering::AcqRel) != now_minimized {
-                sync_account_memory_target(&tracked);
-            }
-        }
-        _ => {}
-    });
-
-    sync_account_memory_target(win);
-}
-
-#[cfg(not(all(target_os = "windows", feature = "windows-memory")))]
-fn register_windows_memory_target(_win: &WebviewWindow) {}
-
-/// Re-apply the memory target from the window's CURRENT state. Called on every
-/// focus change and on minimize/restore (Resized with a minimized-state flip),
-/// and directly from [`show_account`] so a tray-hidden window returning to
-/// screen always comes back at NORMAL before the first video plays.
-#[cfg(all(target_os = "windows", feature = "windows-memory"))]
-fn sync_account_memory_target(win: &WebviewWindow) {
-    let low = windows_memory_low(
-        win.is_visible().unwrap_or(false),
-        win.is_minimized().unwrap_or(false),
-        win.is_focused().unwrap_or(false),
-    );
-    set_windows_memory_target(win, low);
-}
-
-/// Pure LOW/NORMAL decision for the Windows memory feature. LOW only when the
-/// user cannot currently watch this window (hidden or minimized); visible
-/// windows — focused or not — stay NORMAL so video audio never gets reclaimed
-/// mid-playback. Ungated (platform-independent logic) so the test suite
-/// exercises it on every OS; callers that touch WebView2 remain cfg-gated.
-#[cfg_attr(
-    not(all(target_os = "windows", feature = "windows-memory")),
-    allow(dead_code)
-)]
-fn windows_memory_low(visible: bool, minimized: bool, _focused: bool) -> bool {
-    let _ = _focused;
-    !(visible && !minimized)
-}
-
-#[cfg(all(target_os = "windows", feature = "windows-memory"))]
-fn set_windows_memory_target(win: &WebviewWindow, low: bool) {
+    let app = win.app_handle().clone();
     let _ = win.with_webview(move |webview| {
-        use webview2_com::Microsoft::Web::WebView2::Win32::{
-            ICoreWebView2, ICoreWebView2_19, COREWEBVIEW2_MEMORY_USAGE_TARGET_LEVEL_LOW,
-            COREWEBVIEW2_MEMORY_USAGE_TARGET_LEVEL_NORMAL,
-        };
-        use windows_core::Interface;
-
-        // SAFETY: with_webview runs on the WebView2 UI thread. ICoreWebView2_19
-        // is queried at runtime, so older Evergreen runtimes fail gracefully.
-        unsafe {
-            let result = webview
-                .controller()
-                .CoreWebView2()
-                .and_then(|core: ICoreWebView2| core.cast::<ICoreWebView2_19>())
-                .and_then(|core| {
-                    core.SetMemoryUsageTargetLevel(if low {
-                        COREWEBVIEW2_MEMORY_USAGE_TARGET_LEVEL_LOW
-                    } else {
-                        COREWEBVIEW2_MEMORY_USAGE_TARGET_LEVEL_NORMAL
-                    })
-                });
-            match result {
-                Ok(()) => crate::dlog::log(if low {
-                    "webview: Windows 10 memory target LOW"
-                } else {
-                    "webview: Windows 10 memory target NORMAL"
-                }),
-                Err(error) => crate::dlog::log(&format!(
-                    "webview: Windows 10 memory target unavailable: {error}"
-                )),
+        #[cfg(feature = "windows-memory")]
+        if let Err(error) = crate::background_media::configure(&webview) {
+            crate::dlog::log(&format!(
+                "webview: NORMAL media priority unavailable: {error}"
+            ));
+        }
+        if let Some(identity) = app.try_state::<crate::audio_identity::AudioSessionIdentityGuard>()
+        {
+            if let Err(error) = identity.registrar().attach(&webview) {
+                crate::dlog::log(&format!(
+                    "audio identity: webview registration unavailable ({error})"
+                ));
             }
         }
     });
 }
+
+#[cfg(not(target_os = "windows"))]
+fn register_windows_memory_target(_win: &WebviewWindow) {}
 
 /// Show + unminimize + focus an account window by its `wa-<id>` label.
 pub fn show_account(app: &AppHandle, label: &str) {
@@ -1723,11 +1639,11 @@ pub fn show_account(app: &AppHandle, label: &str) {
         let _ = w.show();
         let _ = w.unminimize();
         let _ = w.set_focus();
-        // Returning to screen must restore full media performance immediately
-        // (Resized/Focused events can race or be missed across a show+unminimize
-        // burst; this re-sync makes the NORMAL target deterministic).
+        // Reassert the same NORMAL policy when restoring an account window.
         #[cfg(all(target_os = "windows", feature = "windows-memory"))]
-        sync_account_memory_target(&w);
+        let _ = w.with_webview(|webview| {
+            let _ = crate::background_media::configure(&webview);
+        });
     }
 }
 
@@ -2895,31 +2811,6 @@ mod tests {
     #[test]
     fn visible_active_window_is_hidden() {
         assert_eq!(toggle_decision(Some(true)), ToggleAct::Hide);
-    }
-
-    #[test]
-    fn visible_windows_never_drop_to_low_memory_even_unfocused() {
-        // The video-audio guard: a VISIBLE window (focused or not, minimized or
-        // not) must stay at the NORMAL memory target. The old focus-only policy
-        // set LOW the moment focus left, and clicking play inside a video does
-        // not re-raise Focused(true) — LOW then swapped the audio graph out and
-        // the clip played silently.
-        let low = super::windows_memory_low;
-        assert!(!low(true, false, true), "visible+focused stays NORMAL");
-        assert!(
-            !low(true, false, false),
-            "visible+unfocused stays NORMAL (media guard)"
-        );
-        assert!(low(false, false, false), "hidden to tray goes LOW");
-        assert!(
-            low(false, false, true),
-            "hidden but focused (transient) goes LOW"
-        );
-        assert!(
-            low(true, true, true),
-            "minimized goes LOW even if visible flag lingers"
-        );
-        assert!(low(false, true, false), "hidden+minimized goes LOW");
     }
 
     #[test]

@@ -6,12 +6,12 @@ on:
       app_version:
         description: "Application version used in release filenames"
         required: true
-        default: "2.6.2"
+        default: "2.6.3"
         type: string
       release_tag:
         description: "GitHub Release tag"
         required: true
-        default: "v2.6.2"
+        default: "v2.6.3"
         type: string
       publish_release:
         description: "Create a draft GitHub Release after all builds pass"
@@ -30,7 +30,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  APP_VERSION: ${{ github.event_name == 'push' && github.ref_name || github.event.inputs.app_version || '2.6.2' }}
+  APP_VERSION: ${{ github.event_name == 'push' && github.ref_name || github.event.inputs.app_version || '2.6.3' }}
   RELEASE_TAG: ${{ github.event.inputs.release_tag || github.ref_name }}
 
 jobs:
@@ -276,6 +276,14 @@ jobs:
       - name: Build NSIS installer and MSI
         shell: bash
         run: tauri build --target x86_64-pc-windows-msvc --bundles nsis,msi --features windows-memory
+
+      - name: Verify Windows media feature regressions
+        shell: bash
+        working-directory: src-tauri
+        run: |
+          set -euo pipefail
+          cargo test --locked --features windows-memory,portable-mode
+          cargo clippy --locked --all-targets --features windows-memory,portable-mode -- -D warnings
 
       - name: Build portable executable (windows-memory, portable-mode)
         shell: bash

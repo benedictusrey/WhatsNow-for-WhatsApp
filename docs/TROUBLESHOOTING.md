@@ -248,17 +248,17 @@ Older `windows-memory` builds asked WebView2 to reclaim renderer memory
 whenever the window lost FOCUS. Clicking play inside a video does not
 re-raise the window-focus event, so a visible window could stay at the LOW
 memory target — a best-effort reclaim that can swap browser-process memory
-to disk (ICoreWebView2_19). The video kept painting while the swapped-out
-audio graph played silence.
+to disk (ICoreWebView2_19). Historical reports associated that policy with silent
+playback; the API documentation does not establish it as a direct pause command.
 
-Fixed in the current build: LOW now applies only to windows you cannot watch
-(minimized, or hidden to tray). Every visible window runs media at the
-NORMAL target, focus or not, and returning a window from the tray re-applies
-NORMAL before the first video plays. To confirm on an installed copy, check
-the diagnostic log: focusing a restored window must log
-`webview: Windows 10 memory target NORMAL`. If silence ever returns, record
-whether the log said LOW while the window was clearly visible and attach it
-per [SUPPORT.md](../SUPPORT.md).
+Version 2.6.3 removes all app-requested LOW transitions. Account/call
+webviews remain at NORMAL even while minimized, tray-hidden, or App Locked.
+This is a reliability mitigation, not proof that memory priority caused every
+sound pause. App Lock intentionally does not silence ongoing media.
+If silence returns, check the Windows volume mixer, output device, permissions,
+and WhatsApp's media state. Record whether it happens on minimize, tray hiding,
+or lock; include the runtime version and logs per [SUPPORT.md](../SUPPORT.md).
+Do not bypass OS mute or force automatic playback.
 
 ## Voice messages or calls fail
 

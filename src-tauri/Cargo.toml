@@ -1,6 +1,6 @@
 [package]
 name = "whatsnow"
-version = "2.6.2"
+version = "2.6.3"
 edition = "2021"
 rust-version = "1.82"
 authors = ["Benedictus Reynaldo Hartanto (@benedictusrey) <https://github.com/benedictusrey>"]
@@ -24,8 +24,8 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 # Builds the raw Windows executable without modifying system notification
 # identity or Start-menu shortcuts at runtime.
 portable-mode = []
-# Separate Windows memory-conscious build: ask WebView2 to reclaim inactive
-# renderer memory without suspending scripts or network connections.
+# Compatibility feature name: keep Windows account/call renderers at NORMAL
+# memory priority, even when hidden, to favor background media reliability.
 windows-memory = []
 
 [build-dependencies]
@@ -52,6 +52,8 @@ windows = { version = "0.61", features = [
   "Data_Xml_Dom",            # native Windows toast XML
   "UI_Notifications",        # clickable native toast notifications
   "Win32_Foundation",         # existing
+  "Win32_Media_Audio",        # owned audio-session identity, never mute/volume
+  "Win32_System_Threading",   # process creation times prevent PID reuse
   "Win32_System_Com",         # existing (webview2 permission handler)
   "Win32_System_Com_StructuredStorage", # PROPVARIANT for the notification shortcut AUMID
   "Win32_System_Ole",         # VARIANT/PROPVARIANT conversions

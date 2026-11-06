@@ -1,28 +1,29 @@
-# WhatsNow memory-conscious builds for Windows
+# WhatsNow builds for Windows
 
 WhatsNow is authored and maintained solely by
 [@benedictusrey](https://github.com/benedictusrey).
 
-WhatsNow 2.6.1 ships a Windows build that requests WebView2's supported
-low-memory target while the app is backgrounded:
+WhatsNow 2.6.3 is a reliability-first update. Its Windows packages are:
 
-- `WhatsNow_2.6.1_windows_x64-setup.exe` — installer
-- `WhatsNow_2.6.1_windows_x64_en-US.msi` — MSI package (managed deployment)
-- `WhatsNow_2.6.1_windows_x64-portable.exe` — portable application
+- `WhatsNow_2.6.3_windows_x64-setup.exe` — installer
+- `WhatsNow_2.6.3_windows_x64_en-US.msi` — MSI package (managed deployment)
+- `WhatsNow_2.6.3_windows_x64-portable.exe` — portable application
 
-Both carry the same memory-conscious behavior; they differ only in how they
+All carry the same background-media policy; they differ only in how they
 are installed. The naming is universal (`windows`, not `windows10`) — the
 build is intended for any 64-bit Windows 10 or Windows 11 system.
 
-## What the memory-conscious build changes
+## Background media policy
 
-When WhatsNow is visible, WebView2 uses its normal memory target even when
-unfocused, preserving media playback. Hidden/minimized account windows request
-WebView2's supported low-memory target. Scripts and network
-connections continue running, so background messages and native notifications
-remain active.
+WebView2 keeps NORMAL memory priority while visible, unfocused, minimized,
+tray-hidden, or hidden behind App Lock. Secondary accounts use the same policy.
+This removes the older LOW-memory hint; it does not force autoplay or unmute.
+Manual pause, mute, volume, hang-up, Quit, and OS restrictions remain in force.
+App Lock conceals content but intentionally leaves ongoing media audible.
+Background RAM may increase. Extended live WhatsApp media/call checks remain unverified;
+see [implementation and acceptance](IMPLEMENTATION_v2.6.3.md).
 
-The optimization is best-effort. WebView2 still uses separate browser,
+WebView2 still uses separate browser,
 renderer, GPU, and utility processes by design, and Task Manager can continue
 to show several `msedgewebview2.exe` entries. Compare total memory after
 leaving WhatsNow in the background for a few minutes rather than comparing
@@ -36,13 +37,13 @@ cause instability, or pause the background scripts that WhatsNow needs.
 
 Installer:
 
-1. Download `WhatsNow_2.6.1_windows_x64-setup.exe`.
-2. Verify its SHA-256 value against `checksums-windows.sha256`.
+1. Download `WhatsNow_2.6.3_windows_x64-setup.exe` from the official release.
+2. Verify its SHA-256 value against the release's `checksums.sha256`.
 3. Run the installer and launch WhatsNow normally.
 
 Portable:
 
-1. Download `WhatsNow_2.6.1_windows_x64-portable.exe`.
+1. Download `WhatsNow_2.6.3_windows_x64-portable.exe` from the official release.
 2. Keep it in a writable folder, such as `Documents\WhatsNow Portable`.
 3. Run it directly. Do not place it in `Program Files`.
 
@@ -56,4 +57,4 @@ expose the supported memory-target API.
 The source builds this variant with the `windows-memory` Cargo
 feature (see `scripts/build-windows.ps1`). The portable variant additionally
 uses `portable-mode`. The output lands in `dist/windows/` with the
-`WhatsNow_2.6.1_windows_x64-*` names and `checksums-windows.sha256`.
+`WhatsNow_2.6.3_windows_x64-*` names and `checksums-windows.sha256`.

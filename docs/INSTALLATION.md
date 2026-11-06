@@ -31,23 +31,23 @@ Authenticode publisher.
 
 1. Download the x64 setup executable.
 2. Check the SHA-256 checksum and inspect **Properties > Digital Signatures**
-   when a signature is present. The current local v2.6.2 candidates are unsigned;
+   when a signature is present. The v2.6.3 Windows release packages are unsigned;
    a missing signature must not be described as a verified publisher.
 3. Run the setup and start WhatsNow from the Start menu.
 
 PowerShell can display the signature and hash:
 
 ```powershell
-Get-AuthenticodeSignature .\WhatsNow_2.6.2_windows_x64-setup.exe |
+Get-AuthenticodeSignature .\WhatsNow_2.6.3_windows_x64-setup.exe |
   Format-List Status,StatusMessage,SignerCertificate
-Get-FileHash .\WhatsNow_2.6.2_windows_x64-setup.exe -Algorithm SHA256
+Get-FileHash .\WhatsNow_2.6.3_windows_x64-setup.exe -Algorithm SHA256
 ```
 
 The repository installer accepts a local package:
 
 ```powershell
 .\scripts\install-windows.ps1 `
-  -Source .\WhatsNow_2.6.2_windows_x64-setup.exe `
+  -Source .\WhatsNow_2.6.3_windows_x64-setup.exe `
   -ExpectedSha256 'RELEASE_SHA256'
 ```
 
@@ -62,7 +62,7 @@ It can also select the newest compatible GitHub release:
 Use the MSI for managed deployment:
 
 ```powershell
-msiexec.exe /i .\WhatsNow_2.6.2_windows_x64_en-US.msi
+msiexec.exe /i .\WhatsNow_2.6.3_windows_x64_en-US.msi
 ```
 
 Your deployment system can pass its normal `msiexec` user-interface and logging
@@ -105,7 +105,7 @@ Install a downloaded DMG:
 
 ```bash
 sh ./scripts/install-macos.sh \
-  --source ./WhatsNow_2.6.2_aarch64.dmg \
+  --source ./WhatsNow_2.6.3_aarch64.dmg \
   --sha256 RELEASE_SHA256
 ```
 
@@ -129,7 +129,7 @@ Install an AppImage:
 
 ```bash
 sh ./scripts/install-linux.sh \
-  --source ./WhatsNow_2.6.2_amd64.AppImage \
+  --source ./WhatsNow_2.6.3_amd64.AppImage \
   --sha256 RELEASE_SHA256
 ```
 
@@ -148,7 +148,7 @@ The AppImage installer creates:
 Install a Debian package with:
 
 ```bash
-sh ./scripts/install-linux.sh --source ./WhatsNow_2.6.2_amd64.deb
+sh ./scripts/install-linux.sh --source ./WhatsNow_2.6.3_amd64.deb
 ```
 
 The script uses `apt-get` or `dpkg` and asks for `sudo` only for the Debian

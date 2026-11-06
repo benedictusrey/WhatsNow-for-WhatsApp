@@ -6,10 +6,14 @@ _2026-10-17 · WhatsNow is authored and maintained by [@benedictusrey](https://g
 
 ## 📋 Canonical location
 
-Use the Desktop **WhatsNow** folder for development, documentation, native
+Use the active **WhatsNow** checkout for development, documentation, native
 builds, tests, and GitHub Desktop. The former **WhatsNow - Improved** folder
 has been moved into this workspace; it is no longer a second working checkout.
 No application feature or chat-theme/notification logic was changed by the move.
+
+The current checkout is under the Desktop **04_Projects** collection. Select
+that existing repository in GitHub Desktop; the consolidation details below
+describe the historical 2026-10-17 move, not a second active checkout.
 
 The active Git repository retains the public checkout's history and remote:
 `https://github.com/benedictusrey/WhatsNow-for-WhatsApp.git`.
