@@ -23,6 +23,11 @@ guides are updated together. Historical implementation records remain intact.
   manifests. They are not the cloud-built release assets.
 - Release review restricted the Windows audio-identity module to Windows and
   test builds, avoiding unused platform-only helpers in Linux/macOS builds.
+- The first cloud check exposed a popup-test close-event race. The test now
+  waits for the opener's closed state; production call handling is unchanged.
+- GitHub canceled ARM macOS jobs before runner assignment due to capacity.
+  Packaging and compile checks use a macOS 15 Intel host for both targets;
+  Apple Silicon binaries are cross-compiled, not live-tested on ARM hardware.
 
 ## Publication gate
 

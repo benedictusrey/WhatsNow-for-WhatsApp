@@ -40,6 +40,7 @@ try {
   });
   assert.equal(mode, "none", "Chromium honors the uncropped capture preference on its fake camera");
   await child.close();
+  await page.waitForFunction(() => window.child.closed);
   assert.equal(await page.evaluate(() => window.child.closed), true);
   console.log("Call popup: WindowProxy, opener handshake, named target, uncropped fake-camera capture, and close lifecycle PASS");
 } finally {

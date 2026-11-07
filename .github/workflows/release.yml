@@ -152,7 +152,7 @@ jobs:
   build-macos:
     name: macOS bundles (Apple Silicon + Intel)
     needs: verify
-    runs-on: macos-15
+    runs-on: macos-15-intel
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

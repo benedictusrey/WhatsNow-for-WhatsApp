@@ -23,10 +23,10 @@ jobs:
             platform: windows-latest
             target: x86_64-pc-windows-msvc
           - name: macos-arm64
-            platform: macos-latest
+            platform: macos-15-intel
             target: aarch64-apple-darwin
           - name: macos-x64
-            platform: macos-latest
+            platform: macos-15-intel
             target: x86_64-apple-darwin
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.platform }}

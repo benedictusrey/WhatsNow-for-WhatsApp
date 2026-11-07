@@ -7,7 +7,7 @@ WhatsNow is authored and maintained solely by
 | --- | --- | --- | --- |
 | Windows 10/11 x64 | NSIS setup, MSI, portable EXE | Edge WebView2 | Windows 11 native fixtures passed; Windows 10 and extended live calls/media unverified; unsigned |
 | Linux x64 | AppImage, Debian package | WebKitGTK 2.46.1+ | Native CI packaging required; installed-app media/calling unverified |
-| macOS Apple silicon | DMG, app archive | WKWebView | Native CI packaging required; installed-app media/calling unverified; not notarized |
+| macOS Apple silicon | DMG, app archive | WKWebView | Cross-target build on macOS required; installed-app media/calling unverified; not notarized |
 | macOS Intel | DMG, app archive | WKWebView | Cross-target build on macOS required; installed-app media/calling unverified; not notarized |
 
 All packages must come from the same tagged source revision for a release.
