@@ -28,7 +28,7 @@
       </button>
     </div>
     <div class="settings-shell">
-      <aside class="side-rail" aria-label="Settings navigation">
+      <aside class="side-rail">
         <div class="brand-block">
           <img class="brand-mark" src="app-icon.svg" alt="" aria-hidden="true" />
           <div>
@@ -37,37 +37,53 @@
           </div>
         </div>
 
-        <nav class="settings-nav">
-          <button type="button" class="nav-item active" data-panel-target="overview">
-            <span class="nav-icon" aria-hidden="true">⌂</span>
+        <nav class="settings-nav" role="tablist" aria-orientation="vertical" aria-label="Settings sections">
+          <button type="button" role="tab" id="tab-overview" class="nav-item active" aria-selected="true" aria-controls="panel-overview" data-panel-target="overview">
+            <span class="nav-icon" aria-hidden="true">
+              <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><rect x="2" y="2" width="5" height="5" rx="1.2"/><rect x="9" y="2" width="5" height="5" rx="1.2"/><rect x="2" y="9" width="5" height="5" rx="1.2"/><rect x="9" y="9" width="5" height="5" rx="1.2"/></svg>
+            </span>
             <span>Overview</span>
           </button>
-          <button type="button" class="nav-item" data-panel-target="accounts">
-            <span class="nav-icon" aria-hidden="true">◎</span>
+          <button type="button" role="tab" id="tab-accounts" class="nav-item" aria-selected="false" tabindex="-1" aria-controls="panel-accounts" data-panel-target="accounts">
+            <span class="nav-icon" aria-hidden="true">
+              <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="5.5" r="2.6"/><path d="M2.8 13.6c.5-2.6 2.5-4 5.2-4s4.7 1.4 5.2 4"/></svg>
+            </span>
             <span>Accounts</span>
           </button>
-          <button type="button" class="nav-item" data-panel-target="focus">
-            <span class="nav-icon" aria-hidden="true">◷</span>
+          <button type="button" role="tab" id="tab-focus" class="nav-item" aria-selected="false" tabindex="-1" aria-controls="panel-focus" data-panel-target="focus">
+            <span class="nav-icon" aria-hidden="true">
+              <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="5.8"/><path d="M8 4.7V8l2.2 1.6"/></svg>
+            </span>
             <span>Focus</span>
           </button>
-          <button type="button" class="nav-item" data-panel-target="appearance">
-            <span class="nav-icon" aria-hidden="true">✦</span>
+          <button type="button" role="tab" id="tab-appearance" class="nav-item" aria-selected="false" tabindex="-1" aria-controls="panel-appearance" data-panel-target="appearance">
+            <span class="nav-icon" aria-hidden="true">
+              <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><circle cx="8" cy="8" r="5.8"/><path d="M8 2.2v11.6a5.8 5.8 0 0 0 0-11.6z" fill="currentColor"/></svg>
+            </span>
             <span>Appearance</span>
           </button>
-          <button type="button" class="nav-item" data-panel-target="notifications">
-            <span class="nav-icon" aria-hidden="true">◉</span>
+          <button type="button" role="tab" id="tab-notifications" class="nav-item" aria-selected="false" tabindex="-1" aria-controls="panel-notifications" data-panel-target="notifications">
+            <span class="nav-icon" aria-hidden="true">
+              <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.6 11.2c.9-.9 1.3-1.8 1.3-3.2V6.9a3.1 3.1 0 0 1 6.2 0V8c0 1.4.4 2.3 1.3 3.2z"/><path d="M6.6 13.4a1.5 1.5 0 0 0 2.8 0"/></svg>
+            </span>
             <span>Notifications</span>
           </button>
-          <button type="button" class="nav-item" data-panel-target="preferences">
-            <span class="nav-icon" aria-hidden="true">⌘</span>
+          <button type="button" role="tab" id="tab-preferences" class="nav-item" aria-selected="false" tabindex="-1" aria-controls="panel-preferences" data-panel-target="preferences">
+            <span class="nav-icon" aria-hidden="true">
+              <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2.5 4.5h6M12.5 4.5h1M2.5 11.5h1M7.5 11.5h6"/><circle cx="10.5" cy="4.5" r="1.7"/><circle cx="5.5" cy="11.5" r="1.7"/></svg>
+            </span>
             <span>Preferences</span>
           </button>
-          <button type="button" class="nav-item" data-panel-target="security">
-            <span class="nav-icon" aria-hidden="true">◇</span>
+          <button type="button" role="tab" id="tab-security" class="nav-item" aria-selected="false" tabindex="-1" aria-controls="panel-security" data-panel-target="security">
+            <span class="nav-icon" aria-hidden="true">
+              <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3.2" y="7" width="9.6" height="6.6" rx="1.6"/><path d="M5.4 7V5.2a2.6 2.6 0 0 1 5.2 0V7"/></svg>
+            </span>
             <span>Security</span>
           </button>
-          <button type="button" class="nav-item" data-panel-target="about">
-            <span class="nav-icon" aria-hidden="true">i</span>
+          <button type="button" role="tab" id="tab-about" class="nav-item" aria-selected="false" tabindex="-1" aria-controls="panel-about" data-panel-target="about">
+            <span class="nav-icon" aria-hidden="true">
+              <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="5.8"/><path d="M8 7.3v3.4M8 5.1v.1"/></svg>
+            </span>
             <span>About</span>
           </button>
         </nav>
@@ -81,54 +97,49 @@
       <div class="workspace">
         <header class="workspace-header">
           <div>
-            <p class="eyebrow">Settings workspace</p>
             <h1 id="panel_title">Overview</h1>
-            <p id="panel_description">Your accounts, attention, and personal style at a glance.</p>
+            <p id="panel_description">Your accounts, alerts, and focus at a glance.</p>
           </div>
-          <button type="button" id="save" class="primary-action">Save changes</button>
+          <div id="save_status" class="save-status" role="status" aria-live="polite" hidden>
+            <span id="save_status_text"></span>
+            <button type="button" id="save_retry" class="save-retry" hidden>Retry</button>
+          </div>
         </header>
 
-        <main class="panel-stage">
-          <section class="settings-panel active" data-panel="overview" aria-labelledby="panel_title">
-            <div class="welcome-card">
-              <div>
-                <p class="eyebrow">Your communication cockpit</p>
-                <h2>Keep conversations close, without losing your focus.</h2>
-                <p>
-                  Switch accounts, quiet interruptions, and personalize every WhatsNow
-                  window from one compact workspace.
-                </p>
-              </div>
-              <img src="app-icon.svg" alt="" aria-hidden="true" />
-            </div>
+        <div id="load_error" class="load-error" role="alert" hidden>
+          <span id="load_error_text">Settings could not be loaded.</span>
+          <button type="button" id="load_retry" class="secondary">Retry</button>
+        </div>
 
-            <div class="metric-grid">
-              <button type="button" class="metric-card" data-jump-panel="accounts">
-                <span class="metric-label">Connected spaces</span>
-                <strong id="overview_accounts">—</strong>
-                <small>Manage accounts</small>
-              </button>
-              <button type="button" class="metric-card" data-jump-panel="focus">
-                <span class="metric-label">Attention mode</span>
-                <strong id="overview_focus">Ready</strong>
-                <small>Start a focus session</small>
-              </button>
-              <button type="button" class="metric-card" data-jump-panel="appearance">
-                <span class="metric-label">Current style</span>
-                <strong id="overview_theme">Dark</strong>
-                <small>Personalize WhatsNow</small>
-              </button>
+        <main class="panel-stage">
+          <section class="settings-panel active" role="tabpanel" id="panel-overview" aria-labelledby="tab-overview" data-panel="overview">
+            <div class="section-surface">
+              <div class="block-head">
+                <h2>Accounts</h2>
+                <button type="button" class="link-button" data-jump-panel="accounts">Manage accounts</button>
+              </div>
+              <div id="overview_accounts_list" class="accounts-list"></div>
             </div>
 
             <div class="section-surface">
-              <div class="section-heading">
-                <div>
-                  <p class="eyebrow">Quick start</p>
-                  <h2>Focus presets</h2>
-                </div>
-                <p>Pause native notifications while every chat stays connected.</p>
+              <div class="block-head">
+                <h2>Notifications</h2>
+                <button type="button" class="link-button" data-jump-panel="notifications">Notification settings</button>
               </div>
-              <div class="focus-presets compact-presets" aria-label="Quick focus duration">
+              <div class="health-row" data-health-row>
+                <span class="health-dot" data-health-dot aria-hidden="true"></span>
+                <p data-health-text>Checking notification status…</p>
+                <button type="button" class="secondary" data-health-fix hidden>Fix in Windows settings</button>
+              </div>
+            </div>
+
+            <div class="section-surface">
+              <div class="block-head">
+                <h2>Focus</h2>
+                <span id="overview_focus" class="block-value">Ready</span>
+              </div>
+              <p class="block-note">Pause native notifications while every chat stays connected.</p>
+              <div class="focus-presets compact-presets" role="group" aria-label="Quick focus duration">
                 <button type="button" class="preset-button" data-focus-minutes="15">
                   <strong>15</strong><span>minutes</span>
                 </button>
@@ -143,14 +154,17 @@
                 </button>
               </div>
             </div>
+
+            <div class="section-surface">
+              <div class="block-head">
+                <h2>Theme</h2>
+                <span id="overview_theme" class="block-value">Dark</span>
+              </div>
+              <button type="button" class="secondary" data-jump-panel="appearance">Change theme</button>
+            </div>
           </section>
 
-          <section class="settings-panel" data-panel="accounts" hidden>
-            <div class="panel-intro">
-              <p class="eyebrow">Workspace</p>
-              <h2>Accounts</h2>
-              <p>Keep work, personal, and project sessions separate and easy to reach.</p>
-            </div>
+          <section class="settings-panel" role="tabpanel" id="panel-accounts" aria-labelledby="tab-accounts" data-panel="accounts" hidden>
             <div class="section-surface">
               <div id="accounts-list" class="accounts-list"></div>
               <div class="add-row">
@@ -161,21 +175,17 @@
                   placeholder="Account name, e.g. Work"
                   aria-label="New account name"
                 />
-                <button id="add_account">Add account</button>
+                <button type="button" id="add_account" class="btn-primary">Add account</button>
               </div>
+              <p id="add_account_error" class="inline-error" role="alert" hidden></p>
               <p id="macos-note" class="warning-note" hidden>
                 Multiple accounts require macOS 14 or newer.
               </p>
             </div>
           </section>
 
-          <section class="settings-panel" data-panel="focus" hidden>
-            <div class="panel-intro">
-              <p class="eyebrow">Productivity</p>
-              <h2>Focus mode</h2>
-              <p>Pause native alerts for a chosen window of time without disconnecting chats.</p>
-            </div>
-            <div class="focus-presets" aria-label="Focus duration">
+          <section class="settings-panel" role="tabpanel" id="panel-focus" aria-labelledby="tab-focus" data-panel="focus" hidden>
+            <div class="focus-presets" role="group" aria-label="Focus duration">
               <button type="button" class="preset-button" data-focus-minutes="15">
                 <strong>15</strong><span>minutes</span>
               </button>
@@ -198,29 +208,18 @@
             <div class="section-surface custom-focus">
               <div class="custom-focus-copy">
                 <strong>Custom duration</strong>
-                <span>Choose any focused interval from 1 minute to 24 hours.</span>
+                <span>Choose any interval from 1 minute to 24 hours.</span>
               </div>
-              <label class="field custom-focus-field" for="focus_custom">
-                <span class="sr-only">Custom focus duration in minutes</span>
-                <div class="number-action">
-                  <input type="number" id="focus_custom" min="1" max="1440" value="90" />
-                  <span>minutes</span>
-                  <button type="button" id="focus_custom_start">Start focus</button>
-                </div>
-              </label>
-              <button type="button" id="focus_off" class="quiet" hidden>End current focus</button>
+              <div class="number-action">
+                <input type="number" id="focus_custom" min="1" max="1440" value="90" aria-label="Custom focus duration in minutes" />
+                <span>minutes</span>
+                <button type="button" id="focus_custom_start" class="btn-primary">Start focus</button>
+              </div>
+              <button type="button" id="focus_off" class="secondary" hidden>End current focus</button>
             </div>
           </section>
 
-          <section class="settings-panel" data-panel="appearance" hidden>
-            <div class="panel-intro">
-              <p class="eyebrow">Personalize</p>
-              <h2>Appearance</h2>
-              <p>
-                Choose a readable personality for Settings, app lock, native chrome,
-                and the WhatsApp chatting workspace.
-              </p>
-            </div>
+          <section class="settings-panel" role="tabpanel" id="panel-appearance" aria-labelledby="tab-appearance" data-panel="appearance" hidden>
             <fieldset class="theme-picker">
               <legend class="sr-only">WhatsNow theme</legend>
               <label class="theme-option">
@@ -275,17 +274,19 @@
               </label>
             </fieldset>
             <p class="field-note">
-              Preview appears here immediately. Save to apply it to all open chat windows.
-              Dark and Light preserve WhatsApp's complete official interface and doodles.
-              Personality themes change only the conversation wallpaper and hide doodles.
+              Your choice applies to Settings, the lock screen, and every open chat window as
+              soon as you pick it. Dark and Light keep WhatsApp's official interface and doodles;
+              the other themes restyle only the conversation area and hide doodles.
             </p>
           </section>
 
-          <section class="settings-panel" data-panel="notifications" hidden>
-            <div class="panel-intro">
-              <p class="eyebrow">Attention</p>
-              <h2>Notifications</h2>
-              <p>Choose how much message detail reaches your desktop.</p>
+          <section class="settings-panel" role="tabpanel" id="panel-notifications" aria-labelledby="tab-notifications" data-panel="notifications" hidden>
+            <div class="section-surface health-surface">
+              <div class="health-row" data-health-row>
+                <span class="health-dot" data-health-dot aria-hidden="true"></span>
+                <p data-health-text>Checking notification status…</p>
+                <button type="button" class="secondary" data-health-fix hidden>Fix in Windows settings</button>
+              </div>
             </div>
             <div class="section-surface setting-list">
               <label class="switch-row">
@@ -305,7 +306,11 @@
               <label class="duration-row" for="notification_preview_duration_secs">
                 <span>
                   <strong>Preview duration</strong>
-                  <small>Banner time on screen (15+ seconds uses Windows' extended banner). Toasts also stay in the notification center so you can reopen them later.</small>
+                  <small>How long the banner stays on screen.</small>
+                  <small data-windows-only>
+                    On Windows, 15 seconds or more uses the extended banner. Alerts also stay in
+                    the notification center so you can reopen them later.
+                  </small>
                 </span>
                 <span class="duration-control">
                   <input
@@ -324,24 +329,19 @@
                 <button type="button" id="test_notification" class="secondary">
                   Send test notification
                 </button>
-                <span id="test_notification_note" class="muted-note"></span>
+                <span id="test_notification_note" class="muted-note" role="status"></span>
               </div>
             </div>
           </section>
 
-          <section class="settings-panel" data-panel="preferences" hidden>
-            <div class="panel-intro">
-              <p class="eyebrow">Desktop</p>
-              <h2>Preferences</h2>
-              <p>Control how WhatsNow stays available while you work.</p>
-            </div>
+          <section class="settings-panel" role="tabpanel" id="panel-preferences" aria-labelledby="tab-preferences" data-panel="preferences" hidden>
             <div class="section-surface setting-list">
               <label class="switch-row">
                 <span><strong>Close to tray</strong><small>Keep accounts connected in the background.</small></span>
                 <input type="checkbox" id="close_to_tray" />
               </label>
               <label class="switch-row">
-                <span><strong>Start minimized</strong><small>Open quietly in the system tray.</small></span>
+                <span><strong>Start minimized</strong><small>Open quietly in the system tray. Applies next launch.</small></span>
                 <input type="checkbox" id="start_minimized" />
               </label>
               <label class="switch-row">
@@ -349,40 +349,38 @@
                 <input type="checkbox" id="autostart" />
               </label>
               <label class="switch-row">
-                <span><strong>Keep chat windows on top</strong><small>Apply to every account window.</small></span>
+                <span><strong>Keep chat windows on top</strong><small>Applies to account windows. Call windows keep their own placement.</small></span>
                 <input type="checkbox" id="always_on_top" />
               </label>
               <label class="switch-row">
                 <span><strong>Global show/hide shortcut</strong><small>Bring your active account forward from anywhere.</small></span>
                 <input type="checkbox" id="hotkey_enabled" />
               </label>
-            </div>
-            <div class="section-surface shortcut-surface">
-              <label class="field" for="hotkey">
-                <span>Shortcut</span>
-                <div class="hotkey-row">
-                  <input type="text" id="hotkey" placeholder="Alt+W" />
-                  <button type="button" id="record_hotkey" class="secondary">Record</button>
+              <fieldset class="shortcut-fields" id="shortcut_fields">
+                <legend class="sr-only">Shortcut</legend>
+                <label class="field" for="hotkey">
+                  <span>Shortcut</span>
+                  <div class="hotkey-row">
+                    <input type="text" id="hotkey" placeholder="Alt+W" aria-describedby="hotkey_error" />
+                    <button type="button" id="record_hotkey" class="secondary">Record</button>
+                  </div>
+                </label>
+                <div id="hotkey_presets" class="shortcut-presets" role="group" aria-label="Suggested shortcuts">
+                  <button type="button" class="chip" data-hotkey-preset="platform">Recommended</button>
+                  <button type="button" class="chip" data-hotkey-preset="Ctrl+Alt+W">Ctrl + Alt + W</button>
+                  <button type="button" class="chip" data-hotkey-preset="CmdOrCtrl+Shift+W">Ctrl/Cmd + Shift + W</button>
                 </div>
-              </label>
-              <div id="hotkey_presets" class="shortcut-presets" aria-label="Suggested shortcuts">
-                <button type="button" class="chip" data-hotkey-preset="platform">Recommended</button>
-                <button type="button" class="chip" data-hotkey-preset="Ctrl+Alt+W">Ctrl + Alt + W</button>
-                <button type="button" class="chip" data-hotkey-preset="CmdOrCtrl+Shift+W">Ctrl/Cmd + Shift + W</button>
-              </div>
-              <p id="hotkey_hint" class="hotkey-hint" hidden></p>
-              <p class="field-note" id="platform_shortcut_note"></p>
+                <p id="hotkey_hint" class="hotkey-hint" hidden></p>
+                <p id="hotkey_error" class="inline-error" role="alert" hidden></p>
+                <p class="field-note" id="platform_shortcut_note"></p>
+              </fieldset>
             </div>
           </section>
 
-          <section class="settings-panel" data-panel="security" hidden>
-            <div class="panel-intro">
-              <p class="eyebrow">Privacy</p>
-              <h2>App lock</h2>
-              <p>Require authentication before any WhatsNow chat is revealed.</p>
-            </div>
+          <section class="settings-panel" role="tabpanel" id="panel-security" aria-labelledby="tab-security" data-panel="security" hidden>
             <div class="section-surface">
               <div id="lock-disabled">
+                <p class="block-note">Require a password before any WhatsNow chat is revealed.</p>
                 <div class="password-grid">
                   <label class="field" for="lock_pw1">
                     <span>Password (minimum 4 characters)</span>
@@ -393,30 +391,34 @@
                     <input type="password" id="lock_pw2" autocomplete="new-password" />
                   </label>
                 </div>
-                <button id="enable_lock">Enable app lock</button>
+                <p id="lock_error" class="inline-error" role="alert" hidden></p>
+                <button type="button" id="enable_lock" class="btn-primary">Enable app lock</button>
               </div>
 
               <div id="lock-enabled" hidden>
-                <label class="switch-row" id="biometric_row" hidden>
-                  <span><strong id="biometric_label">Use biometric</strong></span>
-                  <input type="checkbox" id="biometric_enabled" />
-                </label>
-                <label class="switch-row">
-                  <span><strong>Lock on launch</strong></span>
-                  <input type="checkbox" id="lock_on_launch" />
-                </label>
-                <label class="switch-row">
-                  <span><strong>Lock when hidden to tray</strong></span>
-                  <input type="checkbox" id="lock_on_hide" />
-                </label>
+                <div class="setting-list flush">
+                  <label class="switch-row" id="biometric_row" hidden>
+                    <span><strong id="biometric_label">Use biometric</strong></span>
+                    <input type="checkbox" id="biometric_enabled" />
+                  </label>
+                  <label class="switch-row">
+                    <span><strong>Lock on launch</strong><small>Applies next launch.</small></span>
+                    <input type="checkbox" id="lock_on_launch" />
+                  </label>
+                  <label class="switch-row">
+                    <span><strong>Lock when hidden to tray</strong></span>
+                    <input type="checkbox" id="lock_on_hide" />
+                  </label>
+                </div>
                 <label class="field compact-field" for="idle_min">
                   <span>Auto-lock after inactivity (minutes, 0 = off)</span>
                   <input type="number" id="idle_min" min="0" max="1440" step="1" value="0" />
                 </label>
+                <p id="lock_options_error" class="inline-error" role="alert" hidden></p>
                 <div class="button-group">
-                  <button id="lock_now">Lock now</button>
-                  <button id="change_pw" class="secondary">Change password</button>
-                  <button id="disable_lock" class="danger">Disable lock</button>
+                  <button type="button" id="lock_now" class="btn-primary">Lock now</button>
+                  <button type="button" id="change_pw" class="secondary">Change password</button>
+                  <button type="button" id="disable_lock" class="danger">Disable lock</button>
                 </div>
               </div>
               <p class="field-note">
@@ -426,17 +428,12 @@
             </div>
           </section>
 
-          <section class="settings-panel" data-panel="about" hidden>
-            <div class="panel-intro">
-              <p class="eyebrow">Identity</p>
-              <h2>About WhatsNow</h2>
-              <p>Your focused WhatsApp workspace.</p>
-            </div>
+          <section class="settings-panel" role="tabpanel" id="panel-about" aria-labelledby="tab-about" data-panel="about" hidden>
             <div class="section-surface about-card">
               <img src="app-icon.svg" alt="" aria-hidden="true" />
               <div class="about-copy">
                 <span class="about-version" data-version-ref>WhatsNow 0.0.0</span>
-                <h3>Made for focused conversations.</h3>
+                <h2>Made for focused conversations.</h2>
                 <p>
                   Thank you for using WhatsNow. Sole author and maintainer: Benedictus RH
                   (<a href="https://github.com/benedictusrey" target="_blank" rel="noopener noreferrer">@benedictusrey</a>).
@@ -457,44 +454,23 @@
       </div>
     </div>
 
+    <dialog id="app_dialog" class="app-dialog" aria-labelledby="dialog_title" aria-describedby="dialog_message">
+      <form id="dialog_form" novalidate>
+        <h2 id="dialog_title"></h2>
+        <p id="dialog_message"></p>
+        <div id="dialog_fields" class="dialog-fields"></div>
+        <p id="dialog_error" class="inline-error" role="alert" hidden></p>
+        <div class="dialog-actions">
+          <button type="button" id="dialog_cancel" class="secondary">Cancel</button>
+          <button type="submit" id="dialog_confirm" class="btn-primary">Confirm</button>
+        </div>
+      </form>
+    </dialog>
+
     <script src="theme.js?v=2.6.3"></script>
     <script src="hotkey.js?v=2.6.3"></script>
+    <script src="autosave.js?v=2.6.3"></script>
+    <script src="idleClose.js?v=2.6.3"></script>
     <script src="main.js?v=2.6.3"></script>
-    <script>
-      // Seamless window: the page draws its own titlebar (drag region + close
-      // button). This wires the close button to the native window (with a
-      // plain window.close() fallback) and auto-closes the Settings pop-up
-      // after 30 seconds without any interaction.
-      (function () {
-        var close = document.getElementById("window-close");
-        var closeWindow = function () {
-          var win =
-            window.__TAURI__ &&
-            window.__TAURI__.window &&
-            window.__TAURI__.window.getCurrentWindow();
-          if (win && win.close) {
-            win.close().catch(function () {
-              window.close();
-            });
-          } else {
-            window.close();
-          }
-        };
-        if (close) {
-          close.addEventListener("click", closeWindow);
-        }
-        var idleMs = 30000;
-        var idleTimer = window.setTimeout(closeWindow, idleMs);
-        var resetIdle = function () {
-          window.clearTimeout(idleTimer);
-          idleTimer = window.setTimeout(closeWindow, idleMs);
-        };
-        ["pointermove", "pointerdown", "keydown", "wheel", "input"].forEach(
-          function (type) {
-            window.addEventListener(type, resetIdle, { passive: true });
-          }
-        );
-      })();
-    </script>
   </body>
 </html>

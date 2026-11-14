@@ -12,6 +12,10 @@ try {
     .replace(/<link\b[^>]*>/gi, ""));
   await page.addStyleTag({ content: css });
   await page.addStyleTag({ content: "* { transition: none !important; animation: none !important; }" });
+  await page.evaluate(() => {
+    document.querySelector('[data-panel="overview"]').hidden = true;
+    document.querySelector('[data-panel="accounts"]').hidden = false;
+  });
   const failures = [];
   for (const theme of ["light", "dark", "midnight", "forest", "graphite", "ocean", "blush", "lavender", "candy", "aurora"]) {
     await page.evaluate(theme => { document.documentElement.dataset.theme = theme; }, theme);
@@ -30,16 +34,16 @@ try {
         for (const text of ["--text", "--muted", "--accent"])
           entries.push([`${text} on ${surface}`, resolve(text), resolve(surface)]);
       entries.push(["navigation", resolve("--rail-muted"), resolve("--rail")]);
-      const save = getComputedStyle(document.querySelector("#save"));
-      entries.push(["Save changes", save.color, save.backgroundColor]);
+      const save = getComputedStyle(document.querySelector("#add_account"));
+      entries.push(["Primary button", save.color, save.backgroundColor]);
       const icon = getComputedStyle(document.querySelector(".nav-item.active .nav-icon"));
       entries.push(["active navigation icon", icon.color, icon.backgroundColor]);
       return entries;
     });
-    await page.locator("#save").hover();
-    const hover = await page.locator("#save").evaluate(el => {
+    await page.locator("#add_account").hover();
+    const hover = await page.locator("#add_account").evaluate(el => {
       const style = getComputedStyle(el);
-      return ["Save changes hover", style.color, style.backgroundColor];
+      return ["Primary button hover", style.color, style.backgroundColor];
     });
     pairs.push(hover);
     await page.mouse.move(0, 0);
