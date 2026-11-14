@@ -295,6 +295,10 @@ fn open_account_window_inner(
     // "launch flash" never shows (the user's eyes will thank us). start_hidden
     // (autostart/tray) keeps the window invisible indefinitely.
     let reveal_pending = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(!start_hidden));
+    // The main window is centred ONCE, at launch (hidden at build time, again just
+    // before it is first shown). Later moves are kept until restart, so neither
+    // show_account nor show_active re-centre.
+    let cascade = next_cascade_offset();
     if !start_hidden {
         // Bounded fallback: if the first page load never finishes (offline,
         // site hiccup), reveal the window anyway so the user is never left
@@ -306,19 +310,19 @@ fn open_account_window_inner(
             std::thread::sleep(std::time::Duration::from_secs(12));
             if fallback_pending.swap(false, std::sync::atomic::Ordering::AcqRel) {
                 if let Some(w) = fallback_app.get_webview_window(&fallback_label) {
+                    center_on_monitor(&w, cascade);
                     let _ = w.show();
                     crate::dlog::log("account window revealed by fallback timer");
                 }
             }
         });
     }
-    // Default size clamped to the monitor work area so small screens (e.g.
-    // 1366x768 laptops, high-DPI 125%/150% scaling) never open a window that
-    // is larger than the desktop.
-    let (default_w, default_h) = clamped_logical_size(app, 1100.0, 800.0);
+    // Nominal size only: `center_on_monitor` clamps it to the work area of the
+    // monitor the window actually opens on (small screens, high-DPI scaling,
+    // removed secondary monitors) and centres it.
     let builder = WebviewWindowBuilder::new(app, &label, WebviewUrl::External(url))
         .title(format!("WhatsNow — {}", accounts::title_name(account)))
-        .inner_size(default_w, default_h)
+        .inner_size(1100.0, 800.0)
         .min_inner_size(560.0, 480.0)
         .icon(icon)?
         .user_agent(CHROME_UA)
@@ -570,6 +574,7 @@ fn open_account_window_inner(
                 // the page is loaded, so the navigation can finally apply.
                 crate::window::drain_pending_navigations(window.app_handle(), window.label());
                 if reveal_pending.swap(false, Ordering::AcqRel) {
+                    center_on_monitor(&window, cascade);
                     let _ = window.show();
                     let _ = window.set_focus();
                     crate::dlog::log("account window revealed after initial page load");
@@ -628,6 +633,7 @@ fn open_account_window_inner(
 
     let builder = apply_isolation(builder, account, app);
     let win = builder.build()?;
+    center_on_monitor(&win, cascade);
     let _ = win.set_always_on_top(current_settings.always_on_top);
     let _ = win.set_theme(current_settings.theme.native_theme());
 
@@ -1308,6 +1314,71 @@ pub fn ensure_isolation_supported() -> Result<(), String> {
     {
         Ok(())
     }
+}
+
+/// Centre an `outer`-sized window inside `work` (x, y, width, height), all in
+/// PHYSICAL pixels so scale factors never mix. The size is first clamped to 96%
+/// of the work area (room for the taskbar and shadow), so a window saved on a
+/// larger or removed monitor can never come back bigger than the screen.
+/// Returns `(x, y, width, height)`.
+fn centered_in_work_area(work: (i32, i32, u32, u32), outer: (u32, u32)) -> (i32, i32, u32, u32) {
+    let limit = |available: u32| ((u64::from(available) * 96) / 100).max(1) as u32;
+    let width = outer.0.clamp(1, limit(work.2));
+    let height = outer.1.clamp(1, limit(work.3));
+    let x = i64::from(work.0) + (i64::from(work.2) - i64::from(width)) / 2;
+    let y = i64::from(work.1) + (i64::from(work.3) - i64::from(height)) / 2;
+    (x as i32, y as i32, width, height)
+}
+
+/// Spacing between consecutive account windows when several open at launch.
+const CASCADE_STEP_PX: i32 = 32;
+
+/// Next cascade offset for a freshly built account window: 0, 32, 64 ... wrapping
+/// after six windows so a long session never walks off-screen.
+fn next_cascade_offset() -> i32 {
+    static SEQ: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(0);
+    (SEQ.fetch_add(1, std::sync::atomic::Ordering::Relaxed) % 6) * CASCADE_STEP_PX
+}
+
+/// Centre `win` on the monitor under the cursor (falling back to its current
+/// monitor, then the primary one) and shrink it to fit that monitor's work
+/// area. `cascade` shifts the result down-right by that many physical pixels
+/// (kept inside the work area). Maximized and fullscreen windows are left alone.
+fn center_on_monitor(win: &WebviewWindow, cascade: i32) {
+    if win.is_maximized().unwrap_or(false) || win.is_fullscreen().unwrap_or(false) {
+        return;
+    }
+    let app = win.app_handle();
+    let monitor = app
+        .cursor_position()
+        .ok()
+        .and_then(|cursor| app.monitor_from_point(cursor.x, cursor.y).ok().flatten())
+        .or_else(|| win.current_monitor().ok().flatten())
+        .or_else(|| app.primary_monitor().ok().flatten());
+    let (Some(monitor), Ok(outer), Ok(inner)) = (monitor, win.outer_size(), win.inner_size())
+    else {
+        return;
+    };
+    let area = monitor.work_area();
+    let work = (
+        area.position.x,
+        area.position.y,
+        area.size.width,
+        area.size.height,
+    );
+    let (x, y, width, height) = centered_in_work_area(work, (outer.width, outer.height));
+    if (width, height) != (outer.width, outer.height) {
+        // set_size resizes the INNER area; remove the clamped-off amount from it
+        // so decorated windows keep their frame allowance.
+        let inner_width = inner.width.saturating_sub(outer.width - width).max(1);
+        let inner_height = inner.height.saturating_sub(outer.height - height).max(1);
+        let _ = win.set_size(tauri::PhysicalSize::new(inner_width, inner_height));
+    }
+    let max_x = (i64::from(work.0) + i64::from(work.2) - i64::from(width)).max(i64::from(work.0));
+    let max_y = (i64::from(work.1) + i64::from(work.3) - i64::from(height)).max(i64::from(work.1));
+    let x = (i64::from(x) + i64::from(cascade)).min(max_x) as i32;
+    let y = (i64::from(y) + i64::from(cascade)).min(max_y) as i32;
+    let _ = win.set_position(tauri::PhysicalPosition::new(x, y));
 }
 
 /// Clamp a requested default window size to the primary monitor's work area
@@ -2130,19 +2201,37 @@ pub fn open_settings_window(app: &AppHandle) {
     use std::sync::atomic::{AtomicBool, Ordering};
 
     if let Some(w) = app.get_webview_window("settings") {
+        // Settings opens centred on the cursor's monitor every single time.
+        center_on_monitor(&w, 0);
         let _ = w.show();
         let _ = w.set_focus();
         return;
     }
 
     let settings = crate::settings::load(app);
-    let reveal_pending = AtomicBool::new(true);
-    // Settings is a tall panel (min 640 logical px) — clamp to the work area
-    // so 1366x768-class screens do not open it taller than the desktop.
-    let (settings_w, settings_h) = clamped_logical_size(app, 760.0, 820.0);
+    let reveal_pending = std::sync::Arc::new(AtomicBool::new(true));
+    // Bounded fallback, like the account window's: if the page never reports
+    // Finished, reveal Settings anyway instead of leaving it invisible.
+    {
+        let fallback_app = app.clone();
+        let fallback_pending = reveal_pending.clone();
+        std::thread::spawn(move || {
+            std::thread::sleep(std::time::Duration::from_secs(6));
+            if fallback_pending.swap(false, Ordering::AcqRel) {
+                if let Some(w) = fallback_app.get_webview_window("settings") {
+                    center_on_monitor(&w, 0);
+                    let _ = w.show();
+                    let _ = w.set_focus();
+                    crate::dlog::log("settings window revealed by fallback timer");
+                }
+            }
+        });
+    }
+    // Settings is a tall panel (min 640 logical px). The nominal size is clamped
+    // to the opening monitor's work area by `center_on_monitor`.
     let builder = WebviewWindowBuilder::new(app, "settings", WebviewUrl::App("index.html".into()))
         .title("WhatsNow — Settings")
-        .inner_size(settings_w, settings_h)
+        .inner_size(760.0, 820.0)
         .min_inner_size(560.0, 640.0)
         .resizable(true)
         // Seamless pop-up style: no native titlebar (the Settings page draws
@@ -2168,6 +2257,7 @@ pub fn open_settings_window(app: &AppHandle) {
             if payload.event() == PageLoadEvent::Finished
                 && reveal_pending.swap(false, Ordering::AcqRel)
             {
+                center_on_monitor(&window, 0);
                 let _ = window.show();
                 let _ = window.set_focus();
             }
@@ -2180,7 +2270,7 @@ pub fn open_settings_window(app: &AppHandle) {
 #[cfg(test)]
 mod tests {
     use super::{
-        base64_encode, deep_link_open_by_phone_script, drop_msg_begin, drop_msg_chunk_prefix,
+        base64_encode, centered_in_work_area, deep_link_open_by_phone_script, drop_msg_begin, drop_msg_chunk_prefix,
         drop_msg_commit, drop_msg_end, drop_msg_reserve, ensure_download_destination,
         external_web_url, is_whatsapp_call_url, mime_for, plan_drop, settings_theme_bootstrap,
         settings_version_bootstrap, settings_window_background, stream_chunks, summarize_skips,
@@ -2189,6 +2279,47 @@ mod tests {
         DROP_CHUNK_BYTES, DROP_MSG_CHUNK_SUFFIX, MAX_DROP_FILES,
     };
     use crate::settings::AppTheme;
+
+    #[test]
+    fn centering_places_a_window_in_the_middle_of_a_primary_work_area() {
+        // 1920x1080 monitor with a 40px taskbar: work area 1920x1040 at (0, 0).
+        assert_eq!(
+            centered_in_work_area((0, 0, 1920, 1040), (1100, 800)),
+            (410, 120, 1100, 800)
+        );
+    }
+
+    #[test]
+    fn centering_honours_a_negative_origin_secondary_monitor() {
+        // A monitor to the left of and above the primary one.
+        let (x, y, w, h) = centered_in_work_area((-1920, -200, 1920, 1080), (1000, 700));
+        assert_eq!((w, h), (1000, 700));
+        assert_eq!((x, y), (-1920 + 460, -200 + 190));
+        assert!(x >= -1920 && x + w as i32 <= 0);
+    }
+
+    #[test]
+    fn centering_shrinks_a_window_larger_than_the_work_area() {
+        let (x, y, w, h) = centered_in_work_area((0, 0, 1920, 1040), (3000, 2000));
+        assert_eq!((w, h), (1843, 998));
+        assert_eq!((x, y), ((1920 - 1843) / 2, (1040 - 998) / 2));
+    }
+
+    #[test]
+    fn centering_fits_the_default_window_on_a_1366x768_screen_at_150_percent() {
+        // 1100x800 logical at 150% is 1650x1200 physical, well over the
+        // 1366x728 work area (768 minus a 40px taskbar).
+        let (x, y, w, h) = centered_in_work_area((0, 0, 1366, 728), (1650, 1200));
+        assert_eq!((w, h), (1311, 698));
+        assert!(x >= 0 && y >= 0);
+        assert!(x as u32 + w <= 1366 && y as u32 + h <= 728);
+    }
+
+    #[test]
+    fn centering_never_returns_an_empty_window() {
+        let (_, _, w, h) = centered_in_work_area((0, 0, 1, 1), (0, 0));
+        assert!(w >= 1 && h >= 1);
+    }
 
     #[test]
     fn settings_window_starts_with_the_saved_palette() {

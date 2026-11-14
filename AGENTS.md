@@ -147,6 +147,14 @@ auto-close, reveal only after first paint. The frameless style is permanent:
 the restore, and `set_decorations(false)` is re-asserted on page load — a
 stale saved state must NEVER re-attach the native title bar.
 
+**Centering (2.7.0, user-specified):** Settings opens centered on the
+cursor's monitor EVERY time it opens (first open and reuse). The main/account
+windows center ONCE at app launch; moves during the session are kept until the
+next restart, so `show_account` / `show_active` must never re-center.
+`tauri-plugin-window-state` keeps `StateFlags::POSITION` excluded (size and
+maximized state are still restored), and `center_on_monitor` +
+`centered_in_work_area` (physical pixels, 96% work-area clamp) own placement.
+
 ### 3. Notification icon — ALWAYS the compact toast (user-confirmed 2026-08-08, updated 2026-08-11)
 
 Every toast banner AND every notification-center entry MUST use the
@@ -188,6 +196,10 @@ name, with NO large icon on the toast body. This applies to EVERY toast
 
 ### 4. Other standing rules
 
+- **Window placement (2.7.0).** See the Centering paragraph under §2: Settings
+  re-centers on every open, account windows only at launch (cascaded +32 px per
+  extra account). Do not re-center on show/toggle and do not restore saved
+  positions.
 - Version stays at 2.5.0 until the user explicitly asks for a bump.
 - `whatsnow --settings` opens the Settings pop-up (also forwarded to a
   running hidden instance); `--test-notification` is diagnostic-only.

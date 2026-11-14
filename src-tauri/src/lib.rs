@@ -136,6 +136,10 @@ pub fn run() {
                 // DECORATIONS is excluded too: the Settings window is permanently
                 // frameless (decorations(false) in its builder), and a stale saved
                 // state from an older build must not re-attach the native title bar.
+                // POSITION is excluded as well (2.7.0): windows are centred on the
+                // cursor's monitor when they open, so a position saved on a removed
+                // or rearranged monitor can never strand a window off-screen. Size
+                // and the maximized state are still restored.
                 tauri_plugin_window_state::Builder::default()
                     // Call stages are transient: stale saved geometry must not
                     // override their opener-monitor fit on the next call.
@@ -143,7 +147,8 @@ pub fn run() {
                     .with_state_flags(
                         tauri_plugin_window_state::StateFlags::all()
                             & !tauri_plugin_window_state::StateFlags::VISIBLE
-                            & !tauri_plugin_window_state::StateFlags::DECORATIONS,
+                            & !tauri_plugin_window_state::StateFlags::DECORATIONS
+                            & !tauri_plugin_window_state::StateFlags::POSITION,
                     )
                     .build(),
             )
