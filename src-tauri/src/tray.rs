@@ -245,7 +245,7 @@ pub fn refresh_badges(app: &AppHandle) {
 
 fn update_window_badges(app: &AppHandle, count: u32) {
     for (label, window) in app.webview_windows() {
-        if !label.starts_with("wa-") {
+        if !accounts::is_account_label(&label) {
             continue;
         }
 

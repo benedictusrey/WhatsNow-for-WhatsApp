@@ -24,7 +24,7 @@ pub struct PendingNavigations(pub Mutex<Vec<String>>);
 /// content (call stages, invite pages, wa.me confirmations). All
 /// window.open requests to family hosts are shown here instead of spawning
 /// one window per link.
-pub const CONTENT_POPUP_LABEL: &str = "wa-content";
+pub const CONTENT_POPUP_LABEL: &str = accounts::CONTENT_POPUP_LABEL;
 
 /// Recent desktop Chrome UA. WhatsApp Web rejects the default WebKitGTK/Safari UA.
 /// Bump the major version occasionally, and keep it in sync with the client-hints
@@ -235,7 +235,7 @@ pub fn run_ui_diagnostic(app: &AppHandle) {
 "##;
 
     for (label, window) in app.webview_windows() {
-        if label.starts_with("wa-") {
+        if accounts::is_account_label(&label) {
             let _ = window.eval(SCRIPT);
         }
     }
@@ -1222,7 +1222,7 @@ fn register_focus_listener(app: &AppHandle, win: &WebviewWindow) {
     win.on_window_event(move |event| {
         if let tauri::WindowEvent::Focused(true) = event {
             if let Some(active) = app_handle.try_state::<ActiveAccount>() {
-                *active.lock().unwrap() = label.clone();
+                *active.lock().unwrap_or_else(|e| e.into_inner()) = label.clone();
             }
             // Re-assert the taskbar overlay so the count is always visible when
             // the window is restored (hidden-to-tray windows have no taskbar
@@ -1236,7 +1236,7 @@ fn register_focus_listener(app: &AppHandle, win: &WebviewWindow) {
 /// focused. In that state the user can already see incoming activity.
 pub fn has_focused_account_window(app: &AppHandle) -> bool {
     app.webview_windows().iter().any(|(label, window)| {
-        label.starts_with("wa-")
+        accounts::is_account_label(label)
             && window.is_visible().unwrap_or(false)
             && !window.is_minimized().unwrap_or(false)
             && window.is_focused().unwrap_or(false)
@@ -1863,7 +1863,7 @@ pub fn navigate_active_account(app: &AppHandle, url: &str) {
         .or_else(|| {
             app.webview_windows()
                 .keys()
-                .find(|l| l.starts_with("wa-"))
+                .find(|l| accounts::is_account_label(l))
                 .cloned()
         });
     let Some(label) = label else {
@@ -1992,7 +1992,7 @@ pub fn show_active(app: &AppHandle) {
         return;
     }
     if let Some(active) = app.try_state::<ActiveAccount>() {
-        let label = active.lock().unwrap().clone();
+        let label = active.lock().unwrap_or_else(|e| e.into_inner()).clone();
         if app.get_webview_window(&label).is_some() {
             show_account(app, &label);
             return;
@@ -2002,7 +2002,7 @@ pub fn show_active(app: &AppHandle) {
     if let Some(label) = app
         .webview_windows()
         .keys()
-        .find(|l| l.starts_with("wa-"))
+        .find(|l| accounts::is_account_label(l))
         .cloned()
     {
         show_account(app, &label);
@@ -2046,7 +2046,7 @@ pub fn toggle_decision(active_visible: Option<bool>) -> ToggleAct {
 pub fn toggle_active(app: &AppHandle) {
     let label = app
         .try_state::<ActiveAccount>()
-        .map(|a| a.lock().unwrap().clone());
+        .map(|a| a.lock().unwrap_or_else(|e| e.into_inner()).clone());
     let visible = label
         .as_ref()
         .and_then(|l| app.get_webview_window(l))

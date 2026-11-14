@@ -14,6 +14,9 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::sync::Mutex;
 
+/// The log restarts once it passes this size.
+const MAX_LOG_BYTES: u64 = 1024 * 1024;
+
 /// Serializes writes across the per-account notification threads.
 static LOCK: Mutex<()> = Mutex::new(());
 
@@ -48,6 +51,10 @@ pub fn log(msg: &str) {
         .map(|d| d.as_secs())
         .unwrap_or(0);
     let _g = LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    // Bounded: a very long session restarts the file instead of growing forever.
+    if std::fs::metadata(&p).is_ok_and(|m| m.len() > MAX_LOG_BYTES) {
+        let _ = std::fs::File::create(&p);
+    }
     if let Ok(mut f) = std::fs::OpenOptions::new()
         .create(true)
         .append(true)

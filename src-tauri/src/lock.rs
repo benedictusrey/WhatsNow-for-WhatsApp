@@ -1,4 +1,5 @@
 use std::sync::Mutex;
+use std::time::{Duration, Instant};
 use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindowBuilder};
 
 /// Runtime lock state. `unlocked == false` means the app is locked.
@@ -6,6 +7,8 @@ pub struct LockState {
     pub unlocked: Mutex<bool>,
     /// Labels of windows hidden by `lock_now`, to re-show on `unlock`.
     pub hidden: Mutex<Vec<String>>,
+    /// Consecutive wrong passwords and the moment further attempts are allowed.
+    pub attempts: Mutex<(u32, Option<Instant>)>,
 }
 
 impl LockState {
@@ -13,7 +16,42 @@ impl LockState {
         Self {
             unlocked: Mutex::new(unlocked),
             hidden: Mutex::new(Vec::new()),
+            attempts: Mutex::new((0, None)),
         }
+    }
+}
+
+/// Seconds to wait after `failures` consecutive wrong passwords: none for the
+/// first four, then 1, 2, 4 ... capped at 30. Pure and unit-tested.
+pub fn backoff_secs(failures: u32) -> u64 {
+    if failures < 5 {
+        0
+    } else {
+        (1u64 << (failures - 5).min(5)).min(30)
+    }
+}
+
+/// Seconds still to wait before another password attempt is accepted.
+pub fn lockout_remaining_secs(app: &AppHandle) -> Option<u64> {
+    let state = app.try_state::<LockState>()?;
+    let attempts = state.attempts.lock().unwrap_or_else(|e| e.into_inner());
+    let until = attempts.1?;
+    let remaining = until.checked_duration_since(Instant::now())?;
+    Some(remaining.as_secs() + u64::from(remaining.subsec_nanos() > 0))
+}
+
+pub fn record_unlock_failure(app: &AppHandle) {
+    if let Some(state) = app.try_state::<LockState>() {
+        let mut attempts = state.attempts.lock().unwrap_or_else(|e| e.into_inner());
+        attempts.0 = attempts.0.saturating_add(1);
+        let wait = backoff_secs(attempts.0);
+        attempts.1 = (wait > 0).then(|| Instant::now() + Duration::from_secs(wait));
+    }
+}
+
+pub fn record_unlock_success(app: &AppHandle) {
+    if let Some(state) = app.try_state::<LockState>() {
+        *state.attempts.lock().unwrap_or_else(|e| e.into_inner()) = (0, None);
     }
 }
 
@@ -36,7 +74,7 @@ pub fn is_lock_window(window: &tauri::Window) -> bool {
 /// not yet managed, so nothing is accidentally gated before setup runs.
 pub fn is_unlocked(app: &AppHandle) -> bool {
     app.try_state::<LockState>()
-        .map(|s| *s.unlocked.lock().unwrap())
+        .map(|s| *s.unlocked.lock().unwrap_or_else(|e| e.into_inner()))
         .unwrap_or(true)
 }
 
@@ -58,13 +96,13 @@ fn lock_with_visibility(app: &AppHandle, show_lock: bool) {
     };
     // Idempotent: if already locked, just ensure the lock screen is up — do NOT
     // re-hide windows or clobber the recorded `hidden` list (which unlock restores).
-    if !*state.unlocked.lock().unwrap() {
+    if !*state.unlocked.lock().unwrap_or_else(|e| e.into_inner()) {
         if show_lock {
             show_lock_window(app);
         }
         return;
     }
-    *state.unlocked.lock().unwrap() = false;
+    *state.unlocked.lock().unwrap_or_else(|e| e.into_inner()) = false;
     let mut hidden = Vec::new();
     for (label, w) in app.webview_windows() {
         if should_hide(&label) && w.is_visible().unwrap_or(false) {
@@ -72,7 +110,7 @@ fn lock_with_visibility(app: &AppHandle, show_lock: bool) {
             hidden.push(label);
         }
     }
-    *state.hidden.lock().unwrap() = hidden;
+    *state.hidden.lock().unwrap_or_else(|e| e.into_inner()) = hidden;
     if show_lock {
         show_lock_window(app);
     } else if let Some(window) = app.get_webview_window("lock") {
@@ -97,11 +135,11 @@ pub fn unlock(app: &AppHandle) {
         Some(s) => s,
         None => return, // not yet set up — bail
     };
-    *state.unlocked.lock().unwrap() = true;
+    *state.unlocked.lock().unwrap_or_else(|e| e.into_inner()) = true;
     if let Some(w) = app.get_webview_window("lock") {
         let _ = w.destroy();
     }
-    let hidden = std::mem::take(&mut *state.hidden.lock().unwrap());
+    let hidden = std::mem::take(&mut *state.hidden.lock().unwrap_or_else(|e| e.into_inner()));
     if hidden.is_empty() {
         crate::window::show_active(app);
     } else {
@@ -159,6 +197,20 @@ mod tests {
     fn should_hide_never_hides_the_lock_window() {
         assert!(!should_hide("lock"));
         assert!(!should_hide("some-future-internal-panel"));
+    }
+
+    #[test]
+    fn backoff_grows_after_five_failures_and_is_capped() {
+        for failures in 0..5 {
+            assert_eq!(backoff_secs(failures), 0);
+        }
+        assert_eq!(backoff_secs(5), 1);
+        assert_eq!(backoff_secs(6), 2);
+        assert_eq!(backoff_secs(7), 4);
+        assert_eq!(backoff_secs(8), 8);
+        assert_eq!(backoff_secs(9), 16);
+        assert_eq!(backoff_secs(10), 30);
+        assert_eq!(backoff_secs(u32::MAX), 30);
     }
 
     #[test]

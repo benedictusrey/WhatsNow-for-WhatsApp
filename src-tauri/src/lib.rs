@@ -21,7 +21,6 @@ mod notify;
 mod protocol;
 mod settings;
 mod tray;
-mod unread;
 mod window;
 
 pub const APP_NAME: &str = "WhatsNow";
@@ -175,7 +174,6 @@ pub fn run() {
             commands::activate_notification_window,
             commands::notification_click,
             commands::notify,
-            commands::set_unread,
             commands::set_unread_count,
             commands::set_profile_name,
             commands::open_external_url,
@@ -186,7 +184,6 @@ pub fn run() {
             commands::get_productivity_status,
             commands::set_focus_mode,
             commands::test_notification,
-            commands::open_settings,
             commands::list_accounts,
             commands::add_account,
             commands::remove_account,
@@ -271,7 +268,7 @@ pub fn run() {
 
             tray::setup(handle)?;
             tray::rebuild_menu(handle);
-            let _ = settings::apply(handle, &s);
+            let _ = settings::apply(handle, None, &s);
 
             // Cold-start toast activation: Windows relaunched this (previously
             // exited) app from a toast click with the route payload on the

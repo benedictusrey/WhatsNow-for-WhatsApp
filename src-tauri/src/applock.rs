@@ -56,7 +56,7 @@ pub fn load(app: &AppHandle) -> AppLockConfig {
 pub fn save(app: &AppHandle, c: &AppLockConfig) -> tauri::Result<()> {
     let path = config_path(app)?;
     let json = serde_json::to_string_pretty(c).expect("serialize app-lock config");
-    std::fs::write(path, json)?;
+    crate::settings::write_atomic(&path, json.as_bytes())?;
     Ok(())
 }
 

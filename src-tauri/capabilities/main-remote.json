@@ -7,7 +7,6 @@
     "urls": ["https://web.whatsapp.com/*"]
   },
   "permissions": [
-    "notification:default",
     "allow-activate-notification-window",
     "allow-dlog",
     "allow-notification-click",

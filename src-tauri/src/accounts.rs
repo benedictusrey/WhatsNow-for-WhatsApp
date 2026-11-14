@@ -157,9 +157,23 @@ pub fn window_label(id: &str) -> String {
     format!("wa-{id}")
 }
 
+/// Label of the single reusable content popup (family links other than calls).
+pub const CONTENT_POPUP_LABEL: &str = "wa-content";
+
+/// True only for real account windows. Call stages (`wa-call-N`) and the content
+/// popup share the `wa-` prefix but are not accounts: they must not count as a
+/// focused chat, appear in the unread map, or receive account-level settings.
+pub fn is_account_label(label: &str) -> bool {
+    label.starts_with("wa-") && !label.starts_with("wa-call-") && label != CONTENT_POPUP_LABEL
+}
+
 /// Extract the account id from a window label, or `None` if not an account label.
 pub fn id_from_label(label: &str) -> Option<&str> {
-    label.strip_prefix("wa-")
+    if is_account_label(label) {
+        label.strip_prefix("wa-")
+    } else {
+        None
+    }
 }
 
 /// The on-disk profile directory for an account (Linux/Windows data_directory).
@@ -203,7 +217,7 @@ pub fn load(app: &AppHandle) -> AccountsFile {
 pub fn save(app: &AppHandle, f: &AccountsFile) -> tauri::Result<()> {
     let path = accounts_path(app)?;
     let json = serde_json::to_string_pretty(f).expect("serialize accounts");
-    std::fs::write(path, json)?;
+    crate::settings::write_atomic(&path, json.as_bytes())?;
     Ok(())
 }
 
@@ -425,6 +439,19 @@ mod tests {
         for id in ["default", "acct-7"] {
             assert_eq!(id_from_label(&window_label(id)), Some(id));
         }
+    }
+
+    #[test]
+    fn only_real_account_windows_are_account_labels() {
+        assert!(is_account_label("wa-default"));
+        assert!(is_account_label("wa-acct-3"));
+        assert!(!is_account_label("wa-call-1"));
+        assert!(!is_account_label("wa-call-12"));
+        assert!(!is_account_label(CONTENT_POPUP_LABEL));
+        assert!(!is_account_label("settings"));
+        assert!(!is_account_label("lock"));
+        assert_eq!(id_from_label("wa-call-1"), None);
+        assert_eq!(id_from_label("wa-content"), None);
     }
 
     #[test]

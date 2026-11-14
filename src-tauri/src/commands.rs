@@ -115,7 +115,7 @@ pub fn notify(
     crate::dlog::log("commands::notify invoked");
     // While locked, suppress notifications entirely so message previews don't leak
     // to a popup / lock screen. Count-only unread state still updates the taskbar
-    // overlay, tray tooltip, and tray account menu through set_unread.
+    // overlay, tray tooltip, and tray account menu through set_unread_count.
     if !crate::lock::is_unlocked(&app) {
         crate::dlog::log("commands::notify suppressed: app is locked");
         return;
@@ -190,12 +190,6 @@ pub fn activate_notification_window(
 pub fn dlog(msg: String) {
     let msg: String = msg.chars().take(300).collect();
     crate::dlog::log(&format!("js: {msg}"));
-}
-
-#[tauri::command]
-pub fn set_unread(window: tauri::Window, app: tauri::AppHandle, title: String) {
-    let count = crate::unread::parse_unread(&title);
-    update_unread_count(&window, &app, count);
 }
 
 /// Receive a count-only unread update from the scoped WhatsApp bridge.
@@ -298,8 +292,12 @@ pub fn set_settings(
     let mut settings = settings;
     settings.notification_preview_duration_secs =
         crate::settings::notification_duration_secs(settings.notification_preview_duration_secs);
+    // A mistyped shortcut is rejected BEFORE anything is saved or unregistered,
+    // so the previously working shortcut keeps working.
+    crate::settings::validate_hotkey(&settings)?;
+    let previous = crate::settings::load(&app);
     crate::settings::save(&app, &settings).map_err(|e| e.to_string())?;
-    Ok(crate::settings::apply(&app, &settings))
+    Ok(crate::settings::apply(&app, Some(&previous), &settings))
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -404,16 +402,6 @@ pub fn test_notification(window: tauri::Window, app: tauri::AppHandle) -> Result
     Ok("Native test delivered. Check the banner or notification center.".into())
 }
 
-#[tauri::command]
-pub fn open_settings(window: tauri::Window, app: tauri::AppHandle) -> Result<(), String> {
-    if is_remote(&window) {
-        return Err("forbidden".into());
-    }
-    lock::require_unlocked(&app)?;
-    crate::window::open_settings_window(&app);
-    Ok(())
-}
-
 // ---------------------------------------------------------------------------
 // Account-management commands (local-only).
 // ---------------------------------------------------------------------------
@@ -431,7 +419,7 @@ pub struct AccountView {
 fn account_views(app: &tauri::AppHandle) -> Vec<AccountView> {
     let f = accounts::load(app);
     let map = app.state::<UnreadMap>();
-    let map = map.lock().unwrap();
+    let map = map.lock().unwrap_or_else(|error| error.into_inner());
     let mut views: Vec<AccountView> = f
         .accounts
         .iter()
@@ -516,7 +504,7 @@ pub fn remove_account(
     // Drop the per-account unread count.
     {
         let state = app.state::<UnreadMap>();
-        let mut map = state.lock().unwrap();
+        let mut map = state.lock().unwrap_or_else(|error| error.into_inner());
         map.remove(&removed.id);
     }
     accounts::delete_profile(&app, &removed.id);
@@ -524,7 +512,7 @@ pub fn remove_account(
     // Recompute the aggregate badge and the menu.
     let total = {
         let state = app.state::<UnreadMap>();
-        let map = state.lock().unwrap();
+        let map = state.lock().unwrap_or_else(|error| error.into_inner());
         accounts::aggregate_unread(&map)
     };
     crate::tray::update_badge(&app, total);
@@ -605,7 +593,7 @@ pub fn open_account(
     crate::window::show_account(&app, &accounts::window_label(&acct.id));
     // Track as the active account.
     if let Some(active) = app.try_state::<ActiveAccount>() {
-        *active.lock().unwrap() = accounts::window_label(&acct.id);
+        *active.lock().unwrap_or_else(|e| e.into_inner()) = accounts::window_label(&acct.id);
     }
     Ok(())
 }
@@ -805,10 +793,15 @@ pub fn unlock_password(
         lock::unlock(&app);
         return Ok(true);
     };
+    if let Some(wait) = lock::lockout_remaining_secs(&app) {
+        return Err(format!("Too many attempts. Try again in {wait}s."));
+    }
     if applock::verify_password(&password, &phc) {
+        lock::record_unlock_success(&app);
         lock::unlock(&app);
         Ok(true)
     } else {
+        lock::record_unlock_failure(&app);
         Ok(false)
     }
 }
