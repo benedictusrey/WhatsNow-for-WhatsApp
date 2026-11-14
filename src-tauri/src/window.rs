@@ -51,7 +51,7 @@ pub const CHROME_UA: &str =
 
 const BRIDGE_JS: &str = include_str!("../resources/bridge.js");
 const CHAT_THEME_JS: &str = include_str!("../resources/chat-theme.js");
-const APP_ICON: &[u8] = include_bytes!("../icons/128x128.png");
+pub(crate) const APP_ICON: &[u8] = include_bytes!("../icons/128x128.png");
 
 fn external_web_url(url: &tauri::Url) -> bool {
     matches!(url.scheme(), "http" | "https") && !whatsapp_family_host(url)
