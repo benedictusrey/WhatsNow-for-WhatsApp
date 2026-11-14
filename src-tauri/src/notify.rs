@@ -106,6 +106,97 @@ pub fn route_payload_in_args(args: &[String]) -> Option<(String, NotificationRou
     args.iter().find_map(|arg| decode_route_payload(arg))
 }
 
+/// Longest title / body shown in a toast. Longer text is cut with an ellipsis so
+/// an enormous message can never make the toast fail to display.
+#[cfg_attr(not(target_os = "windows"), allow(dead_code))]
+const TOAST_TITLE_CAP: usize = 128;
+#[cfg_attr(not(target_os = "windows"), allow(dead_code))]
+const TOAST_BODY_CAP: usize = 400;
+
+/// Make text safe for the toast XML: drop control characters and the XML 1.0
+/// non-characters (U+FFFE / U+FFFF make `LoadXml` fail and the whole toast is
+/// silently lost), then cap the length, ending with an ellipsis when cut.
+#[cfg_attr(not(target_os = "windows"), allow(dead_code))]
+fn sanitize_toast_text(value: &str, cap: usize) -> String {
+    let mut clean: Vec<char> = value
+        .chars()
+        .filter(|character| {
+            (matches!(*character, '\t' | '\n' | '\r') || !character.is_control())
+                && !matches!(*character, '\u{FFFE}' | '\u{FFFF}')
+                && !('\u{FDD0}'..='\u{FDEF}').contains(character)
+        })
+        .collect();
+    if clean.len() > cap {
+        clean.truncate(cap.saturating_sub(1));
+        clean.push('\u{2026}');
+    }
+    clean.into_iter().collect()
+}
+
+/// FNV-1a, 64 bit. Stable across runs and platforms, which `DefaultHasher`
+/// is not; toast groups must keep matching toasts shown by an earlier session.
+fn fnv1a64(value: &str) -> u64 {
+    let mut hash: u64 = 0xcbf2_9ce4_8422_2325;
+    for byte in value.bytes() {
+        hash ^= u64::from(byte);
+        hash = hash.wrapping_mul(0x0000_0100_0000_01b3);
+    }
+    hash
+}
+
+/// First six hex characters of every toast group of one account, so all of an
+/// account's groups can be found by prefix.
+pub fn account_group_prefix(account_id: &str) -> String {
+    format!("{:016x}", fnv1a64(account_id))[..6].to_string()
+}
+
+/// Action Center group id for one chat of one account: 16 hex characters, the
+/// first six being [`account_group_prefix`]. Well under WinRT's 64-char limit.
+pub fn toast_group(account_id: &str, chat_key: &str) -> String {
+    let chat = fnv1a64(&format!("{account_id}\u{1f}{chat_key}"));
+    format!("{}{:010x}", account_group_prefix(account_id), chat & 0xff_ffff_ffff)
+}
+
+/// The key that identifies a chat for grouping/clearing: the chat id (jid) when
+/// the page supplied one, else its title. Empty when previews are hidden.
+pub fn chat_key_for(route: &NotificationRoute) -> String {
+    if route.chat_id.is_empty() {
+        route.chat_title.clone()
+    } else {
+        route.chat_id.clone()
+    }
+}
+
+/// Remove the Action Center toasts of ONE chat (best effort, never panics).
+pub fn clear_chat(app: &AppHandle, account_id: &str, chat_key: &str) {
+    #[cfg(target_os = "windows")]
+    clear_group_windows(app, &toast_group(account_id, chat_key));
+    #[cfg(not(target_os = "windows"))]
+    let _ = (app, account_id, chat_key);
+}
+
+/// Remove every Action Center toast of one account (best effort).
+pub fn clear_account(app: &AppHandle, account_id: &str) {
+    #[cfg(target_os = "windows")]
+    clear_account_windows(app, account_id);
+    #[cfg(not(target_os = "windows"))]
+    let _ = (app, account_id);
+}
+
+/// Windows' notification permission for WhatsNow, as a stable string for the
+/// Settings "Notification health" card.
+pub fn notification_status(app: &AppHandle) -> &'static str {
+    #[cfg(target_os = "windows")]
+    {
+        notification_status_windows(app)
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        let _ = app;
+        "enabled"
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Delivery {
     Native,
@@ -155,9 +246,8 @@ pub fn show(app: &AppHandle, title: &str, body: &str) -> Result<Delivery, String
 
 #[cfg(target_os = "windows")]
 fn escape_toast_xml(value: &str) -> String {
-    value
+    sanitize_toast_text(value, usize::MAX)
         .chars()
-        .filter(|character| matches!(*character, '\t' | '\n' | '\r') || !character.is_control())
         .fold(String::new(), |mut escaped, character| {
             match character {
                 '&' => escaped.push_str("&amp;"),
@@ -249,7 +339,9 @@ fn show_windows_message(
         "short"
     };
     let launch = route_payload(account_id, &route);
-    let xml = build_toast_xml(banner, &launch, title, body);
+    let title = sanitize_toast_text(title, TOAST_TITLE_CAP);
+    let body = sanitize_toast_text(body, TOAST_BODY_CAP);
+    let xml = build_toast_xml(banner, &launch, &title, &body);
     let document = XmlDocument::new().map_err(|error| error.to_string())?;
     document
         .LoadXml(&HSTRING::from(xml.as_str()))
@@ -266,6 +358,21 @@ fn show_windows_message(
         format!("toast creation failed: {error}")
     })?;
     crate::dlog::log("notify: ToastNotification created");
+    // Group = account prefix + chat hash, Tag = unique per toast. Together they
+    // let the bridge clear a chat's toasts from the Action Center once the chat
+    // is read, in WhatsNow or on the phone (see clear_chat / clear_account).
+    use std::sync::atomic::{AtomicU64, Ordering};
+    static TOAST_SEQ: AtomicU64 = AtomicU64::new(0);
+    static TOAST_EPOCH: std::sync::OnceLock<u64> = std::sync::OnceLock::new();
+    let epoch = *TOAST_EPOCH.get_or_init(crate::settings::now_epoch_secs);
+    let tag = format!("{epoch:x}-{:x}", TOAST_SEQ.fetch_add(1, Ordering::Relaxed));
+    let group = toast_group(account_id, &chat_key_for(&route));
+    if let Err(error) = toast.SetGroup(&HSTRING::from(group.as_str())) {
+        crate::dlog::log(&format!("notify: SetGroup failed: {error}"));
+    }
+    if let Err(error) = toast.SetTag(&HSTRING::from(tag.as_str())) {
+        crate::dlog::log(&format!("notify: SetTag failed: {error}"));
+    }
     let notifier = ToastNotificationManager::CreateToastNotifierWithId(&HSTRING::from(
         app.config().identifier.clone(),
     ))
@@ -320,6 +427,61 @@ fn show_windows_message(
     // banner brief; Windows retains the entry in the notification history.
     crate::dlog::log("notify::show_message dispatched clickable native Windows toast");
     Ok(Delivery::Native)
+}
+
+#[cfg(target_os = "windows")]
+fn clear_group_windows(app: &AppHandle, group: &str) {
+    use windows::{core::HSTRING, UI::Notifications::ToastNotificationManager};
+    let result = ToastNotificationManager::History().and_then(|history| {
+        history.RemoveGroupWithId(
+            &HSTRING::from(group),
+            &HSTRING::from(app.config().identifier.clone()),
+        )
+    });
+    if let Err(error) = result {
+        crate::dlog::log(&format!("notify: clear chat toasts failed: {error}"));
+    }
+}
+
+#[cfg(target_os = "windows")]
+fn clear_account_windows(app: &AppHandle, account_id: &str) {
+    use windows::{core::HSTRING, UI::Notifications::ToastNotificationManager};
+    let prefix = account_group_prefix(account_id);
+    let app_id = HSTRING::from(app.config().identifier.clone());
+    let result = (|| -> windows::core::Result<()> {
+        let history = ToastNotificationManager::History()?;
+        let mut groups = std::collections::BTreeSet::new();
+        for toast in history.GetHistoryWithId(&app_id)? {
+            let group = toast.Group()?.to_string();
+            if group.starts_with(&prefix) {
+                groups.insert(group);
+            }
+        }
+        for group in groups {
+            history.RemoveGroupWithId(&HSTRING::from(group), &app_id)?;
+        }
+        Ok(())
+    })();
+    if let Err(error) = result {
+        crate::dlog::log(&format!("notify: clear account toasts failed: {error}"));
+    }
+}
+
+#[cfg(target_os = "windows")]
+fn notification_status_windows(app: &AppHandle) -> &'static str {
+    use windows::{core::HSTRING, UI::Notifications::*};
+    let setting = ToastNotificationManager::CreateToastNotifierWithId(&HSTRING::from(
+        app.config().identifier.clone(),
+    ))
+    .and_then(|notifier| notifier.Setting());
+    match setting {
+        Ok(NotificationSetting::Enabled) => "enabled",
+        Ok(NotificationSetting::DisabledForUser) => "disabled_by_user",
+        Ok(NotificationSetting::DisabledForApplication)
+        | Ok(NotificationSetting::DisabledByManifest) => "disabled_for_app",
+        Ok(NotificationSetting::DisabledByGroupPolicy) => "group_policy",
+        _ => "unknown",
+    }
 }
 
 /// Build the toast XML. Deliberately NO appLogoOverride image: Windows
@@ -383,6 +545,58 @@ mod tests {
             xml.contains("placement=\"attribution\""),
             "toast keeps the attribution line"
         );
+    }
+
+    #[test]
+    fn toast_groups_are_stable_short_and_share_the_account_prefix() {
+        let a = super::toast_group("default", "1234@c.us");
+        assert_eq!(a, super::toast_group("default", "1234@c.us"));
+        assert_eq!(a.len(), 16);
+        assert!(a.chars().all(|c| c.is_ascii_hexdigit()));
+        assert_ne!(a, super::toast_group("default", "5678@c.us"));
+        // Same chat id under another account is a different group.
+        assert_ne!(a, super::toast_group("acct-2", "1234@c.us"));
+        let prefix = super::account_group_prefix("default");
+        assert_eq!(prefix.len(), 6);
+        assert!(a.starts_with(&prefix));
+        assert!(super::toast_group("default", "other").starts_with(&prefix));
+        assert!(!super::toast_group("acct-2", "1234@c.us").starts_with(&prefix));
+    }
+
+    #[test]
+    fn chat_key_prefers_the_chat_id_over_the_title() {
+        let with_id = NotificationRoute {
+            chat_title: "Alice".into(),
+            chat_id: "1@c.us".into(),
+            ..Default::default()
+        };
+        assert_eq!(super::chat_key_for(&with_id), "1@c.us");
+        let title_only = NotificationRoute {
+            chat_title: "Alice".into(),
+            ..Default::default()
+        };
+        assert_eq!(super::chat_key_for(&title_only), "Alice");
+    }
+
+    #[test]
+    fn toast_text_drops_xml_non_characters_and_controls() {
+        assert_eq!(
+            super::sanitize_toast_text("a\u{FFFE}b\u{FFFF}c\u{FDD0}d\u{0007}e", 50),
+            "abcde"
+        );
+        assert_eq!(super::sanitize_toast_text("line\nbreak\t", 50), "line\nbreak\t");
+    }
+
+    #[test]
+    fn toast_text_is_capped_with_an_ellipsis() {
+        let long = "x".repeat(1_000);
+        let body = super::sanitize_toast_text(&long, super::TOAST_BODY_CAP);
+        assert_eq!(body.chars().count(), super::TOAST_BODY_CAP);
+        assert!(body.ends_with('\u{2026}'));
+        let title = super::sanitize_toast_text(&long, super::TOAST_TITLE_CAP);
+        assert_eq!(title.chars().count(), super::TOAST_TITLE_CAP);
+        let short = super::sanitize_toast_text("hello", super::TOAST_TITLE_CAP);
+        assert_eq!(short, "hello");
     }
 
     #[cfg(target_os = "windows")]

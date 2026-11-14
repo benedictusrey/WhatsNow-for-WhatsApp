@@ -667,7 +667,15 @@
   // title+body seen within DEDUP_MS; genuinely different messages are never affected.
   // Returns true if forwarded, false if suppressed as a duplicate.
   var DEDUP_MS = 3500;
+  // Messages with a real id are remembered for 6 hours. Fingerprints WITHOUT an
+  // id (chat + body only) expire after 90 seconds, so a second "ok" from the
+  // same chat a minute later is a new message, not a replay.
   var MESSAGE_HISTORY_MS = 6 * 60 * 60 * 1000;
+  var PREVIEW_HISTORY_MS = 90 * 1000;
+  // A real Notification and the unread-badge fallback can describe the same
+  // message; when both fire for one chat within this window only one toast shows.
+  var CROSS_SOURCE_MS = 5000;
+  var recentByChat = Object.create(null);
   // WhatsApp can replay its most recent browser notification while restoring a
   // session. Treat that initial hydration burst as history, not a new message.
   var NOTIFICATION_WARMUP_MS = 12000;
@@ -726,9 +734,12 @@
       details.body,
     ].join("\u001f");
   }
+  function fingerprintWindow(fingerprint) {
+    return fingerprint.indexOf("id:") === 0 ? MESSAGE_HISTORY_MS : PREVIEW_HISTORY_MS;
+  }
   function rememberNotification(details, now) {
     for (var key in notifiedMessages) {
-      if (now - notifiedMessages[key] > MESSAGE_HISTORY_MS) {
+      if (now - notifiedMessages[key] > fingerprintWindow(key)) {
         delete notifiedMessages[key];
       }
     }
@@ -737,7 +748,9 @@
     notifiedMessages[fingerprint] = now;
     return true;
   }
-  function nativeNotify(title, options) {
+  // `source` is "fallback" for toasts derived from the unread badge; everything
+  // else (window.Notification, showNotification) is the page's own alert.
+  function nativeNotify(title, options, source) {
     var details = notificationDetails(title, options);
     title = details.title;
     var body = details.body;
@@ -762,8 +775,18 @@
     }
     var key = title + " " + body;
     if (recentNotif[key] && now - recentNotif[key] <= DEDUP_MS) return false;
+    var origin = source === "fallback" ? "fallback" : "page";
+    var chatKey = details.route.chatId || details.route.chatTitle || title;
+    for (var chat in recentByChat) {
+      if (now - recentByChat[chat].at > CROSS_SOURCE_MS) delete recentByChat[chat];
+    }
+    var lastForChat = recentByChat[chatKey];
+    if (lastForChat && lastForChat.origin !== origin && now - lastForChat.at <= CROSS_SOURCE_MS) {
+      return false;
+    }
     if (!rememberNotification(details, now)) return false;
     recentNotif[key] = now;
+    recentByChat[chatKey] = { at: now, origin: origin };
     invoke("notify", { title: title, body: body, route: details.route });
     lastRichNotificationAt = now;
     return true;
@@ -1935,55 +1958,209 @@
     return total;
   }
 
+  // ---- Unread rows -> fallback toasts and Action Center clearing -------------
   // Service workers can emit a notification from their own execution context,
-  // beyond the page prototype overridden above. If an unread badge increases and
-  // no rich notification reached us, derive the newest chat preview from the
-  // accessible chat row. This covers direct, group, and community rows alike.
-  function latestUnreadDetail() {
-    if (!document.querySelectorAll) return null;
-    var badges = document.querySelectorAll(
-      '[aria-label*="unread message" i], [data-testid="icon-unread-count"], [data-icon="unread-count"], [data-testid*="unread-count"]'
+  // beyond the page prototype overridden above. When a chat's unread number
+  // rises and no rich notification reached us, derive the preview from that
+  // accessible chat row. Rows are tracked PER CHAT so that:
+  //   * a toast is only raised for a chat whose own unread number went up,
+  //     picking the TOP-most such row (WhatsApp lists the newest chat first)
+  //     and never a muted chat;
+  //   * the baseline is taken only once the chat list has rendered and settled,
+  //     so a slow load / QR login can never replay old unread chats as toasts;
+  //   * when a chat's badge goes away (read here or on the phone) or its
+  //     conversation is open, its toasts are cleared from the Action Center.
+  var UNREAD_BADGE_SELECTOR =
+    '[aria-label*="unread message" i], [data-testid="icon-unread-count"], ' +
+    '[data-icon="unread-count"], [data-testid*="unread-count"]';
+  var UNREAD_ROW_SELECTOR = '[data-testid="cell-frame-container"], [role="row"]';
+  var MUTED_ICON_SELECTOR = '[data-icon*="muted" i], [data-testid*="muted" i]';
+  var UNREAD_SETTLE_MS = 3000;
+  var CLEAR_THROTTLE_MS = 2000;
+
+  function unreadRowFor(badge) {
+    return (
+      (badge.closest && badge.closest(UNREAD_ROW_SELECTOR)) || badge.parentElement || null
     );
-    for (var index = badges.length - 1; index >= 0; index--) {
+  }
+
+  // Same key order the Rust side derives: the stable chat id, else the title.
+  function chatKeyForRow(row) {
+    var id = rowChatIdOf(row);
+    if (id) return id;
+    var titleNode = row.querySelector && row.querySelector("[title]");
+    return titleNode ? String(titleNode.getAttribute("title") || "").trim() : "";
+  }
+
+  function detailFromRow(row) {
+    if (!row) return null;
+    var titleNode = row.querySelector && row.querySelector("[title]");
+    var title = titleNode && String(titleNode.getAttribute("title") || "").trim();
+    if (!title) return null;
+    var pieces = row.querySelectorAll
+      ? Array.from(row.querySelectorAll('[dir="auto"], span'))
+          .map(function (node) {
+            return String(node.textContent || "").replace(/\s+/g, " ").trim();
+          })
+          .filter(function (text) {
+            return text && text !== title && !/^\d{1,2}:\d{2}$/.test(text) && !/^\d+\+?$/.test(text);
+          })
+      : [];
+    var body = pieces.length ? pieces[pieces.length - 1] : "";
+    var messageNode =
+      row.querySelector &&
+      row.querySelector("[data-message-id],[data-id*='true_'],[data-id*='false_']");
+    var messageId =
+      (messageNode &&
+        (messageNode.getAttribute("data-message-id") || messageNode.getAttribute("data-id"))) ||
+      "";
+    return { title: title, body: body, chatId: rowChatIdOf(row), messageId: messageId };
+  }
+
+  function collectUnreadRows() {
+    var rows = [];
+    if (!document.querySelectorAll) return rows;
+    var badges = document.querySelectorAll(UNREAD_BADGE_SELECTOR);
+    var seen = [];
+    for (var index = 0; index < badges.length; index++) {
       var badge = badges[index];
-      var row =
-        (badge.closest &&
-          badge.closest('[data-testid="cell-frame-container"], [role="row"]')) ||
-        badge.parentElement;
-      if (!row) continue;
+      var row = unreadRowFor(badge);
+      if (!row || seen.indexOf(row) !== -1) continue;
+      var unread = readBadgeNumber(badge) || readBadgeNumber(badge.parentElement);
+      if (unread <= 0) continue;
+      var key = chatKeyForRow(row);
+      if (!key) continue;
+      seen.push(row);
       var titleNode = row.querySelector && row.querySelector("[title]");
-      var title = titleNode && String(titleNode.getAttribute("title") || "").trim();
-      if (!title) continue;
-      var pieces = row.querySelectorAll
-        ? Array.from(row.querySelectorAll('[dir="auto"], span'))
-            .map(function (node) {
-              return String(node.textContent || "").replace(/\s+/g, " ").trim();
-            })
-            .filter(function (text) {
-              return text && text !== title && !/^\d{1,2}:\d{2}$/.test(text) && !/^\d+\+?$/.test(text);
-            })
-        : [];
-      var body = pieces.length ? pieces[pieces.length - 1] : "";
-      var chatId =
-        (row.getAttribute &&
-          (row.getAttribute("data-id") || row.getAttribute("data-chat-id"))) ||
-        "";
-      var messageNode =
-        row.querySelector &&
-        row.querySelector("[data-message-id],[data-id*='true_'],[data-id*='false_']");
-      var messageId =
-        (messageNode &&
-          (messageNode.getAttribute("data-message-id") ||
-            messageNode.getAttribute("data-id"))) ||
-        "";
-      return {
-        title: title,
-        body: body,
-        chatId: chatId,
-        messageId: messageId,
-      };
+      rows.push({
+        key: key,
+        title: titleNode ? String(titleNode.getAttribute("title") || "").trim() : key,
+        unread: unread,
+        muted: !!(row.querySelector && row.querySelector(MUTED_ICON_SELECTOR)),
+        el: row,
+        top: function () {
+          try {
+            return this.el.getBoundingClientRect().top;
+          } catch (e) {
+            return 0;
+          }
+        },
+      });
     }
-    return null;
+    return rows;
+  }
+
+  function chatListRendered() {
+    var pane = document.querySelector && document.querySelector("#pane-side");
+    return !!(
+      pane &&
+      pane.querySelector &&
+      pane.querySelector(UNREAD_ROW_SELECTOR + ", [role='listitem']")
+    );
+  }
+
+  function chatListScrolled() {
+    var pane = document.querySelector && document.querySelector("#pane-side");
+    return !!(pane && pane.scrollTop > 40);
+  }
+
+  // Pure decision core (no DOM access), exposed for tests. `snapshot` is
+  // { listRendered, scrolled, rows: [{ key, title, unread, muted, top }] }.
+  function createUnreadTracker() {
+    var previous = Object.create(null);
+    var titles = Object.create(null);
+    var listSeenAt = 0;
+    var baselined = false;
+    function rowTop(row) {
+      return typeof row.top === "function" ? row.top() : row.top;
+    }
+    return {
+      trackedKeys: function () {
+        return Object.keys(previous).filter(function (key) {
+          return previous[key] > 0;
+        });
+      },
+      title: function (key) {
+        return titles[key] || "";
+      },
+      forget: function (key) {
+        delete previous[key];
+      },
+      update: function (snapshot, now) {
+        var result = { notify: null, clear: [], baselined: false };
+        if (!snapshot.listRendered) return result;
+        if (!listSeenAt) listSeenAt = now;
+        var current = Object.create(null);
+        snapshot.rows.forEach(function (row) {
+          current[row.key] = row.unread;
+          titles[row.key] = row.title;
+        });
+        if (now - listSeenAt < UNREAD_SETTLE_MS) {
+          previous = current;
+          return result;
+        }
+        if (!baselined) {
+          baselined = true;
+          result.baselined = true;
+        }
+        var rises = snapshot.rows.filter(function (row) {
+          return !row.muted && row.unread > (previous[row.key] || 0);
+        });
+        Object.keys(previous).forEach(function (key) {
+          if (previous[key] > 0 && !(current[key] > 0)) {
+            // A scrolled list virtualizes rows away: absence proves nothing.
+            if (snapshot.scrolled && !(key in current)) {
+              current[key] = previous[key];
+            } else {
+              result.clear.push(key);
+            }
+          }
+        });
+        previous = current;
+        if (rises.length && !result.baselined) {
+          var best = rises[0];
+          var bestTop = rowTop(best);
+          for (var index = 1; index < rises.length; index++) {
+            var top = rowTop(rises[index]);
+            if (top < bestTop) {
+              best = rises[index];
+              bestTop = top;
+            }
+          }
+          result.notify = best;
+        }
+        return result;
+      },
+    };
+  }
+
+  var unreadTracker = createUnreadTracker();
+  var lastClearAt = Object.create(null);
+  function clearChatToasts(key) {
+    if (!key) return;
+    var now = Date.now();
+    if (lastClearAt[key] && now - lastClearAt[key] < CLEAR_THROTTLE_MS) return;
+    if (Object.keys(lastClearAt).length > 200) lastClearAt = Object.create(null);
+    lastClearAt[key] = now;
+    invoke("clear_chat_notifications", { chatKey: String(key).slice(0, 256) });
+  }
+
+  // The open conversation's toasts are redundant the moment it is on screen.
+  function clearOpenConversationToasts() {
+    if (document.hidden) return;
+    var keys = unreadTracker.trackedKeys();
+    if (!keys.length) return;
+    var header =
+      document.querySelector("[data-testid='conversation-header']") ||
+      document.querySelector("[data-testid='conversation-info-header']") ||
+      document.querySelector("header[data-tab]");
+    if (!header) return;
+    keys.slice(0, 12).forEach(function (key) {
+      if (routeValueMatches(header, key, unreadTracker.title(key))) {
+        clearChatToasts(key);
+        unreadTracker.forget(key);
+      }
+    });
   }
 
   var lastUnread = -1;
@@ -1991,12 +2168,24 @@
     var titleCount = parseUnreadNumber(document.title);
     var badgeCount = collectUnreadCount();
     var count = Math.max(titleCount, badgeCount);
-    if (count === lastUnread) return;
-    var previousUnread = lastUnread;
-    lastUnread = count;
-    invoke("set_unread_count", { count: count });
-    if (previousUnread < 0) {
-      var initialDetail = latestUnreadDetail();
+    if (count !== lastUnread) {
+      lastUnread = count;
+      invoke("set_unread_count", { count: count });
+    }
+    var rows = count > 0 || unreadTracker.trackedKeys().length ? collectUnreadRows() : [];
+    var result = unreadTracker.update(
+      { listRendered: chatListRendered(), scrolled: chatListScrolled(), rows: rows },
+      Date.now()
+    );
+    result.clear.forEach(clearChatToasts);
+    clearOpenConversationToasts();
+    if (result.baselined) {
+      // Chats that were already unread when the list settled are history: a
+      // replay of the newest one must not raise a toast later.
+      var visibleRows = rows.filter(function (row) {
+        return !row.muted;
+      });
+      var initialDetail = visibleRows.length ? detailFromRow(visibleRows[0].el) : null;
       if (initialDetail) {
         rememberNotification(
           notificationDetails(initialDetail.title, {
@@ -2010,23 +2199,27 @@
           Date.now()
         );
       }
-      return;
     }
-    if (count > previousUnread) {
+    if (result.notify) {
       var observedAt = Date.now();
+      var notifyRow = result.notify.el;
       setTimeout(function () {
         if (lastRichNotificationAt >= observedAt) return;
-        var detail = latestUnreadDetail();
+        var detail = detailFromRow(notifyRow);
         if (!detail) return;
-        nativeNotify(detail.title, {
-          body: detail.body,
-          data: {
-            chatTitle: detail.title,
-            chatId: detail.chatId,
-            messageId: detail.messageId,
-            messageText: detail.body,
+        nativeNotify(
+          detail.title,
+          {
+            body: detail.body,
+            data: {
+              chatTitle: detail.title,
+              chatId: detail.chatId,
+              messageId: detail.messageId,
+              messageText: detail.body,
+            },
           },
-        });
+          "fallback"
+        );
       }, 650);
     }
   }
@@ -2117,17 +2310,44 @@
     }
   }
 
+  // The probe runs on every DOM change, in every account window (hidden ones
+  // included) and next to a live call, so it is kept cheap: the unread count is
+  // checked on every probe, the profile-name work only until the name is known
+  // and then once a minute, and the credit lookup only every few seconds while
+  // the card is missing. Hidden windows probe far less often.
+  var PROBE_VISIBLE_MS = 220;
+  var PROBE_HIDDEN_MS = 1000;
+  var HEAVY_PROBE_MS = 60 * 1000;
+  var CREDIT_PROBE_MS = 5000;
   var probeTimer = 0;
+  var lastHeavyAt = 0;
+  var lastCreditAt = 0;
+  function runHeavyProbe() {
+    var now = Date.now();
+    if (lastProfileName && now - lastHeavyAt < HEAVY_PROBE_MS) return;
+    lastHeavyAt = now;
+    reportProfileName(visibleProfileName());
+    resolveProfileNameFromStorage();
+    requestProfileDiscovery();
+  }
+  function runCreditProbe(minGapMs) {
+    if (document.hidden) return;
+    var now = Date.now();
+    if (now - lastCreditAt < minGapMs) return;
+    lastCreditAt = now;
+    installAuthorCredit();
+  }
   function scheduleProbe() {
     if (probeTimer) return;
-    probeTimer = setTimeout(function () {
-      probeTimer = 0;
-      report();
-      reportProfileName(visibleProfileName());
-      resolveProfileNameFromStorage();
-      requestProfileDiscovery();
-      installAuthorCredit();
-    }, 220);
+    probeTimer = setTimeout(
+      function () {
+        probeTimer = 0;
+        report();
+        runHeavyProbe();
+        runCreditProbe(CREDIT_PROBE_MS);
+      },
+      document.hidden ? PROBE_HIDDEN_MS : PROBE_VISIBLE_MS
+    );
   }
 
   function start() {
@@ -2148,17 +2368,42 @@
           attributeFilter: ["aria-label", "data-testid", "data-icon"],
         });
       }
-      setInterval(scheduleProbe, 2000); // fallback if WhatsApp replaces an observed root
+      // Fallback if WhatsApp replaces an observed root: 2 s visible, 5 s hidden.
+      (function tick() {
+        setTimeout(function () {
+          scheduleProbe();
+          tick();
+        }, document.hidden ? 5000 : 2000);
+      })();
+      document.addEventListener("visibilitychange", function () {
+        if (!document.hidden) scheduleProbe();
+      });
+      // Opening the You panel is a click: look for the Log out row right away
+      // instead of waiting for the next periodic credit probe.
+      document.addEventListener(
+        "click",
+        function () {
+          setTimeout(function () {
+            runCreditProbe(1000);
+          }, 350);
+        },
+        true
+      );
       report();
       reportProfileName(visibleProfileName());
       resolveProfileNameFromStorage();
+      lastHeavyAt = Date.now();
       setTimeout(requestProfileDiscovery, 1200);
       installAuthorCredit();
+      lastCreditAt = Date.now();
     } catch (e) {}
   }
   window.__whatsnowUnreadProbe = Object.freeze({
     parse: parseUnreadNumber,
     collect: collectUnreadCount,
+    createTracker: createUnreadTracker,
+    settleMs: UNREAD_SETTLE_MS,
+    report: report,
   });
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", start);

@@ -158,6 +158,25 @@ pub fn open_external_url(app: &AppHandle, value: &str) -> Result<(), String> {
         })
 }
 
+/// Open the operating system's notification settings. Windows only: the page
+/// is `ms-settings:notifications`, handed to the shell launcher without a
+/// command shell, exactly like `open_external_url`.
+pub fn open_os_notification_settings() -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    {
+        std::process::Command::new("rundll32.exe")
+            .arg("url.dll,FileProtocolHandler")
+            .arg("ms-settings:notifications")
+            .spawn()
+            .map(|_| ())
+            .map_err(|error| format!("Windows settings could not be opened ({error})"))
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        Err("Open your system's notification settings to change this.".into())
+    }
+}
+
 /// Run a content-free live check inside each WhatsApp window.
 ///
 /// This is intentionally triggered only by a local second-instance

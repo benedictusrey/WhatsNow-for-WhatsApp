@@ -1214,7 +1214,132 @@ async function testCallPopupReturnsNativeWindowProxy() {
     "a real blocked popup still returns null; no fabricated success");
 }
 
+async function testUnreadTrackerBaselineRowChoiceAndClearing() {
+  console.log("unread tracker: slow-render baseline, topmost row, muted rows, clearing");
+  const probe = makeHarness().window.__whatsnowUnreadProbe;
+  const row = (key, unread, top, extra = {}) => ({
+    key,
+    title: key,
+    unread,
+    muted: false,
+    top,
+    ...extra,
+  });
+  const snap = (rows, extra = {}) => ({ listRendered: true, scrolled: false, rows, ...extra });
+
+  // Slow render: the list is not on screen yet, then appears already carrying
+  // five unread chats. Nothing may fire during the settle window or right after.
+  let t = new Tracker(probe);
+  let r = t.update({ listRendered: false, scrolled: false, rows: [] }, 0);
+  assert(!r.notify && r.clear.length === 0, "no list yet: no decision");
+  r = t.update(snap([row("A", 5, 100)]), 1000);
+  assert(!r.notify, "first render with old unread chats fires no toast");
+  r = t.update(snap([row("A", 5, 100)]), 1000 + probe.settleMs + 10);
+  assert(!r.notify && r.baselined, "baseline is taken after the list settles");
+  r = t.update(snap([row("A", 5, 100)]), 1000 + probe.settleMs + 500);
+  assert(!r.notify, "unchanged unread never fires");
+
+  // A rise on the top-most chat wins over a lower one.
+  r = t.update(snap([row("A", 6, 100), row("B", 2, 300)]), 6000);
+  assert(r.notify && r.notify.key === "A", "rising chat is chosen");
+  r = t.update(snap([row("B", 3, 300), row("A", 7, 100)]), 7000);
+  assert(r.notify && r.notify.key === "A", "the TOP-most rising row is picked, not the last one");
+
+  // Muted chats raise no fallback toast, but are still tracked.
+  r = t.update(snap([row("A", 7, 100), row("M", 4, 200, { muted: true }), row("B", 3, 300)]), 8000);
+  assert(!r.notify, "a muted chat's rise never notifies");
+  r = t.update(snap([row("A", 7, 100), row("M", 5, 200, { muted: true }), row("B", 4, 300)]), 9000);
+  assert(r.notify && r.notify.key === "B", "muted row skipped, next rising row used");
+
+  // Badge disappears: clear that chat.
+  r = t.update(snap([row("A", 7, 100)]), 10000);
+  assert(
+    r.clear.includes("B") && r.clear.includes("M") && !r.clear.includes("A"),
+    "chats whose badge vanished are cleared (got " + JSON.stringify(r.clear) + ")"
+  );
+  // A scrolled list virtualizes rows away: absence must not clear anything.
+  r = t.update(snap([], { scrolled: true }), 11000);
+  assert(r.clear.length === 0, "scrolled list never clears by absence");
+  assert(t.trackedKeys().includes("A"), "scrolled-away chat stays tracked");
+}
+
+// Tiny adapter so the test reads naturally.
+function Tracker(probe) {
+  return probe.createTracker();
+}
+
+async function testPreviewFingerprintsExpireButIdsStay() {
+  console.log("repeated bodies notify again after 90s; message ids stay deduped for hours");
+  const { window: w } = makeHarness();
+  const p = w.__whatsnowNotificationProbe;
+  const plain = p.details("Alice", { body: "ok" });
+  assert(p.remember(plain, 1_000_000) === true, "first 'ok' is new");
+  assert(p.remember(plain, 1_000_000 + 10_000) === false, "second 'ok' 10s later is a duplicate");
+  assert(p.remember(plain, 1_000_000 + 91_000) === true, "the same body after 90s is a new message");
+  const withId = p.details("Alice", { body: "ok", data: { messageId: "MSG1" } });
+  assert(p.remember(withId, 2_000_000) === true, "first id'd message is new");
+  assert(p.remember(withId, 2_000_000 + 91_000) === false, "id'd message stays deduped past 90s");
+  assert(
+    p.remember(withId, 2_000_000 + 7 * 60 * 60 * 1000) === true,
+    "id'd message is forgotten after the 6 hour window"
+  );
+}
+
+async function testUnreadReportFlowsNoStaleToastAndClearsOnRead() {
+  console.log("unread report: slow render raises no toast; a vanished badge clears its toasts");
+  const log = [];
+  const h = makeHarness({ invokeLog: log });
+  const doc = h.document;
+  const state = { rows: [], rendered: false };
+  const mkRow = (id, title, unread) => {
+    const titleNode = { getAttribute: (n) => (n === "title" ? title : null) };
+    const rowEl = {
+      getAttribute: (n) => (n === "data-id" ? id : null),
+      parentElement: null,
+      querySelector: (sel) => (sel === "[title]" ? titleNode : null),
+      querySelectorAll: () => [],
+      getBoundingClientRect: () => ({ top: 10 }),
+    };
+    const badge = {
+      getAttribute: (n) => (n === "aria-label" ? `${unread} unread messages` : null),
+      textContent: String(unread),
+      parentElement: rowEl,
+      closest: (sel) => (sel.includes("cell-frame") ? rowEl : badge),
+    };
+    return badge;
+  };
+  const originalAll = doc.querySelectorAll.bind(doc);
+  const originalOne = doc.querySelector.bind(doc);
+  doc.querySelectorAll = (sel) => (sel.includes("unread") ? state.rows : originalAll(sel));
+  const pane = {
+    scrollTop: 0,
+    querySelector: () => (state.rows.length ? {} : {}),
+  };
+  doc.querySelector = (sel) => (sel === "#pane-side" ? (state.rendered ? pane : null) : originalOne(sel));
+  const report = h.window.__whatsnowUnreadProbe.report;
+  const count = (cmd) => log.filter((entry) => entry.cmd === cmd).length;
+
+  report(); // login screen: no list, no count
+  state.rows = [mkRow("5511@c.us", "Alice", 5)];
+  state.rendered = true;
+  report(); // the list appears already carrying 5 unread chats
+  await sleep(h.window.__whatsnowUnreadProbe.settleMs + 150);
+  report(); // settled: baseline
+  await sleep(900); // longer than the 650 ms fallback delay
+  assert(count("notify") === 0, "an old unread chat after a slow render raises no toast");
+  state.rows = [];
+  report(); // the chat was read (here or on the phone)
+  const cleared = log.find((entry) => entry.cmd === "clear_chat_notifications");
+  assert(
+    cleared && cleared.chatKey === "5511@c.us",
+    "clear_chat_notifications is invoked for the chat whose badge vanished"
+  );
+}
+
 const tests = [
+  testUnreadTrackerBaselineRowChoiceAndClearing,
+  testPreviewFingerprintsExpireButIdsStay,
+  testUnreadReportFlowsNoStaleToastAndClearsOnRead,
   testCallPopupReturnsNativeWindowProxy,
   testMixedDropLosesNothing,
   testPureMediaGoesToMediaInput,

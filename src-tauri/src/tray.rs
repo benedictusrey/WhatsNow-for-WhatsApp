@@ -217,7 +217,7 @@ pub fn update_badge(app: &AppHandle, count: u32) {
             if let Ok(icon) = Image::from_bytes(ICON_NORMAL) {
                 let _ = tray.set_icon(Some(icon));
             }
-            update_window_badges(app, 0);
+            update_window_badges(app);
         }
         BadgeState::Count(c) => {
             // The tray icon stays visually clean (user preference); the unread
@@ -227,7 +227,7 @@ pub fn update_badge(app: &AppHandle, count: u32) {
             if let Ok(icon) = Image::from_bytes(ICON_NORMAL) {
                 let _ = tray.set_icon(Some(icon));
             }
-            update_window_badges(app, c);
+            update_window_badges(app);
         }
     }
 }
@@ -243,11 +243,19 @@ pub fn refresh_badges(app: &AppHandle) {
     update_badge(app, total);
 }
 
-fn update_window_badges(app: &AppHandle, count: u32) {
+/// Each account window's taskbar badge shows ITS OWN unread count (the tray
+/// tooltip keeps the total across accounts).
+fn update_window_badges(app: &AppHandle) {
+    let per_account = {
+        let state = app.state::<UnreadMap>();
+        let map = state.lock().unwrap_or_else(|error| error.into_inner());
+        map.clone()
+    };
     for (label, window) in app.webview_windows() {
-        if !accounts::is_account_label(&label) {
+        let Some(id) = accounts::id_from_label(&label) else {
             continue;
-        }
+        };
+        let count = per_account.get(id).copied().unwrap_or(0);
 
         #[cfg(target_os = "windows")]
         {

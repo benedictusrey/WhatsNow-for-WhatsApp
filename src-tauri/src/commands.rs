@@ -162,6 +162,56 @@ pub fn notify(
     );
 }
 
+/// Longest chat key (jid or title) the bridge may send for clearing.
+const MAX_CHAT_KEY_CHARS: usize = 256;
+
+/// Bridge -> Rust: a chat was opened or its unread badge went away, so its
+/// toasts no longer belong in the Action Center. Only an account window may
+/// ask, and only for its own account.
+#[tauri::command]
+pub fn clear_chat_notifications(
+    window: tauri::Window,
+    app: tauri::AppHandle,
+    chat_key: String,
+) -> Result<(), String> {
+    let Some(account_id) = accounts::id_from_label(window.label()) else {
+        return Err("forbidden".into());
+    };
+    if chat_key.chars().count() > MAX_CHAT_KEY_CHARS {
+        return Err("chat key is too long".into());
+    }
+    crate::notify::clear_chat(&app, account_id, &chat_key);
+    Ok(())
+}
+
+/// Windows' notification permission for WhatsNow (Settings "Notification
+/// health" card): `enabled`, `disabled_by_user`, `disabled_for_app`,
+/// `group_policy` or `unknown`. Always `enabled` where the OS has no such switch.
+#[tauri::command]
+pub fn get_notification_status(
+    window: tauri::Window,
+    app: tauri::AppHandle,
+) -> Result<&'static str, String> {
+    if is_remote(&window) {
+        return Err("forbidden".into());
+    }
+    lock::require_unlocked(&app)?;
+    Ok(crate::notify::notification_status(&app))
+}
+
+/// Open the operating system's notification settings page.
+#[tauri::command]
+pub fn open_os_notification_settings(
+    window: tauri::Window,
+    app: tauri::AppHandle,
+) -> Result<(), String> {
+    if is_remote(&window) {
+        return Err("forbidden".into());
+    }
+    lock::require_unlocked(&app)?;
+    crate::window::open_os_notification_settings()
+}
+
 /// Reveal an account window only after its page-side toast route has finished.
 /// The remote caller may activate only its own `wa-<id>` window.
 #[tauri::command]
@@ -251,12 +301,18 @@ fn update_unread_count(window: &tauri::Window, app: &tauri::AppHandle, count: u3
     // Update the per-account count and compute the aggregate, then drop all
     // UnreadMap guards BEFORE calling tray::rebuild_menu (which re-locks the map)
     // to avoid a deadlock.
-    let total = {
+    let (total, previous) = {
         let state = app.state::<UnreadMap>();
         let mut map = state.lock().unwrap_or_else(|error| error.into_inner());
-        map.insert(id.to_string(), count);
-        accounts::aggregate_unread(&map)
+        let previous = map.insert(id.to_string(), count).unwrap_or(0);
+        (accounts::aggregate_unread(&map), previous)
     };
+
+    // Everything of this account was read (here or on the phone): its toasts no
+    // longer belong in the Action Center.
+    if previous > 0 && count == 0 {
+        crate::notify::clear_account(app, id);
+    }
 
     crate::tray::update_badge(app, total);
     crate::tray::rebuild_menu(app);

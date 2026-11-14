@@ -92,4 +92,53 @@ assert.ok(
   "window.rs must dispatch the trusted CDP click",
 );
 
+// 2.7.0: the remote page may no longer call the notification plugin directly
+// (it would skip the lock, mute and preview-privacy checks in commands::notify),
+// and every command the bridge invokes must still be granted to it.
+assert.ok(
+  !remotePermissions.has("notification:default"),
+  "main-remote.json must not grant the raw notification plugin to the web page",
+);
+const bridgeSource = await readFile(
+  new URL("../src-tauri/resources/bridge.js", import.meta.url),
+  "utf8",
+);
+assert.ok(
+  !bridgeSource.includes("plugin:notification"),
+  "bridge.js must only notify through the guarded notify command",
+);
+const bridgeCommands = new Set(
+  Array.from(bridgeSource.matchAll(/invoke(?:Checked)?\("([a-z0-9_]+)"/g), (m) => m[1]),
+);
+for (const command of bridgeCommands) {
+  assert.ok(
+    remotePermissions.has(permissionFor(command)),
+    `main-remote.json must permit the bridge command ${command}`,
+  );
+}
+assert.ok(
+  bridgeCommands.has("clear_chat_notifications") &&
+    buildScript.includes('"clear_chat_notifications"'),
+  "Action Center clearing is invoked by the bridge and registered in build.rs",
+);
+
+// Notification health is a Settings-only surface: granted to settings.json,
+// never to the remote WhatsApp page.
+for (const command of ["get_notification_status", "open_os_notification_settings"]) {
+  assert.ok(buildScript.includes(`"${command}"`), `build.rs registers ${command}`);
+  assert.ok(
+    settingsPermissions.has(permissionFor(command)),
+    `settings.json permits ${command}`,
+  );
+  assert.ok(
+    !remotePermissions.has(permissionFor(command)),
+    `main-remote.json must not permit ${command}`,
+  );
+}
+
+// Dead commands removed in 2.7.0 stay removed.
+for (const command of ["set_unread", "open_settings"]) {
+  assert.ok(!buildScript.includes(`"${command}"`), `${command} is no longer registered`);
+}
+
 console.log("all Settings ACL tests passed");

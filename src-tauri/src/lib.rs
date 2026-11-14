@@ -177,6 +177,9 @@ pub fn run() {
         .manage(window::PendingNavigations(Default::default()))
         .invoke_handler(tauri::generate_handler![
             commands::activate_notification_window,
+            commands::clear_chat_notifications,
+            commands::get_notification_status,
+            commands::open_os_notification_settings,
             commands::notification_click,
             commands::notify,
             commands::set_unread_count,

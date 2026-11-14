@@ -8,6 +8,7 @@
   },
   "permissions": [
     "allow-activate-notification-window",
+    "allow-clear-chat-notifications",
     "allow-dlog",
     "allow-notification-click",
     "allow-notify",
