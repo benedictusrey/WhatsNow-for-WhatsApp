@@ -1,6 +1,6 @@
 # WhatsNow — current feature guide
 
-_v2.6.3 · 2026-11-07 · Created and maintained by Benedictus Reynaldo Hartanto ([@benedictusrey](https://github.com/benedictusrey))._
+_v2.7.0 · 2026-11-15 · Created and maintained by Benedictus Reynaldo Hartanto ([@benedictusrey](https://github.com/benedictusrey))._
 
 ---
 
@@ -12,7 +12,7 @@ WhatsApp or Meta product.
 **“Latest” here means the current documented version**, not a guarantee of
 validation on every platform. Download only assets
 actually attached to the [official releases](https://github.com/benedictusrey/WhatsNow-for-WhatsApp/releases).
-See [v2.6.3 changes and acceptance status](docs/IMPLEMENTATION_v2.6.3.md).
+See [v2.7.0 changes and acceptance status](docs/IMPLEMENTATION_v2.7.0.md).
 
 The Windows build retains NORMAL memory priority for background account/call
 webviews. Ongoing sound is not deliberately silenced by tray hiding or App Lock.
@@ -159,7 +159,7 @@ Read [Privacy](PRIVACY.md) and [Security](SECURITY.md).
 
 ## 📦 Platforms and installation
 
-| Platform | Package formats | Current v2.6.3 targets |
+| Platform | Package formats | Current v2.7.0 targets |
 | --- | --- | --- |
 | Windows x64 | Setup EXE, MSI, portable EXE | Built locally; unsigned |
 | Linux x64 | AppImage, DEB | Native build/validation pending |
@@ -179,7 +179,7 @@ add broad exclusions to run a package you have not verified.
 
 ## ⚡ Performance expectations and support
 
-The 2.6.3 Windows build keeps all account/call webviews at NORMAL memory
+The 2.7.0 Windows build keeps all account/call webviews at NORMAL memory
 priority while visible, unfocused, minimized, tray-hidden, or App Locked.
 This reliability-first policy may increase background RAM. Background scripts
 and connections are not deliberately suspended. Multiple engine processes are expected.

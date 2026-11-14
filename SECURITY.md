@@ -10,11 +10,11 @@ Copyright (c) 2026 @benedictusrey. Released under the [MIT License](LICENSE).
 | Version | Security updates |
 | --- | --- |
 | Latest published release | Preferred baseline for reports |
-| 2.6.3 | Current update; not an independent security audit |
+| 2.7.0 | Current update; not an independent security audit |
 | Older releases | Upgrade recommended; no separate maintenance promise |
 
 Check the newest published release before reporting a problem that may already
-have a fix. v2.6.3 Windows packages are unsigned, and macOS packages are not
+have a fix. v2.7.0 Windows packages are unsigned, and macOS packages are not
 Developer ID signed or notarized. Do not assume independent security certification.
 
 ## Report a vulnerability
@@ -79,8 +79,8 @@ Treat a release as trusted after you verify:
 Windows verification:
 
 ```powershell
-Get-FileHash .\WhatsNow_2.6.3_windows_x64-setup.exe -Algorithm SHA256
-Get-AuthenticodeSignature .\WhatsNow_2.6.3_windows_x64-setup.exe |
+Get-FileHash .\WhatsNow_2.7.0_windows_x64-setup.exe -Algorithm SHA256
+Get-AuthenticodeSignature .\WhatsNow_2.7.0_windows_x64-setup.exe |
   Format-List Status,StatusMessage,SignerCertificate
 ```
 

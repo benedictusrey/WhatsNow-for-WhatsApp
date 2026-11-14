@@ -63,6 +63,36 @@ requires they stay EXACTLY as described. Changing any of them is a regression.
 This applies to human developers AND AI coding agents alike: do not "improve",
 "simplify", or "fix" any of the following without the user explicitly asking.
 
+### v2.7.0 UX update (2026-11-15)
+
+User-specified, verified by tests; do not revert without being asked.
+
+- **Centering:** Settings re-centers on every open; account windows center once
+  at launch (see §2 and §4). `StateFlags::POSITION` stays excluded.
+- **Instant-apply Settings:** there is no Save button. Every control saves as it
+  changes through `autosave.js` (one get -> merge -> set chain; 400 ms debounce
+  for number inputs; Saving/Saved/Retry pill; a failed load disables every control
+  so defaults are never written). Native `<dialog>` replaces `alert`/`prompt`/
+  `confirm`. Palette blocks in `style.css` and the per-theme CSS stay untouched.
+- **Idle close:** still 30 seconds, now in `idleClose.js` and paused while the
+  pointer is over the window, a dialog or the shortcut recorder is open, a
+  password/biometric command is running, or `document.hidden` (lock). Resuming
+  starts a full period. Escape closes Settings only when no dialog or recorder
+  is active.
+- **Action Center:** every toast carries a Group (account prefix + chat hash) and
+  a unique Tag; `clear_chat_notifications` and an account's unread reaching 0
+  remove them. The toast XML and the compact layout (no `appLogoOverride`) are
+  unchanged.
+- **Account labels:** use `accounts::is_account_label` (never a bare
+  `starts_with("wa-")`) wherever "an account window" is meant; `wa-call-*` and
+  `wa-content` are not accounts. `id_from_label` follows the same rule.
+- **Remote page ACL:** `notification:default` is NOT granted to the WhatsApp
+  page; it can only notify through the guarded `notify` command. Notification
+  health commands are granted to the Settings window only.
+- **Unread fallback:** the bridge tracks unread per chat, arms the fallback only
+  after the chat list has rendered and settled, skips muted rows, picks the
+  top-most rising row, and drops a real+fallback pair for one chat within 5 s.
+
 ### 0. The four pillars (summary — each has its own section below)
 
 1. **Themes + doodle mapping** — §1: official `Dark`/`Light` show WhatsApp's
@@ -142,7 +172,9 @@ Implementation (all three MUST stay consistent):
 `.decorations(false)` + `.shadow(true)` + `.skip_taskbar(true)`, the page
 draws its own title bar ("WhatsNow — Settings" left, functional X right,
 `-webkit-app-region: drag` on the bar, `no-drag` on the X), 30 s idle
-auto-close, reveal only after first paint. The frameless style is permanent:
+auto-close (2.7.0: paused while the pointer is over the window, a dialog or
+the shortcut recorder is active, a password/biometric command runs, or the lock
+hides the window — see the v2.7.0 section), reveal only after first paint. The frameless style is permanent:
 `tauri-plugin-window-state` must keep `StateFlags::DECORATIONS` excluded from
 the restore, and `set_decorations(false)` is re-asserted on page load — a
 stale saved state must NEVER re-attach the native title bar.
@@ -200,7 +232,7 @@ name, with NO large icon on the toast body. This applies to EVERY toast
   re-centers on every open, account windows only at launch (cascaded +32 px per
   extra account). Do not re-center on show/toggle and do not restore saved
   positions.
-- Version stays at 2.5.0 until the user explicitly asks for a bump.
+- The current version is 2.7.0; it changes only when the user explicitly asks for a bump.
 - `whatsnow --settings` opens the Settings pop-up (also forwarded to a
   running hidden instance); `--test-notification` is diagnostic-only.
 - Toast clicks route to the sender's chat via the `whatsnow:route?` launch

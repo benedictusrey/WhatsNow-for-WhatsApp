@@ -6,12 +6,12 @@ on:
       app_version:
         description: "Application version used in release filenames"
         required: true
-        default: "2.6.3"
+        default: "2.7.0"
         type: string
       release_tag:
         description: "GitHub Release tag"
         required: true
-        default: "v2.6.3"
+        default: "v2.7.0"
         type: string
       publish_release:
         description: "Create a draft GitHub Release after all builds pass"
@@ -30,7 +30,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  APP_VERSION: ${{ github.event_name == 'push' && github.ref_name || github.event.inputs.app_version || '2.6.3' }}
+  APP_VERSION: ${{ github.event_name == 'push' && github.ref_name || github.event.inputs.app_version || '2.7.0' }}
   RELEASE_TAG: ${{ github.event.inputs.release_tag || github.ref_name }}
 
 jobs:

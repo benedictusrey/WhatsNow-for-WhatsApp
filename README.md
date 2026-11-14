@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="https://github.com/benedictusrey/WhatsNow-for-WhatsApp/releases"><img alt="GitHub releases" src="https://img.shields.io/github/v/release/benedictusrey/WhatsNow-for-WhatsApp?display_name=tag"></a>
-  <img alt="Version 2.6.3" src="https://img.shields.io/badge/version-2.6.3-087a60">
+  <img alt="Version 2.7.0" src="https://img.shields.io/badge/version-2.7.0-087a60">
   <img alt="Windows macOS Linux targets" src="https://img.shields.io/badge/targets-Windows%20%7C%20macOS%20%7C%20Linux-213547">
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-6B9E3A"></a>
   <a href="https://github.com/benedictusrey"><img alt="Author benedictusrey" src="https://img.shields.io/badge/author-%40benedictusrey-111827"></a>
@@ -21,7 +21,7 @@
   <a href="https://github.com/benedictusrey/WhatsNow-for-WhatsApp/releases">Downloads</a> ·
   <a href="WhatsNow_latest.md">All features</a> ·
   <a href="docs/INSTALLATION.md">Installation</a> ·
-  <a href="docs/IMPLEMENTATION_v2.6.3.md">v2.6.3 changes</a> ·
+  <a href="docs/IMPLEMENTATION_v2.7.0.md">v2.7.0 changes</a> ·
   <a href="SECURITY.md">Security</a>
 </p>
 
@@ -31,24 +31,34 @@ native notifications. It is created and maintained by Benedictus Reynaldo
 Hartanto ([@benedictusrey](https://github.com/benedictusrey)) and is not affiliated
 with WhatsApp or Meta.
 
-> **v2.6.3:** Windows background media now takes priority over aggressive memory
-> reclamation. Native lifecycle tests passed; extended live playback, two-party
-> calls on this update, and cross-app mute persistence remain unverified.
-> App Lock hides the UI but leaves ongoing sound audible.
+> **v2.7.0:** a UX and reliability update: windows open centered, Settings
+> saves instantly, and notifications stay in sync with the Windows Action Center.
+> Native tests passed; live checks on a signed-in account (calls, toasts after a
+> phone read) are listed in the [implementation record](docs/IMPLEMENTATION_v2.7.0.md).
 > Download only files actually attached to a published release.
 > The artwork is illustrative, not a pixel-exact screenshot or a security certification.
 
-## 📋 What's new in v2.6.3
+## 📋 What's new in v2.7.0
+
+- **Centered windows:** Settings opens centered on your monitor every time; the main
+  window centers once at launch and then stays where you move it
+- **Instant-apply Settings:** every control saves as you change it, with a Saved
+  indicator, real dialogs instead of browser prompts, and a clearer layout
+- **Notification health:** Settings shows when Windows is blocking WhatsNow alerts
+  and opens the right Windows page
+- **Action Center in sync:** toasts are grouped per chat and cleared once the chat
+  is read in WhatsNow or on your phone; no stale toast after a slow start
+- **Safer storage:** settings, accounts, and the app lock are written atomically,
+  and a wrong unlock password now backs off
+- **Calls stay put:** changing a Settings option no longer drops a call window behind
+  the chat, and call windows carry the WhatsNow icon
+
+### Retained from v2.6.3
 
 - **Reliability-first background policy:** keep Windows account/call webviews at
   normal memory priority while minimized, hidden to tray, or behind App Lock
-- **User controls preserved:** no forced playback or unmute; pause, mute,
-  volume, hang-up, and Quit remain authoritative
 - **Windows audio identity:** owned sessions receive WhatsNow's name, existing icon,
-  and app-specific mixer grouping; independent cold-start mute behavior still
-  requires live testing alongside other WebView2 apps
-- **Focused diagnostics:** isolated native audio/video lifecycle tests;
-  background RAM may increase. See [validation boundaries](docs/IMPLEMENTATION_v2.6.3.md).
+  and app-specific mixer grouping. See [validation boundaries](docs/IMPLEMENTATION_v2.6.3.md).
 
 ### Retained from v2.6.2
 
@@ -113,14 +123,14 @@ figure does **not** establish WhatsNow's total memory use; WebView2 browser,
 renderer, GPU, and utility processes may appear elsewhere. This is not a
 controlled benchmark or proof of a universal advantage over Edge or the official app.
 
-The 2.6.3 Windows build keeps WebView2 at normal memory priority even when
+The 2.7.0 Windows build keeps WebView2 at normal memory priority even when
 hidden/minimized, favoring background media over RAM reclamation. Background
 connections are not deliberately suspended. Measure
 the complete process tree under a comparable workload. See [Windows notes](docs/WINDOWS.md).
 
 ## 📦 Choose your package
 
-| Platform | v2.6.3 package targets | Requirement |
+| Platform | v2.7.0 package targets | Requirement |
 | --- | --- | --- |
 | Windows x64 | Setup EXE, MSI, portable EXE | Updated Microsoft Edge WebView2 |
 | Linux x64 | AppImage, DEB | Compatible WebKitGTK distribution |
@@ -173,7 +183,7 @@ Start with [Contributing](CONTRIBUTING.md) and the platform prerequisites in
 `cargo tauri build`; Windows installer/portable packaging is also available
 through `scripts/build-windows.ps1`.
 
-For release work, follow [the acceptance checklist](docs/IMPLEMENTATION_v2.6.3.md).
+For release work, follow [the acceptance checklist](docs/IMPLEMENTATION_v2.7.0.md).
 The workflow builds all platform packages from one revision and creates a
 **draft**, not an automatically published release. Preserve the pending live
 checks until they are actually confirmed.

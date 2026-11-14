@@ -1,35 +1,32 @@
-# WhatsNow 2.6.3 — background audio improvements
+# WhatsNow 2.7.0 — centered windows, instant Settings, synced notifications
 
-This update favors reliable background sound over aggressive memory reclamation.
+A UX and reliability update. Created and maintained by
+[@benedictusrey](https://github.com/benedictusrey).
 
 ## Improvements
 
-- Identify owned Windows audio sessions as WhatsNow with the existing app icon
-  and app-specific mixer grouping, while preserving user mute and volume.
-
-- Keep Windows account and call webviews at normal memory priority when minimized
-  or hidden to tray, including behind App Lock.
-- Preserve manual pause, mute, volume, hang-up, and Quit behavior.
-- Retain existing themes, native notifications, account isolation, and call-window repairs.
-
-Background RAM may increase. App Lock hides content but does not silence ongoing
-audio. OS mute, permissions, sleep, and WhatsApp's own media behavior still apply.
-
-Native Windows audio/video lifecycle, audio-session identity, and call-window
-tests passed. Extended WhatsApp playback, real two-party calls on this update,
-and independent mute persistence alongside other WebView2 apps remain unverified.
-This update does not replace WebView2 or install an audio driver.
+- Settings opens centered on the monitor under your cursor every time. The main
+  window centers once at launch and keeps wherever you move it until the next restart.
+  Windows saved on a removed or smaller monitor can no longer come back off-screen.
+- Settings saves every change instantly (no Save button), shows Saved or a Retry
+  prompt, and uses proper dialogs for renaming, removing, and password changes.
+  A mistyped shortcut is rejected without losing the one that works.
+- A notification health card shows when Windows is blocking WhatsNow alerts and
+  opens Windows notification settings.
+- Toasts are grouped per chat in the Action Center and cleared once the chat is
+  read in WhatsNow or on your phone. A slow start no longer raises toasts for chats
+  you had already read; muted chats stay quiet; a repeated "ok" a minute later
+  notifies again.
+- Settings, accounts, and the app-lock file are written atomically, an unknown
+  theme value no longer resets your settings, and wrong unlock passwords back off.
+- A call window is never dropped behind the chat by a Settings change, no longer
+  suppresses toasts while focused, and carries the WhatsNow icon.
+- The taskbar badge on each account window shows that account's own unread count,
+  and the page-side bridge does less work while you chat or call.
 
 ## Installation and compatibility
 
-Fully quit WhatsNow from the tray before upgrading. Verify your download against `checksums.sha256`.
-
-Packages cover Windows x64, Linux x64, and macOS Apple Silicon/Intel. Windows
-builds are unsigned; macOS builds are not Developer ID signed or notarized.
-Calling depends on WhatsApp Web availability, account eligibility, permissions,
-hardware, and the platform runtime. Linux/macOS calling and live media behavior
-have not been validated. The recipient's phone controls its display crop.
-
-Created and maintained by [@benedictusrey](https://github.com/benedictusrey).
-
-[Implementation and acceptance checklist](docs/IMPLEMENTATION_v2.6.3.md)
+Fully quit WhatsNow from the tray before upgrading. Verify your download against
+`checksums.sha256`. Windows builds are unsigned; macOS builds are not Developer ID
+signed or notarized. Live checks on a signed-in account are listed in the
+[implementation record](docs/IMPLEMENTATION_v2.7.0.md).

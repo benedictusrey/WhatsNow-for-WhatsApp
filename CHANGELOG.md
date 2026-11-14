@@ -7,6 +7,36 @@ Copyright (c) 2026 @benedictusrey. Released under the [MIT License](LICENSE).
 
 All notable project changes are recorded here.
 
+## [2.7.0] - 2026-11-15
+
+Authored and maintained by [@benedictusrey](https://github.com/benedictusrey).
+
+- Center Settings on the cursor's monitor on every open and the main window once
+  at launch; stop restoring saved window positions and clamp sizes to the opening
+  monitor's work area.
+- Redesign Settings: instant-apply saving with a status indicator, native dialogs
+  for rename/remove/password flows, tab keyboard navigation, notification health
+  card, and a smarter 30-second idle close that pauses while the pointer is over
+  the window, a dialog or the shortcut recorder is active, a password command is
+  running, or the lock has hidden the window.
+- Group toasts per chat (Group/Tag) and clear them from the Windows Action Center
+  when a chat is read or opened; track unread per chat, take the fallback baseline
+  only after the chat list has rendered, skip muted chats, and let repeated
+  messages without an id notify again after 90 seconds.
+- Write settings, accounts, and app-lock files atomically; read an unknown theme
+  as System; validate shortcuts before replacing the working one; back off wrong
+  unlock passwords; bound the diagnostic log; tolerate poisoned locks.
+- Treat only real account windows as accounts (`wa-call-*` and the content popup
+  are not): fixes calls being un-pinned by Settings, suppressed toasts during a
+  call, and a phantom "content" account.
+- Remove the web page's direct notification-plugin grant and the unused
+  `set_unread` / `open_settings` commands; add `clear_chat_notifications`,
+  `get_notification_status`, and `open_os_notification_settings`.
+- Per-account taskbar badges; throttle the unread probe (slower while hidden).
+- Give call windows the WhatsNow icon and a dark client background.
+
+See [implementation and test boundaries](docs/IMPLEMENTATION_v2.7.0.md).
+
 ## [2.6.3] - 2026-11-07
 
 - Add WhatsNow-only Windows audio-session identity: existing app icon, app name,
