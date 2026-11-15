@@ -87,6 +87,7 @@ jobs:
           node --check src-tauri/resources/bridge.js
           node src-tauri/resources/bridge.test.mjs
           node src-tauri/resources/call-media.test.mjs
+          node src-tauri/resources/call-lifecycle.test.mjs
           node --check src-tauri/resources/chat-theme.js
           node src-tauri/resources/chat-theme.test.mjs
 

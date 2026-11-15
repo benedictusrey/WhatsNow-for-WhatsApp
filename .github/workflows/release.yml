@@ -60,6 +60,7 @@ jobs:
           JS
           node src-tauri/resources/bridge.test.mjs
           node src-tauri/resources/call-media.test.mjs
+          node src-tauri/resources/call-lifecycle.test.mjs
           node src-tauri/resources/chat-theme.test.mjs
           node src-tauri/resources/toast-route.test.mjs
           node settings-ui/theme.test.mjs

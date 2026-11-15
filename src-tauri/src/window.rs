@@ -94,7 +94,7 @@ fn whatsapp_popup_allowed(url: &tauri::Url) -> bool {
 /// the account window navigating to a call URL in place. Call stages keep
 /// their dedicated always-on-top window (the 2.6.0 fix); every other family
 /// URL shares the reusable content popup. Pure and unit-tested.
-fn is_whatsapp_call_url(url: &tauri::Url) -> bool {
+pub(crate) fn is_whatsapp_call_url(url: &tauri::Url) -> bool {
     if url.scheme() != "https" {
         return false;
     }
@@ -392,6 +392,7 @@ fn open_account_window_inner(
             // from the active chat. Non-WhatsApp hosts keep the
             // external-browser flow.
             if whatsapp_popup_allowed(&url) {
+                let popup_requested = std::time::Instant::now();
                 let is_call = is_whatsapp_call_url(&url);
                 if !is_call {
                     if let Some(existing) = new_window_app.get_webview_window(CONTENT_POPUP_LABEL) {
@@ -551,9 +552,10 @@ fn open_account_window_inner(
                         // window must never sit at the LOW memory target.
                         register_windows_memory_target(&window);
                         crate::dlog::log(&format!(
-                            "{} window: created for {}",
+                            "{} window: created for {} in {} ms",
                             if is_call { "call" } else { "content" },
                             url.host_str().unwrap_or("?"),
+                            popup_requested.elapsed().as_millis(),
                         ));
                         return tauri::webview::NewWindowResponse::Create { window };
                     }
