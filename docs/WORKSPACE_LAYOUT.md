@@ -31,11 +31,11 @@ Consolidating local files does not commit, push, or publish them.
 | `docs/history/` | Records of earlier versions (audits, release preparation, implementation notes, plans) | Reviewed documentation; history only |
 | root Markdown | `README.md`, `CHANGELOG.md`, `RELEASE_NOTES.md` (release page text), `WhatsNow_latest.md` (feature guide), `WhatsNow_v2.7.0.md` (record of the 2.7.0 work), policies | Reviewed documentation |
 | `release-assets/` | Versioned upload staging and checksum records | Metadata only; package binaries ignored |
-| `dist/` | Local package sets, including earlier v2.6.1 candidates | Local-only |
+| `dist/` | Latest local installers only (`dist/windows`); older sets were deleted and are listed in [past builds and tests](history/past_builds%26tests.md) | Local-only |
 | `backup/` | Locked behavioral/source references | Local-only; do not alter snapshots |
 | `versions/` | Historical development snapshots and old repository mirror | Local-only; historical guidance, not a live mirror |
 | `node_modules/` | Local browser-test dependencies | Local-only |
-| `.workspace/` | Build caches, consolidation evidence, and recovery copies | Local-only |
+| `.workspace/` | Scratch space; emptied on 2026-11-15 (see [past builds and tests](history/past_builds%26tests.md)) | Local-only |
 | `.freebuff/` | Preserved local tool metadata | Local-only |
 
 The live source keeps its existing internal structure so imports, embedded
