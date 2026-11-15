@@ -1,5 +1,8 @@
 # WhatsNow 2.6.3 — background media reliability
 
+> Update: since 2.7.0 WhatsNow clears the mute flag on its own audio sessions, so the statement
+> below that the identity "does not change mute or volume" no longer applies to mute.
+
 2026-11-06 · Created and maintained by [@benedictusrey](https://github.com/benedictusrey).
 Official project: [WhatsNow](https://github.com/benedictusrey/WhatsNow-for-WhatsApp).
 

@@ -62,7 +62,8 @@ and in [CHANGELOG.md](CHANGELOG.md); test boundaries are in
 | `d37aed8` | CI: `check` runs only on demand or on code pull requests, to save Actions minutes. |
 | `1ce2cf9` | Docs: release, install, platform, Windows, security, troubleshooting, and feature guides updated for v2.7.0. |
 | `9d791d1` | Docs: `release-assets/README.md` points to v2.7.0. |
-| _this commit_ | Repository organization: historical records moved to `docs/history/`, `CHANGELOGS_v2.6.1.md` removed (superseded by `CHANGELOG.md`), this record added. |
+| _next commit_ | Audio: WhatsNow's own audio sessions are kept unmuted (Windows saved a per-app mute across launches). The mixer icon cannot be changed from WhatsNow. |
+| `2a6f57c` | Repository organization: historical records moved to `docs/history/`, `CHANGELOGS_v2.6.1.md` removed (superseded by `CHANGELOG.md`), this record added. |
 
 ## Verification at release
 

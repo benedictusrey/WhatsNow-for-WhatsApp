@@ -35,6 +35,8 @@ A UX and reliability update. Created and maintained by
   message a minute later notifies again.
 
 ### Fixed
+- **WhatsNow no longer stays muted in the Windows volume mixer.** A mute set once in the
+  mixer used to come back on every launch; WhatsNow now keeps its own sound unmuted.
 - **A call ending left an empty window behind.** The call window now closes with
   the call.
 - A call window is no longer dropped behind the chat by a Settings change, and no

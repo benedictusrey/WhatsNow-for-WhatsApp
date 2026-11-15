@@ -187,6 +187,14 @@ closes the whole call window with its page (`call_window::close_window_with_page
 The diagnostic log shows `call window: page closed, closing the window`. If an
 empty call window still appears, update to 2.7.0 or newer.
 
+## WhatsNow is muted in the Windows volume mixer (fixed in 2.7.0)
+
+Windows saves a per-app mute across launches. The saved mute is keyed by the shared
+`msedgewebview2.exe` path, so it could stick to WhatsNow. WhatsNow now clears the mute on its own
+audio sessions at start and every few seconds. The mixer row shows the name "WhatsNow" with the
+Microsoft Edge WebView2 icon; that icon is chosen by Windows and cannot be changed by WhatsNow.
+Another WebView2 app's muted row (for example "Microsoft Edge WebView2") is not WhatsNow.
+
 ## The tray menu or Settings shows "WhatsApp" instead of my name
 
 Every surface shows the name you typed in **Settings → Accounts → Rename**, and

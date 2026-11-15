@@ -96,6 +96,10 @@ impl AudioProcessRegistrar {
                 .CoreWebView2()
                 .map_err(|e| e.to_string())?;
             self.capture(&core).map_err(|e| e.to_string())?;
+            // WebView2's own mute flag must never be left on either.
+            if let Ok(core8) = core.cast::<ICoreWebView2_8>() {
+                let _ = core8.SetIsMuted(false);
+            }
             let registrar = self.clone();
             let audio = webview2_com::IsDocumentPlayingAudioChangedEventHandler::create(Box::new(
                 move |sender, _| {
@@ -458,13 +462,16 @@ unsafe fn watch(
             }
             !identify(session, icon, &registrar.members, stop).unwrap_or(false)
         });
+        // shortcut: a mute applied in the mixer is reverted by the next sweep
+        // (3 s); an event-driven unmute would be instant but needs per-session
+        // callbacks, so upgrade only if 3 s proves audible.
         let timeout = if pending
             .iter()
             .any(|(since, _)| since.elapsed() <= Duration::from_secs(5))
         {
             Duration::from_millis(200)
         } else {
-            Duration::from_secs(30)
+            Duration::from_secs(3)
         };
         if let Ok(work) = receive.recv_timeout(timeout) {
             let mut work = Some(work);
@@ -528,6 +535,13 @@ unsafe fn identify(
     }
     if session.GetGroupingParam()? != AUDIO_GROUP {
         session.SetGroupingParam(&AUDIO_GROUP, &EVENT_CONTEXT)?;
+    }
+    // Windows remembers a per-app mute from the volume mixer across launches.
+    // WhatsNow must always be audible, so clear it on every owned session.
+    if let Ok(volume) = session.cast::<ISimpleAudioVolume>() {
+        if volume.GetMute().is_ok_and(|muted| muted.as_bool()) {
+            let _ = volume.SetMute(false, &EVENT_CONTEXT);
+        }
     }
     Ok(true)
 }

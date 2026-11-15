@@ -121,6 +121,13 @@ User-specified, verified by tests; do not revert without being asked.
   UI paints and calls `window.close()` if the call UI vanishes for 2.5 s; it never
   touches peer connections or media. The call-window build stays synchronous
   inside `on_new_window`.
+- **Never muted (2.7.2):** `audio_identity_windows.rs::identify` clears the mute flag
+  (`ISimpleAudioVolume::SetMute(false)`) on every WhatsNow-owned WebView2 audio session,
+  re-checked by the 3 s sweep, and `attach` clears WebView2's own `IsMuted`. Windows keeps
+  a per-app mute across launches, keyed by the shared `msedgewebview2.exe` path, so a mute
+  made once in the mixer used to stick. Only owned sessions are touched. The mixer icon
+  stays the WebView2 icon: Windows takes it from the process that plays the audio and
+  ignored every session icon path tried (exe, .ico, resource ids), so do not retry that.
 - **Settings shortcut (2.7.2):** the WhatsApp page may call exactly one
   window-opening command, `open_whatsnow_settings` (no arguments, account windows
   only, refused while locked). It backs the WhatsNow button the bridge adds to

@@ -69,6 +69,11 @@ Authored and maintained by [@benedictusrey](https://github.com/benedictusrey).
 
 ### Fixed
 
+- **WhatsNow was muted in the Windows volume mixer.** Windows remembers a per-app
+  mute across launches, and WhatsNow never cleared it. WhatsNow now keeps its own audio
+  sessions unmuted. The mixer still shows the Microsoft Edge WebView2 icon next to the
+  name "WhatsNow"; Windows takes that icon from the process that plays the sound.
+
 - **Call window left behind.** When a call ended, WhatsApp's page closed itself but
   WebView2 removed only the web content, leaving an empty dark call window. The
   whole window now closes with its page (verified in a real call).

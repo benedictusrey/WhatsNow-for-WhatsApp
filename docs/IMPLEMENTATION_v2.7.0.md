@@ -32,6 +32,15 @@ the palette, Settings opens visible with data loaded, no gated controls and no
 horizontal overflow. This also caught and fixed a feedback loop in the chat-theme
 repair observer (now covered by `chat-theme.test.mjs`).
 
+## Audio: never muted
+
+`identify` clears the mute flag of every owned WebView2 audio session and the sweep runs
+every 3 seconds; `attach` clears WebView2's `IsMuted`. Verified live: the WhatsNow session was
+unmuted and stayed unmuted. Not achievable: the WhatsNow icon in the mixer. Windows shows the
+icon of the process that plays audio (`msedgewebview2.exe`) and ignored session icon paths
+in every form tried (bare exe, `.ico`, `.ico,0`, `exe,0`, `exe,-32512`, a shared folder, a
+fresh Settings app). Fixing it would need a bundled, re-branded WebView2 runtime.
+
 ## Release packaging
 
 The release has one installer per operating system: `WhatsNow_2.7.0_windows_x64-setup.exe`,
