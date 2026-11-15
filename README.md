@@ -38,43 +38,12 @@ with WhatsApp or Meta.
 > Download only files actually attached to a published release.
 > The artwork is illustrative, not a pixel-exact screenshot or a security certification.
 
-## 📋 What's new in v2.7.0
+## 📋 What's new
 
-- **Centered windows:** Settings opens centered on your monitor every time; the main
-  window centers once at launch and then stays where you move it
-- **Instant-apply Settings:** every control saves as you change it, with a Saved
-  indicator, real dialogs instead of browser prompts, and a clearer layout
-- **Notification health:** Settings shows when Windows is blocking WhatsNow alerts
-  and opens the right Windows page
-- **Action Center in sync:** toasts are grouped per chat and cleared once the chat
-  is read in WhatsNow or on your phone; no stale toast after a slow start
-- **Safer storage:** settings, accounts, and the app lock are written atomically,
-  and a wrong unlock password now backs off
-- **Calls stay put:** changing a Settings option no longer drops a call window behind
-  the chat, and call windows carry the WhatsNow icon
-
-### Retained from v2.6.3
-
-- **Reliability-first background policy:** keep Windows account/call webviews at
-  normal memory priority while minimized, hidden to tray, or behind App Lock
-- **Windows audio identity:** owned sessions receive WhatsNow's name, existing icon,
-  and app-specific mixer grouping. See [validation boundaries](docs/IMPLEMENTATION_v2.6.3.md).
-
-### Retained from v2.6.2
-
-- **Working call handoff:** repair the blank call window and false blocked-popup
-  prompt by preserving the native popup handle and opener connection
-- **Usable call windows:** native resize, maximize, minimize, and restore controls,
-  with monitor/DPI-aware initial sizing
-- **Full-frame camera preference:** reduce browser-side cropping where supported;
-  the receiving phone still controls its own fit/fill layout
-- **Regression protection:** native Windows and browser popup/camera tests, alongside
-  existing theme, notification, attachment, phone-link, and Settings checks
-- **Preserved workspace tools:** themes, Focus, App Lock, accounts, native alerts,
-  no-refresh phone links, and Settings clarity remain part of WhatsNow
-
-Read the [2.6.2 implementation record](docs/IMPLEMENTATION_v2.6.2.md),
-[release notes](RELEASE_NOTES.md), and [previous changes](CHANGELOGS_v2.6.1.md).
+Every release's changes are listed on its
+[GitHub release page](https://github.com/benedictusrey/WhatsNow-for-WhatsApp/releases),
+next to the downloads. The latest is
+[v2.7.0](https://github.com/benedictusrey/WhatsNow-for-WhatsApp/releases/tag/v2.7.0).
 Live service behavior is still subject to WhatsApp Web changes.
 
 ## 💬 Your conversations, with room to focus
@@ -194,4 +163,4 @@ Created and maintained by **Benedictus Reynaldo Hartanto**
 Settings uses the concise name **Benedictus RH**.
 
 [MIT License](LICENSE) · [Third-party and retained notices](THIRD_PARTY_NOTICES) ·
-[Version history](CHANGELOG.md) · [Artwork notes](docs/assets/README.md)
+[Releases](https://github.com/benedictusrey/WhatsNow-for-WhatsApp/releases) · [Artwork notes](docs/assets/README.md)
