@@ -27,6 +27,7 @@
     "allow-set-biometric-enabled",
     "allow-set-focus-mode",
     "allow-set-settings",
+    "allow-settings-ready",
     "allow-test-notification"
   ]
 }

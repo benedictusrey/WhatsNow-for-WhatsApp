@@ -294,6 +294,9 @@ body {
   background: var(--bg);
   color: var(--text);
   font-size: 14px;
+}
+
+.theme-anim body {
   transition: background-color 160ms ease, color 160ms ease;
 }
 
@@ -320,8 +323,9 @@ dialog:focus-visible {
   box-shadow: var(--focus-ring);
 }
 
-button:disabled,
-input:disabled {
+button:disabled:not([data-gated]),
+input:disabled:not([data-gated]),
+.load-failed [data-gated] {
   cursor: not-allowed;
   opacity: 0.48;
 }
@@ -582,7 +586,10 @@ input:disabled {
   width: min(100%, 860px);
   margin: 0 auto;
   gap: var(--space-4);
-  animation: panel-enter 180ms ease-out;
+}
+
+.panels-live .settings-panel {
+  animation: panel-enter 120ms ease-out;
 }
 
 @keyframes panel-enter {

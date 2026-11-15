@@ -179,6 +179,7 @@ pub fn run() {
             commands::activate_notification_window,
             commands::clear_chat_notifications,
             commands::get_notification_status,
+            commands::settings_ready,
             commands::open_os_notification_settings,
             commands::notification_click,
             commands::notify,

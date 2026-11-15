@@ -184,6 +184,18 @@ pub fn clear_chat_notifications(
     Ok(())
 }
 
+/// Settings page -> Rust: the first data has rendered, so the (still hidden)
+/// Settings window can be centred and revealed without a dimmed, half-empty
+/// first frame. Only the Settings window itself may ask.
+#[tauri::command]
+pub fn settings_ready(window: tauri::Window, app: tauri::AppHandle) -> Result<(), String> {
+    if window.label() != "settings" {
+        return Err("forbidden".into());
+    }
+    crate::window::reveal_settings_window(&app);
+    Ok(())
+}
+
 /// Windows' notification permission for WhatsNow (Settings "Notification
 /// health" card): `enabled`, `disabled_by_user`, `disabled_for_app`,
 /// `group_policy` or `unknown`. Always `enabled` where the OS has no such switch.

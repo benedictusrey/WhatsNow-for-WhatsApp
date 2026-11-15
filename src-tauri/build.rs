@@ -28,6 +28,7 @@ fn main() {
         "set_focus_mode",
         "set_profile_name",
         "set_settings",
+        "settings_ready",
         "set_unread_count",
         "test_notification",
         "unlock_biometric",

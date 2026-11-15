@@ -124,7 +124,7 @@ assert.ok(
 
 // Notification health is a Settings-only surface: granted to settings.json,
 // never to the remote WhatsApp page.
-for (const command of ["get_notification_status", "open_os_notification_settings"]) {
+for (const command of ["get_notification_status", "open_os_notification_settings", "settings_ready"]) {
   assert.ok(buildScript.includes(`"${command}"`), `build.rs registers ${command}`);
   assert.ok(
     settingsPermissions.has(permissionFor(command)),

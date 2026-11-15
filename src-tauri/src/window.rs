@@ -2215,10 +2215,21 @@ fn settings_version_bootstrap(version: &str) -> String {
     )
 }
 
+/// Centre and show the Settings window if it is still hidden. Called by the page
+/// once its first data has rendered (`settings_ready`) and by the fallback timer,
+/// so the window never appears dimmed or half-populated. Idempotent.
+pub fn reveal_settings_window(app: &AppHandle) {
+    if let Some(w) = app.get_webview_window("settings") {
+        if !w.is_visible().unwrap_or(false) {
+            center_on_monitor(&w, 0);
+            let _ = w.show();
+            let _ = w.set_focus();
+        }
+    }
+}
+
 /// Opens (or focuses) the local settings window.
 pub fn open_settings_window(app: &AppHandle) {
-    use std::sync::atomic::{AtomicBool, Ordering};
-
     if let Some(w) = app.get_webview_window("settings") {
         // Settings opens centred on the cursor's monitor every single time.
         center_on_monitor(&w, 0);
@@ -2228,22 +2239,23 @@ pub fn open_settings_window(app: &AppHandle) {
     }
 
     let settings = crate::settings::load(app);
-    let reveal_pending = std::sync::Arc::new(AtomicBool::new(true));
-    // Bounded fallback, like the account window's: if the page never reports
-    // Finished, reveal Settings anyway instead of leaving it invisible.
+    // The page reveals itself through `settings_ready` after its first data has
+    // rendered. Bounded fallback: if that never happens (script error, slow
+    // start) reveal Settings anyway instead of leaving it invisible.
     {
         let fallback_app = app.clone();
-        let fallback_pending = reveal_pending.clone();
         std::thread::spawn(move || {
-            std::thread::sleep(std::time::Duration::from_secs(6));
-            if fallback_pending.swap(false, Ordering::AcqRel) {
-                if let Some(w) = fallback_app.get_webview_window("settings") {
-                    center_on_monitor(&w, 0);
-                    let _ = w.show();
-                    let _ = w.set_focus();
+            std::thread::sleep(std::time::Duration::from_secs(4));
+            let handle = fallback_app.clone();
+            let _ = fallback_app.run_on_main_thread(move || {
+                if handle
+                    .get_webview_window("settings")
+                    .is_some_and(|w| !w.is_visible().unwrap_or(true))
+                {
                     crate::dlog::log("settings window revealed by fallback timer");
+                    reveal_settings_window(&handle);
                 }
-            }
+            });
         });
     }
     // Settings is a tall panel (min 640 logical px). The nominal size is clamped
@@ -2268,18 +2280,11 @@ pub fn open_settings_window(app: &AppHandle) {
             settings_version_bootstrap(&app.package_info().version.to_string())
         ))
         .visible(false)
-        .on_page_load(move |window, payload| {
+        .on_page_load(move |window, _payload| {
             // Frameless is a fixed design decision: re-assert it here so a
             // stale window-state (saved by an older build with a native frame)
             // can never re-attach the OS title bar.
             let _ = window.set_decorations(false);
-            if payload.event() == PageLoadEvent::Finished
-                && reveal_pending.swap(false, Ordering::AcqRel)
-            {
-                center_on_monitor(&window, 0);
-                let _ = window.show();
-                let _ = window.set_focus();
-            }
         });
     if let Err(error) = builder.build() {
         crate::dlog::log(&format!("settings window creation failed: {error}"));

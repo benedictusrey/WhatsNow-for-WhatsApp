@@ -121,10 +121,15 @@ function selectTheme(theme) {
 }
 
 function wireThemePicker() {
-  selectTheme("system");
+  // Rust already stamped the saved theme on <html> before first paint; start
+  // from it instead of "system", which used to flash Dark before the real theme
+  // arrived with the async settings.
+  selectTheme(document.documentElement.dataset.themeChoice || "system");
   for (const input of document.querySelectorAll('input[name="theme"]')) {
     input.addEventListener("change", () => {
       if (!input.checked) return;
+      // Colors cross-fade only for a theme the user just picked, never on open.
+      document.documentElement.classList.add("theme-anim");
       applyTheme(input.value);
       autosave.queue({ theme: input.value });
     });
@@ -249,6 +254,7 @@ function applyControlGate() {
 
 function onLoadState(state) {
   settingsLoaded = state.ok;
+  document.documentElement.classList.toggle("load-failed", !state.ok);
   $("load_error").hidden = state.ok;
   if (!state.ok) {
     $("load_error_text").textContent =
@@ -661,6 +667,8 @@ async function addAccount() {
 
 function showPanel(panelName, { focusTab = false } = {}) {
   if (!PANEL_META[panelName]) return;
+  // Panels fade in only when the user switches; the first one is just there.
+  document.documentElement.classList.add("panels-live");
   for (const panel of document.querySelectorAll("[data-panel]")) {
     const active = panel.dataset.panel === panelName;
     panel.hidden = !active;
@@ -777,8 +785,15 @@ window.addEventListener("DOMContentLoaded", () => {
   wireLock();
   $("save_retry").addEventListener("click", () => retryAction?.());
   $("load_retry").addEventListener("click", () => load());
-  load();
-  Promise.allSettled([loadAccounts(), loadLock(), loadFocus(), loadHealth()]);
+  // The window stays hidden until the first data has rendered, then Rust centres
+  // and shows it: no dimmed controls, empty lists, or theme change on screen.
+  Promise.allSettled([load(), loadAccounts(), loadLock(), loadFocus(), loadHealth()]).then(() => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        invoke("settings_ready").catch(() => {});
+      });
+    });
+  });
   $("add_account").addEventListener("click", addAccount);
   $("new_account_name").addEventListener("keydown", (e) => {
     if (e.key === "Enter") addAccount();
