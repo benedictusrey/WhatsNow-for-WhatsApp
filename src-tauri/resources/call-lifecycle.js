@@ -1,12 +1,12 @@
 // WhatsNow call window lifecycle, maintained by @benedictusrey.
 // Runs only inside a dedicated HTTPS WhatsApp call stage (never the chat, never
-// signalling, never media constraints). It does two small things for the
-// separate call window:
+// signalling, never media or peer connections). It does two small things for
+// the separate call window:
 //   1. shows a quiet "Connecting" frame until WhatsApp's call UI paints, so the
 //      window is never an empty dark rectangle while the call bundle loads;
-//   2. closes the window when the call is over. WhatsApp's call page empties
-//      itself on hang-up instead of closing, which left a blank window behind.
-// Closing uses window.close(): the shell turns it into a normal window close.
+//   2. closes the window if the call UI vanishes and nothing replaces it.
+// WhatsApp's own hang-up calls window.close(); the shell closes the whole native
+// window for that (call_window::close_window_with_page).
 (function () {
   "use strict";
   var root = typeof window !== "undefined" ? window : globalThis;
@@ -17,12 +17,11 @@
   )) return;
   if (root.__whatsnowCallLifecycle) return;
 
-  var CLOSED_GRACE_MS = 1500;   // last peer connection closed on purpose
-  var FAILED_GRACE_MS = 6000;   // last peer connection failed (allow a retry)
   var BLANK_MS = 2500;          // call UI gone and nothing replaced it
-  var SPLASH_MAX_MS = 15000;    // never keep the splash if detection misses
+  var SPLASH_MAX_MS = 10000;    // never keep the splash if detection misses
   var CHECK_DELAY_MS = 250;     // coalesce DOM mutation bursts
-  var CONTENT = "video, audio, button, [role='button']";
+  // Anything that means WhatsApp's call UI has drawn something.
+  var CONTENT = "video, audio, canvas, img, input, iframe, button, [role]";
 
   var setTimer = root.setTimeout.bind(root);
   var clearTimer = root.clearTimeout.bind(root);
@@ -51,54 +50,6 @@
         try { root.close(); } catch (e) {}
       }
     }, delay);
-  }
-
-  // --- Peer connections: the call is over when the last one is gone. --------
-  var established = false;
-  var live = [];
-  function forget(pc) {
-    var index = live.indexOf(pc);
-    if (index >= 0) live.splice(index, 1);
-  }
-  function callIsOver() { return established && live.length === 0; }
-  function settle(grace) {
-    if (callIsOver()) scheduleClose("rtc", grace, callIsOver);
-  }
-  var Native = root.RTCPeerConnection;
-  if (typeof Native === "function") {
-    var Tracked = class extends Native {
-      constructor(...args) {
-        super(...args);
-        live.push(this);
-        cancelClose("rtc");
-        var pc = this;
-        var onState = function () {
-          var state = pc.connectionState || pc.iceConnectionState;
-          if (state === "connected" || state === "completed") {
-            established = true;
-            cancelClose("rtc");
-          } else if (state === "closed") {
-            forget(pc);
-            settle(CLOSED_GRACE_MS);
-          } else if (state === "failed") {
-            forget(pc);
-            settle(FAILED_GRACE_MS);
-          }
-        };
-        pc.addEventListener("connectionstatechange", onState);
-        pc.addEventListener("iceconnectionstatechange", onState);
-      }
-      // close() sets the state to "closed" without firing a state event.
-      close() {
-        try {
-          return super.close();
-        } finally {
-          forget(this);
-          settle(CLOSED_GRACE_MS);
-        }
-      }
-    };
-    try { root.RTCPeerConnection = Tracked; } catch (e) {}
   }
 
   // --- Call UI: splash until it paints, close if it vanishes afterwards. ----
@@ -203,7 +154,7 @@
   root.__whatsnowCallLifecycle = Object.freeze({
     // Test hooks only: no behavior hangs off them.
     state: function () {
-      return { established: established, live: live.length, populated: populated };
+      return { populated: populated };
     },
   });
 })();

@@ -118,9 +118,9 @@ User-specified, verified by tests; do not revert without being asked.
   second `WindowCloseRequested` handler that destroys the whole window on the
   main thread; `examples/call-window-smoke.rs` proves it (fails without it).
   `call-lifecycle.js` (call hosts only) adds a "Connecting" frame until the call
-  UI paints and calls `window.close()` itself if the last peer connection closes
-  (1.5 s) or fails (6 s) after an established call, or the call UI has vanished
-  for 2.5 s. The call-window build stays synchronous inside `on_new_window`.
+  UI paints and calls `window.close()` if the call UI vanishes for 2.5 s; it never
+  touches peer connections or media. The call-window build stays synchronous
+  inside `on_new_window`.
 - **Settings shortcut (2.7.2):** the WhatsApp page may call exactly one
   window-opening command, `open_whatsnow_settings` (no arguments, account windows
   only, refused while locked). It backs the WhatsNow button the bridge adds to

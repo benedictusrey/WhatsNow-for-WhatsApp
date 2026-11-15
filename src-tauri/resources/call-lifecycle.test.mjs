@@ -5,9 +5,9 @@ import vm from "node:vm";
 
 const source = readFileSync(new URL("./call-lifecycle.js", import.meta.url), "utf8");
 
-// A tiny fake DOM, a manual clock and a fake RTCPeerConnection: enough to drive
+// A tiny fake DOM and a manual clock: enough to drive
 // the watcher without a browser.
-function harness({ hostname = "call.whatsapp.com", pathname = "/ABC", withRtc = true } = {}) {
+function harness({ hostname = "call.whatsapp.com", pathname = "/ABC" } = {}) {
   let now = 0;
   let nextId = 1;
   const timers = new Map();
@@ -33,19 +33,6 @@ function harness({ hostname = "call.whatsapp.com", pathname = "/ABC", withRtc = 
     createElement: makeElement,
   };
 
-  class FakePeerConnection {
-    constructor() {
-      this.connectionState = "new";
-      this.listeners = {};
-      FakePeerConnection.created.push(this);
-    }
-    addEventListener(type, fn) { (this.listeners[type] ||= []).push(fn); }
-    emit(type) { for (const fn of this.listeners[type] || []) fn(); }
-    setState(value) { this.connectionState = value; this.emit("connectionstatechange"); }
-    close() { this.connectionState = "closed"; }
-  }
-  FakePeerConnection.created = [];
-
   const window = {
     setTimeout(fn, ms) { const id = nextId++; timers.set(id, { fn, at: now + ms }); return id; },
     clearTimeout(id) { timers.delete(id); },
@@ -53,7 +40,6 @@ function harness({ hostname = "call.whatsapp.com", pathname = "/ABC", withRtc = 
     document,
     MutationObserver: class { constructor(cb) { observers.push(cb); } observe() {} },
     matchMedia: () => ({ matches: false }),
-    RTCPeerConnection: withRtc ? FakePeerConnection : undefined,
   };
   vm.runInNewContext(source, {
     window,
@@ -75,7 +61,7 @@ function harness({ hostname = "call.whatsapp.com", pathname = "/ABC", withRtc = 
     now = end;
   };
   const splash = () => documentElement.children.find((c) => c.id === "whatsnow-call-splash");
-  return { window, document, state, closes, observers, advance, splash, FakePeerConnection };
+  return { window, document, state, closes, observers, advance, splash };
 }
 
 // Non-call pages are never touched.
@@ -88,7 +74,6 @@ for (const options of [
   const h = harness(options);
   assert.equal(h.window.__whatsnowCallLifecycle, undefined, `${options.hostname}${options.pathname} ignored`);
   assert.equal(h.splash(), undefined);
-  assert.equal(h.window.RTCPeerConnection, h.FakePeerConnection, "peer connections untouched");
 }
 for (const options of [
   { hostname: "call.whatsapp.com", pathname: "/ABC" },
@@ -118,82 +103,20 @@ for (const options of [
 // Splash safety timeout when content detection never matches.
 {
   const h = harness();
-  h.advance(15_000 + 300);
+  h.advance(10_000 + 300);
   assert.ok(h.splash() === undefined || h.splash().removed, "splash is never left behind");
 }
 
-// A finished call closes the window; hang-up by either side ends in a close.
+// Peer connections are never wrapped or touched.
 {
   const h = harness();
-  const [pc] = [new h.window.RTCPeerConnection()];
-  assert.equal(h.window.RTCPeerConnection.prototype instanceof h.FakePeerConnection, true);
-  assert.ok(pc instanceof h.FakePeerConnection, "instanceof checks keep working");
-  h.advance(10_000);
-  assert.equal(h.closes.length, 0, "no close before a call is established");
-  pc.setState("connected");
-  h.advance(60_000);
-  assert.equal(h.closes.length, 0, "a live call is never closed");
-  pc.setState("disconnected");
-  h.advance(60_000);
-  assert.equal(h.closes.length, 0, "a network blip does not end the call");
-  pc.setState("closed");
-  h.advance(1400);
-  assert.equal(h.closes.length, 0, "short grace period first");
-  h.advance(200);
-  assert.equal(h.closes.length, 1, "closed after the last connection ends");
-}
-// close() fires no state event, so it is observed directly.
-{
-  const h = harness();
-  const pc = new h.window.RTCPeerConnection();
-  pc.setState("connected");
-  pc.close();
-  h.advance(1600);
-  assert.equal(h.closes.length, 1);
-}
-// A replacement connection inside the grace period keeps the call open.
-{
-  const h = harness();
-  const first = new h.window.RTCPeerConnection();
-  first.setState("connected");
-  first.setState("closed");
-  h.advance(500);
-  const second = new h.window.RTCPeerConnection();
-  second.setState("connected");
-  h.advance(10_000);
-  assert.equal(h.closes.length, 0, "reconnects are not mistaken for the end");
-  second.setState("closed");
-  h.advance(1600);
-  assert.equal(h.closes.length, 1);
-}
-// One of several connections closing never ends the call.
-{
-  const h = harness();
-  const a = new h.window.RTCPeerConnection();
-  const b = new h.window.RTCPeerConnection();
-  a.setState("connected");
-  b.setState("connected");
-  a.setState("closed");
-  h.advance(10_000);
-  assert.equal(h.closes.length, 0);
-  b.setState("failed");
-  h.advance(5000);
-  assert.equal(h.closes.length, 0, "failed gets a longer grace period for a retry");
-  h.advance(1100);
-  assert.equal(h.closes.length, 1);
-}
-// A connection that never connected (lobby/preview) does not close the window.
-{
-  const h = harness();
-  const pc = new h.window.RTCPeerConnection();
-  pc.close();
-  h.advance(30_000);
-  assert.equal(h.closes.length, 0);
+  assert.equal(h.window.RTCPeerConnection, undefined);
+  assert.equal(Object.keys(h.window).includes("RTCPeerConnection"), false);
 }
 
 // Blank guard: UI that appeared and then vanished closes the window.
 {
-  const h = harness({ withRtc: false });
+  const h = harness();
   h.state.content = true;
   h.observers[0]();
   h.advance(300);
@@ -208,13 +131,13 @@ for (const options of [
 }
 // A page that was never populated is left alone (still loading).
 {
-  const h = harness({ withRtc: false });
+  const h = harness();
   h.advance(60_000);
   assert.equal(h.closes.length, 0);
 }
 // UI that comes back inside the delay cancels the close.
 {
-  const h = harness({ withRtc: false });
+  const h = harness();
   h.state.content = true;
   h.observers[0]();
   h.advance(300);

@@ -114,6 +114,7 @@ jobs:
           node scripts/phone-routing.test.mjs
           node scripts/call-popup.test.mjs
           node scripts/settings-contrast.test.mjs
+          node scripts/settings-shortcut.test.mjs
           node scripts/settings-attribution.test.mjs
 
       - name: POSIX installer syntax
