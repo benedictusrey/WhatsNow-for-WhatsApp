@@ -233,6 +233,29 @@ pub fn open_os_notification_settings(
     crate::window::open_os_notification_settings()
 }
 
+/// Only a real account window may use the WhatsNow button in its chat list.
+/// Call stages, the content popup and local windows are refused.
+fn settings_shortcut_allowed(caller_label: &str) -> bool {
+    accounts::is_account_label(caller_label)
+}
+
+/// Open WhatsNow Settings from the button WhatsNow adds to the chat-list header.
+/// It takes no arguments and does exactly one thing: show the local Settings
+/// window (the same call as the tray menu). Async so the window is created off
+/// the synchronous-command path, as the other window-opening commands do.
+#[tauri::command]
+pub async fn open_whatsnow_settings(
+    window: tauri::Window,
+    app: tauri::AppHandle,
+) -> Result<(), String> {
+    if !settings_shortcut_allowed(window.label()) {
+        return Err("forbidden".into());
+    }
+    lock::require_unlocked(&app)?;
+    crate::window::open_settings_window(&app);
+    Ok(())
+}
+
 /// Reveal an account window only after its page-side toast route has finished.
 /// The remote caller may activate only its own `wa-<id>` window.
 #[tauri::command]
@@ -921,7 +944,7 @@ pub fn reset_app_lock(window: tauri::Window, app: tauri::AppHandle) -> Result<()
 mod tests {
     use super::{
         is_remote_label, notification_activation_allowed, notification_content,
-        productivity_status, validate_account_label, validate_account_name,
+        productivity_status, settings_shortcut_allowed, validate_account_label, validate_account_name,
     };
     use crate::settings::Settings;
 
@@ -979,6 +1002,15 @@ mod tests {
         let status = productivity_status(&settings, 1_400);
         assert!(status.focus_active);
         assert_eq!(status.focus_remaining_secs, 600);
+    }
+
+    #[test]
+    fn settings_shortcut_is_limited_to_account_windows() {
+        assert!(settings_shortcut_allowed("wa-default"));
+        assert!(settings_shortcut_allowed("wa-acct-2"));
+        for label in ["wa-call-1", "wa-content", "settings", "lock", ""] {
+            assert!(!settings_shortcut_allowed(label), "{label}");
+        }
     }
 
     #[test]

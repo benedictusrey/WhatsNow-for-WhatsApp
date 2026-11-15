@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-open-whatsnow-settings"
+description = "Enables the open_whatsnow_settings command without any pre-configured scope."
+commands.allow = ["open_whatsnow_settings"]
+
+[[permission]]
+identifier = "deny-open-whatsnow-settings"
+description = "Denies the open_whatsnow_settings command without any pre-configured scope."
+commands.deny = ["open_whatsnow_settings"]

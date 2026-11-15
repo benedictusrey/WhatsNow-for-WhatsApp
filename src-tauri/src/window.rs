@@ -51,6 +51,7 @@ pub const CHROME_UA: &str =
 
 const BRIDGE_JS: &str = include_str!("../resources/bridge.js");
 const CHAT_THEME_JS: &str = include_str!("../resources/chat-theme.js");
+const SETTINGS_SHORTCUT_JS: &str = include_str!("../resources/settings-shortcut.js");
 pub(crate) const APP_ICON: &[u8] = include_bytes!("../icons/128x128.png");
 
 fn external_web_url(url: &tauri::Url) -> bool {
@@ -94,7 +95,7 @@ fn whatsapp_popup_allowed(url: &tauri::Url) -> bool {
 /// the account window navigating to a call URL in place. Call stages keep
 /// their dedicated always-on-top window (the 2.6.0 fix); every other family
 /// URL shares the reusable content popup. Pure and unit-tested.
-pub(crate) fn is_whatsapp_call_url(url: &tauri::Url) -> bool {
+fn is_whatsapp_call_url(url: &tauri::Url) -> bool {
     if url.scheme() != "https" {
         return false;
     }
@@ -300,7 +301,7 @@ fn open_account_window_inner(
     let icon = tauri::image::Image::from_bytes(APP_ICON)?;
     let current_settings = crate::settings::load(app);
     let initialization_script = format!(
-        "{BRIDGE_JS}\n{CHAT_THEME_JS}\n{}",
+        "{BRIDGE_JS}\n{CHAT_THEME_JS}\n{SETTINGS_SHORTCUT_JS}\n{}",
         crate::settings::chat_appearance_script(
             current_settings.theme,
             current_settings.chat_doodles,
@@ -548,6 +549,11 @@ fn open_account_window_inner(
                         // (the chat window's handler does not cover them).
                         #[cfg(target_os = "windows")]
                         let _ = window.with_webview(enable_media_windows);
+                        if is_call {
+                            // The call page closes itself at hang-up: close the
+                            // whole window with it, not just the web content.
+                            crate::call_window::close_window_with_page(&window);
+                        }
                         // Same media guard as chat windows: a visible call
                         // window must never sit at the LOW memory target.
                         register_windows_memory_target(&window);

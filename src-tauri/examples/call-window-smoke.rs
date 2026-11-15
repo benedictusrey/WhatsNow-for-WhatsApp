@@ -69,6 +69,7 @@ fn main() {
                     .window_features(features)
                     .data_directory(profile_for_opener.clone());
                 let window = builder.build().expect("call child creation");
+                whatsnow_lib::call_window::close_window_with_page(&window);
                 #[cfg(windows)]
                 {
                     let registrar = registrar.clone();
@@ -102,7 +103,13 @@ fn main() {
                     })) {
                         return Err("resize did not update the client area".into());
                     }
-                    println!("PASS: native popup loaded, returned WindowProxy, retained opener, maximized, restored, and resized.");
+                    // WhatsApp's call page ends a call by calling window.close(): the
+                    // whole native window must go with it, not just the web content.
+                    window.eval("window.close()").map_err(|e| e.to_string())?;
+                    if !wait_for(|| handle.get_webview_window("wa-call-fixture").is_none()) {
+                        return Err("window stayed open after the page closed itself".into());
+                    }
+                    println!("PASS: native popup loaded, returned WindowProxy, retained opener, maximized, restored, resized, and closed with its page.");
                     Ok(())
                 })();
                 if let Err(error) = &result { eprintln!("FAIL: {error}"); }

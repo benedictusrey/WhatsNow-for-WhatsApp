@@ -18,6 +18,7 @@ fn main() {
         "open_external_url",
         "open_account",
         "open_os_notification_settings",
+        "open_whatsnow_settings",
         "remove_account",
         "rename_account",
         "reset_app_lock",

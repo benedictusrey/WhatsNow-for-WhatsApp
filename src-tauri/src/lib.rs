@@ -181,6 +181,7 @@ pub fn run() {
             commands::get_notification_status,
             commands::settings_ready,
             commands::open_os_notification_settings,
+            commands::open_whatsnow_settings,
             commands::notification_click,
             commands::notify,
             commands::set_unread_count,

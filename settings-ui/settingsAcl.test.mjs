@@ -136,6 +136,23 @@ for (const command of ["get_notification_status", "open_os_notification_settings
   );
 }
 
+// The WhatsNow button in WhatsApp's chat-list header opens Settings through one
+// argument-less command: registered, granted to the page, never to Settings.
+assert.ok(buildScript.includes('"open_whatsnow_settings"'), "build.rs registers open_whatsnow_settings");
+assert.ok(
+  remotePermissions.has(permissionFor("open_whatsnow_settings")),
+  "main-remote.json grants open_whatsnow_settings to the WhatsApp page",
+);
+assert.ok(
+  !settingsPermissions.has(permissionFor("open_whatsnow_settings")),
+  "Settings never needs the page shortcut",
+);
+assert.match(
+  await readFile(new URL("../src-tauri/src/commands.rs", import.meta.url), "utf8"),
+  /pub async fn open_whatsnow_settings\(\s*window: tauri::Window,\s*app: tauri::AppHandle,\s*\) -> Result<\(\), String>/,
+  "the shortcut takes no page-controlled arguments",
+);
+
 // Dead commands removed in 2.7.0 stay removed.
 for (const command of ["set_unread", "open_settings"]) {
   assert.ok(!buildScript.includes(`"${command}"`), `${command} is no longer registered`);

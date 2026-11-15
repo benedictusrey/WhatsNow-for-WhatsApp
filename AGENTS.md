@@ -103,6 +103,28 @@ User-specified, verified by tests; do not revert without being asked.
   with the palette header/primary (`caption_colors`, pinned to `chat-theme.js`
   by a unit test); official themes restore the system defaults. The lock
   window starts in the saved theme and `lock.css` carries all 10 palettes.
+- **Account names (2.7.2):** every surface (tray menu, Settings, toasts, window
+  title) shows `accounts::display_name`: the label the user typed, else
+  WhatsApp's own profile name, else "WhatsApp" until the profile is read.
+  "WhatsApp" is never stored as a default label (`AccountsFile::default()` has an
+  empty label; a legacy "WhatsApp" label on the `default` account is migrated to
+  empty on load). A typed label persists until the account is removed; Rename
+  with an empty value clears it. `set_profile_name` rebuilds the tray menu.
+- **Call window end (2.7.2):** a call stage closes with its call. WhatsApp's call
+  page ends a call with `window.close()`, and WebView2 then destroys only the web
+  content (wry's `WindowCloseRequested` handler destroys the inner container),
+  which left an empty dark window. `call_window::close_window_with_page`
+  (registered for every `wa-call-*` window in `on_new_window`, Windows) adds a
+  second `WindowCloseRequested` handler that destroys the whole window on the
+  main thread; `examples/call-window-smoke.rs` proves it (fails without it).
+  `call-lifecycle.js` (call hosts only) adds a "Connecting" frame until the call
+  UI paints and calls `window.close()` itself if the last peer connection closes
+  (1.5 s) or fails (6 s) after an established call, or the call UI has vanished
+  for 2.5 s. The call-window build stays synchronous inside `on_new_window`.
+- **Settings shortcut (2.7.2):** the WhatsApp page may call exactly one
+  window-opening command, `open_whatsnow_settings` (no arguments, account windows
+  only, refused while locked). It backs the WhatsNow button the bridge adds to
+  the chat-list header.
 
 ### 0. The four pillars (summary — each has its own section below)
 

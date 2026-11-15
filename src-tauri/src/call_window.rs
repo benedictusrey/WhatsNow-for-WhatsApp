@@ -1,58 +1,57 @@
 //! WhatsNow call child construction, maintained by @benedictusrey.
 //! Shared with the isolated native WebView2 smoke fixture.
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
 use std::time::Instant;
 use tauri::webview::PageLoadEvent;
-use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindowBuilder, Wry};
+use tauri::{AppHandle, WebviewUrl, WebviewWindowBuilder, Wry};
 
 pub fn initial_url() -> tauri::Url {
     tauri::Url::parse("about:blank").expect("valid blank popup URL")
 }
 
-/// What to do when a call window is about to navigate.
-#[derive(Debug, PartialEq, Eq)]
-pub enum CallNavigation {
-    /// Not a call concern: let the page go there (unchanged behavior).
-    Allow,
-    /// A call stage page: allow it and remember that the call UI was shown.
-    AllowCallPage,
-    /// The call page was replaced by an empty/home page: the call is over.
-    Close,
+/// WebView2 destroys only its inner container when the page calls
+/// `window.close()`, which is exactly what WhatsApp's call page does at hang-up:
+/// the native frame stayed behind as an empty dark window. Close the whole window
+/// when its page asks to close.
+#[cfg(target_os = "windows")]
+pub fn close_window_with_page(window: &tauri::WebviewWindow) {
+    use tauri::Manager;
+    use webview2_com::WindowCloseRequestedEventHandler;
+
+    let app = window.app_handle().clone();
+    let label = window.label().to_string();
+    let _ = window.with_webview(move |webview| {
+        // SAFETY: with_webview runs on the UI thread that owns the controller;
+        // these are standard WebView2 COM calls.
+        unsafe {
+            let Ok(core) = webview.controller().CoreWebView2() else {
+                return;
+            };
+            let handler = WindowCloseRequestedEventHandler::create(Box::new(move |_, _| {
+                crate::dlog::log("call window: page closed, closing the window");
+                let app_for_close = app.clone();
+                let label = label.clone();
+                // Never destroy a window from inside the engine's event callback.
+                let _ = app.run_on_main_thread(move || {
+                    if let Some(window) = app_for_close.get_webview_window(&label) {
+                        let _ = window.destroy();
+                    }
+                });
+                Ok(())
+            }));
+            let mut token: i64 = 0;
+            let _ = core.add_WindowCloseRequested(&handler, &mut token);
+        }
+    });
 }
 
-/// Backstop for the in-page watcher (`call-lifecycle.js`). Once a call stage has
-/// loaded, a navigation to a blank page or the web.whatsapp.com home page means
-/// the call ended and would otherwise leave an empty window behind. Anything
-/// else (help pages, links) is allowed, so a live call is never cut off.
-pub fn classify_navigation(seen_call_page: bool, url: &tauri::Url) -> CallNavigation {
-    if crate::window::is_whatsapp_call_url(url) {
-        return CallNavigation::AllowCallPage;
-    }
-    if !seen_call_page {
-        return CallNavigation::Allow;
-    }
-    let blank = url.as_str() == "about:blank";
-    let home = url.scheme() == "https"
-        && url
-            .host_str()
-            .is_some_and(|host| host.eq_ignore_ascii_case("web.whatsapp.com"))
-        && url.path() == "/";
-    if blank || home {
-        CallNavigation::Close
-    } else {
-        CallNavigation::Allow
-    }
-}
+#[cfg(not(target_os = "windows"))]
+pub fn close_window_with_page(_window: &tauri::WebviewWindow) {}
 
 /// Preserve the engine's pending popup navigation and permit native sizing.
 /// The caller must attach the opener's environment before building the child.
 pub fn builder<'a>(app: &'a AppHandle, label: &str) -> WebviewWindowBuilder<'a, Wry, AppHandle> {
     let created = Instant::now();
     let make = || {
-        let seen_call_page = Arc::new(AtomicBool::new(false));
-        let nav_app = app.clone();
-        let nav_label = label.to_string();
         let load_label = label.to_string();
         WebviewWindowBuilder::new(app, label, WebviewUrl::External(initial_url()))
             .title("WhatsNow — Call")
@@ -70,27 +69,6 @@ pub fn builder<'a>(app: &'a AppHandle, label: &str) -> WebviewWindowBuilder<'a, 
             .initialization_script(include_str!("../resources/call-media.js"))
             // Connecting frame + close-when-the-call-ends (call hosts only).
             .initialization_script(include_str!("../resources/call-lifecycle.js"))
-            .on_navigation(move |url| match classify_navigation(
-                seen_call_page.load(Ordering::Relaxed),
-                url,
-            ) {
-                CallNavigation::Allow => true,
-                CallNavigation::AllowCallPage => {
-                    seen_call_page.store(true, Ordering::Relaxed);
-                    true
-                }
-                CallNavigation::Close => {
-                    crate::dlog::log("call window: closed after the call page was replaced");
-                    let app = nav_app.clone();
-                    let label = nav_label.clone();
-                    let _ = nav_app.run_on_main_thread(move || {
-                        if let Some(window) = app.get_webview_window(&label) {
-                            let _ = window.destroy();
-                        }
-                    });
-                    false
-                }
-            })
             // Timing only (no URLs or content): how long the call window takes
             // to show its page, so a slow open is measurable in release builds.
             .on_page_load(move |_window, payload| {
@@ -109,58 +87,5 @@ pub fn builder<'a>(app: &'a AppHandle, label: &str) -> WebviewWindowBuilder<'a, 
     {
         Ok(builder) => builder,
         Err(_) => make(),
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{classify_navigation, CallNavigation};
-
-    fn url(value: &str) -> tauri::Url {
-        tauri::Url::parse(value).unwrap()
-    }
-
-    #[test]
-    fn call_pages_are_allowed_and_remembered() {
-        for link in [
-            "https://call.whatsapp.com/video/abc",
-            "https://web.whatsapp.com/call/abc",
-            "https://web.whatsapp.com/call",
-        ] {
-            assert_eq!(classify_navigation(false, &url(link)), CallNavigation::AllowCallPage);
-            assert_eq!(classify_navigation(true, &url(link)), CallNavigation::AllowCallPage);
-        }
-    }
-
-    #[test]
-    fn before_a_call_page_loaded_nothing_closes_the_window() {
-        // The engine first loads about:blank into a new popup, then supplies the
-        // call URL: the initial blank must never close it.
-        assert_eq!(classify_navigation(false, &url("about:blank")), CallNavigation::Allow);
-        assert_eq!(
-            classify_navigation(false, &url("https://web.whatsapp.com/")),
-            CallNavigation::Allow
-        );
-    }
-
-    #[test]
-    fn a_blank_or_home_page_after_the_call_closes_the_window() {
-        assert_eq!(classify_navigation(true, &url("about:blank")), CallNavigation::Close);
-        assert_eq!(
-            classify_navigation(true, &url("https://web.whatsapp.com/")),
-            CallNavigation::Close
-        );
-    }
-
-    #[test]
-    fn other_navigations_never_cut_a_call_off() {
-        for link in [
-            "https://faq.whatsapp.com/help",
-            "https://web.whatsapp.com/send?phone=1",
-            "https://web.whatsapp.com.evil.example/",
-            "https://example.com/",
-        ] {
-            assert_eq!(classify_navigation(true, &url(link)), CallNavigation::Allow, "{link}");
-        }
     }
 }

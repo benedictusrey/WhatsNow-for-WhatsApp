@@ -44,6 +44,12 @@ Authored and maintained by [@benedictusrey](https://github.com/benedictusrey).
   pill stays transparent like Dark and Light. Account windows get a per-theme
   start background and a tinted title bar on Windows 11; the lock screen gains
   the missing Aurora palette and starts in the saved theme.
+- Show the account's own name instead of "WhatsApp" in the tray menu, Settings and
+  toasts: the name you typed wins, otherwise your WhatsApp profile name. "WhatsApp"
+  is no longer stored as the default name, and Rename can clear a typed name.
+- Call windows close automatically when the call ends and show a "Connecting"
+  frame while the call page loads.
+- Add a WhatsNow button to the chat-list header that opens WhatsNow Settings.
 
 See [implementation and test boundaries](docs/IMPLEMENTATION_v2.7.0.md).
 
