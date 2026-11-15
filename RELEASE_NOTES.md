@@ -1,9 +1,18 @@
-# WhatsNow 2.7.0 — centered windows, instant Settings, synced notifications
+# WhatsNow 2.7.0 — account names, tidier calls, instant Settings, synced notifications
 
 A UX and reliability update. Created and maintained by
 [@benedictusrey](https://github.com/benedictusrey).
 
 ## Improvements
+
+- Your account shows its own name instead of "WhatsApp" in the tray menu, Settings
+  and toasts: the name you typed, otherwise your WhatsApp profile name.
+- A new WhatsNow button in the chat-list header, next to WhatsApp's ⋮ menu, opens
+  WhatsNow Settings.
+- The call window closes completely when the call ends (it used to leave an empty
+  window behind) and shows a "Connecting" frame while the call loads.
+- Themes Graphite to Aurora color the whole window and leave the area around the
+  message box transparent, like Dark and Light.
 
 - Settings opens centered on the monitor under your cursor every time. The main
   window centers once at launch and keeps wherever you move it until the next restart.

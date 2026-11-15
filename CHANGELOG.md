@@ -11,45 +11,69 @@ All notable project changes are recorded here.
 
 Authored and maintained by [@benedictusrey](https://github.com/benedictusrey).
 
-- Center Settings on the cursor's monitor on every open and the main window once
-  at launch; stop restoring saved window positions and clamp sizes to the opening
-  monitor's work area.
-- Redesign Settings: instant-apply saving with a status indicator, native dialogs
-  for rename/remove/password flows, tab keyboard navigation, notification health
-  card, and a smarter 30-second idle close that pauses while the pointer is over
-  the window, a dialog or the shortcut recorder is active, a password command is
-  running, or the lock has hidden the window.
-- Group toasts per chat (Group/Tag) and clear them from the Windows Action Center
-  when a chat is read or opened; track unread per chat, take the fallback baseline
-  only after the chat list has rendered, skip muted chats, and let repeated
-  messages without an id notify again after 90 seconds.
-- Write settings, accounts, and app-lock files atomically; read an unknown theme
-  as System; validate shortcuts before replacing the working one; back off wrong
-  unlock passwords; bound the diagnostic log; tolerate poisoned locks.
-- Treat only real account windows as accounts (`wa-call-*` and the content popup
-  are not): fixes calls being un-pinned by Settings, suppressed toasts during a
-  call, and a phantom "content" account.
-- Remove the web page's direct notification-plugin grant and the unused
-  `set_unread` / `open_settings` commands; add `clear_chat_notifications`,
-  `get_notification_status`, and `open_os_notification_settings`.
-- Per-account taskbar badges; throttle the unread probe (slower while hidden).
-- Give call windows the WhatsNow icon and a dark client background.
-- Settings polish: panels no longer crop (layout follows the panel width with
-  container queries); Focus, Accounts and Appearance reorganized; the window now
-  appears only after its first data has rendered, starts in the saved theme, and
-  no longer dims or fades on open. New `scripts/settings-layout.test.mjs`.
-- Themes Graphite through Aurora now color the whole window (icon rail, chat list,
+### Added
+
+- A WhatsNow button in the chat-list header (left of WhatsApp's ⋮ menu) that opens
+  WhatsNow Settings. It is found by structure, not by the English "Menu" label, and
+  does nothing if WhatsApp changes that markup. The page may call exactly one
+  window-opening command for it, `open_whatsnow_settings` (no arguments, account
+  windows only, refused while locked).
+- Notification health card in Settings; `clear_chat_notifications`,
+  `get_notification_status`, `open_os_notification_settings` and `settings_ready`
+  commands.
+- Per-account taskbar badges.
+- A "Connecting" frame in the call window while WhatsApp's call page loads.
+
+### Changed
+
+- **Account names.** The tray menu, Settings (Overview and Accounts), multi-account
+  toasts and the window title show the name you typed in Rename; if none is set,
+  your WhatsApp profile name. "WhatsApp" is no longer stored as the default name
+  (an old stored "WhatsApp" on the default account is cleared on start), Rename
+  accepts an empty name to go back to the profile name, and the tray refreshes as
+  soon as the profile name is read.
+- **Windows.** Settings centers on the cursor's monitor on every open; the main
+  window centers once at launch; saved window positions are no longer restored and
+  sizes are clamped to the opening monitor's work area. Settings stays hidden until
+  its first data has rendered, starts in the saved theme, and no longer dims or
+  fades on open. Call windows carry the WhatsNow icon and a dark client background.
+- **Settings.** Instant-apply saving with a Saving/Saved/Retry indicator, native
+  dialogs for rename/remove/password flows, tab keyboard navigation, and a 30-second
+  idle close that pauses while the pointer is over the window, a dialog or the
+  shortcut recorder is active, a password command is running, or the lock hides the
+  window. Panels no longer crop (layout follows the panel width with container
+  queries); Focus, Accounts and Appearance are reorganized.
+- **Themes.** Graphite through Aurora color the whole window (icon rail, chat list,
   search, selection, bubbles, menus, dialogs, emoji panel, composer pill) by
-  re-pointing WhatsApp's design tokens; the composer strip around the message
-  pill stays transparent like Dark and Light. Account windows get a per-theme
-  start background and a tinted title bar on Windows 11; the lock screen gains
-  the missing Aurora palette and starts in the saved theme.
-- Show the account's own name instead of "WhatsApp" in the tray menu, Settings and
-  toasts: the name you typed wins, otherwise your WhatsApp profile name. "WhatsApp"
-  is no longer stored as the default name, and Rename can clear a typed name.
-- Call windows close completely when the call ends (previously an empty window was
-  left behind) and show a "Connecting" frame while the call page loads.
-- Add a WhatsNow button to the chat-list header that opens WhatsNow Settings.
+  re-pointing WhatsApp's design tokens; the composer strip around the message pill
+  stays transparent like Dark and Light. Account windows get a per-theme start
+  background and, on Windows 11, a tinted title bar; the lock screen gains the
+  missing Aurora palette and starts in the saved theme.
+- **Notifications.** Toasts are grouped per chat and cleared from the Action Center
+  when the chat is read or opened. Unread is tracked per chat, the fallback baseline
+  is taken only after the chat list has rendered, muted chats stay quiet, and
+  repeated messages without an id notify again after 90 seconds.
+- The unread probe is throttled (slower while hidden).
+
+### Fixed
+
+- **Call window left behind.** When a call ended, WhatsApp's page closed itself but
+  WebView2 removed only the web content, leaving an empty dark call window. The
+  whole window now closes with its page (verified in a real call).
+- Only real account windows count as accounts (`wa-call-*` and the content popup do
+  not): fixes calls being un-pinned by Settings, toasts suppressed during a call and
+  a phantom "content" account.
+- Settings, accounts and app-lock files are written atomically; an unknown theme
+  value reads as System instead of resetting settings; a shortcut is validated
+  before it replaces the working one; wrong unlock passwords back off; the
+  diagnostic log is bounded; poisoned locks are tolerated.
+- A feedback loop in the chat-theme repair observer that could freeze the page.
+
+### Security
+
+- The web page no longer holds the raw notification-plugin grant and can only notify
+  through the guarded `notify` command; the unused `set_unread` and `open_settings`
+  commands are removed.
 
 See [implementation and test boundaries](docs/IMPLEMENTATION_v2.7.0.md).
 

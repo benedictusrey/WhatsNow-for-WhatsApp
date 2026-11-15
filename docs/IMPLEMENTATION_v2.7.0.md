@@ -32,6 +32,19 @@ the palette, Settings opens visible with data loaded, no gated controls and no
 horizontal overflow. This also caught and fixed a feedback loop in the chat-theme
 repair observer (now covered by `chat-theme.test.mjs`).
 
+## Verified live (account names, call window, Settings button)
+
+Driven over the debug port on the built exe with the real profile, structure only:
+
+- The header button is injected once, sized 40 px like its neighbours, and clicking
+  it opens Settings; Settings Overview and Accounts show "Ben" (the profile name)
+  after the legacy "WhatsApp" label was migrated.
+- A real call: the call window was created in about 75 ms and its page loaded about
+  300-340 ms later. At hang-up the page closed itself and the whole window went
+  with it (log line "page closed, closing the window"). Before the fix the same call
+  left an empty window; `examples/call-window-smoke.rs` reproduces that and fails
+  without the fix.
+
 ## Not verified live
 
 These need a signed-in WhatsApp account or a second device and were not run:
@@ -39,8 +52,9 @@ These need a signed-in WhatsApp account or a second device and were not run:
 - A message from a second device raising a compact toast; opening the chat or
   reading it on the phone removing its toasts from the Action Center.
 - A slow reload raising no stale toast; a muted chat raising no fallback toast.
-- A real two-party call: it stays on top after a Settings toggle, maximizes, has
-  the icon, and the dark client background causes no visible regression.
+- A real two-party call: it stays on top after a Settings toggle, maximizes, and
+  the "Connecting" frame disappears once the call picture appears.
+- The tray menu text itself (unit-tested, not read from the native menu).
 - Main-window centering on a second monitor and a window saved on a removed monitor.
 - Renderer CPU while chatting or calling compared with 2.6.3 (the unread probe is
   throttled, but the saving was not measured).
