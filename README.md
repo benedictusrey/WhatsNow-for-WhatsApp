@@ -165,4 +165,4 @@ Created and maintained by **Benedictus Reynaldo Hartanto**
 Settings uses the concise name **Benedictus RH**.
 
 [MIT License](LICENSE) · [Third-party and retained notices](THIRD_PARTY_NOTICES) ·
-[Releases](https://github.com/benedictusrey/WhatsNow-for-WhatsApp/releases) · [Artwork notes](docs/assets/README.md)
+[Releases](https://github.com/benedictusrey/WhatsNow-for-WhatsApp/releases) · [v2.7.0 record](WhatsNow_v2.7.0.md) · [Artwork notes](docs/assets/README.md)

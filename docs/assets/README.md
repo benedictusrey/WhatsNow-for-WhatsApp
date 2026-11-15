@@ -40,5 +40,5 @@ the new v2.6.1 benchmark. No new measurements were performed for this artwork.
 
 - [README](../../README.md)
 - [Current features](../../WhatsNow_latest.md)
-- [v2.6.1 implementation record](../../CHANGELOGS_v2.6.1.md)
+- [v2.6.1 audit](../history/AUDIT_2.6.1.md)
 - [Release notes](../../RELEASE_NOTES.md)

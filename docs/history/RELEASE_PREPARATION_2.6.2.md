@@ -46,4 +46,4 @@ checksums.sha256
 CI packages are rebuilds of the approved source, not the exact locally tested
 binary. Verify their versions and digests before publication. Windows candidates
 are unsigned; checksums establish integrity, not publisher identity or malware
-absence. Use the [installation guide](INSTALLATION.md) and [security guidance](../SECURITY.md).
+absence. Use the [installation guide](../INSTALLATION.md) and [security guidance](../../SECURITY.md).

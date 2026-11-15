@@ -27,7 +27,9 @@ Consolidating local files does not commit, push, or publish them.
 | `settings-ui/` | Local Settings interface | Reviewed source |
 | `.github/` | CI and release workflows | Reviewed source |
 | `scripts/` | Build, installer, verification, and regression tools | Reviewed tools; exclude generated screenshots |
-| `docs/` and root Markdown | Current guides and release records | Reviewed documentation |
+| `docs/` | Current guides (installation, publishing, troubleshooting, platform support) | Reviewed documentation |
+| `docs/history/` | Records of earlier versions (audits, release preparation, implementation notes, plans) | Reviewed documentation; history only |
+| root Markdown | `README.md`, `CHANGELOG.md`, `RELEASE_NOTES.md` (release page text), `WhatsNow_latest.md` (feature guide), `WhatsNow_v2.7.0.md` (record of the 2.7.0 work), policies | Reviewed documentation |
 | `release-assets/` | Versioned upload staging and checksum records | Metadata only; package binaries ignored |
 | `dist/` | Local package sets, including earlier v2.6.1 candidates | Local-only |
 | `backup/` | Locked behavioral/source references | Local-only; do not alter snapshots |
@@ -109,5 +111,5 @@ location. Remove that obsolete entry from the app's list if desired, without
 deleting the consolidated files. No GitHub Desktop settings were changed here.
 
 For release acceptance and remaining live-platform limits, use
-[release preparation](RELEASE_PREPARATION_2.6.1.md). Moving files is not a new
+[release preparation](history/RELEASE_PREPARATION_2.6.1.md). Moving files is not a new
 end-to-end validation of WhatsApp server behavior or a real two-party call.

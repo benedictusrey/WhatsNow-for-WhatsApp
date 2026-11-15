@@ -58,7 +58,7 @@ No comparable five-run live workload benchmark demonstrated a reduction in total
 WhatsNow RAM, so no overall RAM-saving claim is made. NORMAL media priority remains.
 
 The detailed plan and remaining acceptance checks are in
-[the isolation plan](superpowers/plans/2026-11-06-independent-audio-and-memory.md).
+[the isolation plan](plans/2026-11-06-independent-audio-and-memory.md).
 
 ### Audio identity validation — 2026-11-07
 

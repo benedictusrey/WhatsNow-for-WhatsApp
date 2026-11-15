@@ -37,14 +37,14 @@ the verified CI release assets. Package binaries remain ignored by Git.
 ## Historical v2.6.1 candidate
 
 The final local candidate includes the Settings attribution-link correction.
-Its consolidated history is [CHANGELOGS_v2.6.1.md](../CHANGELOGS_v2.6.1.md);
-follow [release preparation](../docs/RELEASE_PREPARATION_2.6.1.md) for exact hashes,
+Its history is the [2.6.1 audit](../docs/history/AUDIT_2.6.1.md);
+follow [release preparation](../docs/history/RELEASE_PREPARATION_2.6.1.md) for exact hashes,
 same-source native builds, and remaining acceptance gates.
 
 `v2.6.1/` contains the locally built Windows setup executable, MSI, portable
 executable, and their SHA-256 manifest. The v2.6.1 candidate fixes phone-link
 delivery and call-window classification while preserving themes and native
-notification behavior. See [the audit](../docs/AUDIT_2.6.1.md) and
+notification behavior. See [the audit](../docs/history/AUDIT_2.6.1.md) and
 [publishing guide](../docs/PUBLISHING.md). Local staging does not publish a
 GitHub Release; complete the live checks and CI before publication.
 

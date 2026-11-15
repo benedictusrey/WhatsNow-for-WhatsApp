@@ -108,7 +108,7 @@ See [implementation and test boundaries](docs/IMPLEMENTATION_v2.7.0.md).
 - This reliability-first policy may increase background RAM. Extended live
   WhatsApp media/call checks remain unverified; native synthetic tests passed.
 
-See [implementation and test boundaries](docs/IMPLEMENTATION_v2.6.3.md).
+See [implementation and test boundaries](docs/history/IMPLEMENTATION_v2.6.3.md).
 
 ## [2.6.2] - release preparation (2026-10-21)
 
@@ -118,17 +118,17 @@ See [implementation and test boundaries](docs/IMPLEMENTATION_v2.6.3.md).
 - Prefer full-frame camera capture where supported, without changing screen
   sharing, selected devices, or audio constraints. The recipient controls phone display cropping.
 - Add browser opener-handshake and native Windows maximize/restore/resize tests.
-- See the [repair record](docs/CALL_WINDOW_FIX_2026-10-21.md) for evidence and live-test limits.
+- See the [repair record](docs/history/CALL_WINDOW_FIX_2026-10-21.md) for evidence and live-test limits.
 - The maintainer confirmed successful Windows calling after installing 2.6.2.
-- See [implementation and validation](docs/IMPLEMENTATION_v2.6.2.md) for the complete update record.
+- See [implementation and validation](docs/history/IMPLEMENTATION_v2.6.2.md) for the complete update record.
 
 The published v2.6.1 packages remain unchanged. Version 2.6.2 is being prepared
 as a draft with fresh native builds; Linux/macOS runtime acceptance remains separate.
 
 ## [2.6.1] - 2026-10-17
 
-Complete implementation history and validation boundaries:
-[CHANGELOGS_v2.6.1.md](CHANGELOGS_v2.6.1.md).
+Implementation history and validation boundaries:
+[2.6.1 audit](docs/history/AUDIT_2.6.1.md).
 
 ### Fixed
 
@@ -162,7 +162,7 @@ Complete implementation history and validation boundaries:
 - Existing theme/doodle/emoji styling and notification delivery are preserved.
 - Regression tests cover unlisted targets, draft text, invalid input, and
   superseded link requests; the browser smoke matrix covers all 11 themes.
-- See [v2.6.1 audit](docs/AUDIT_2.6.1.md) for checks and runtime limitations.
+- See [v2.6.1 audit](docs/history/AUDIT_2.6.1.md) for checks and runtime limitations.
 
 ## [2.6.0] - 2026-09-15
 

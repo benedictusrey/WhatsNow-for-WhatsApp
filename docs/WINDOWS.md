@@ -19,7 +19,7 @@ This removes the older LOW-memory hint; it does not force autoplay or unmute.
 Manual pause, mute, volume, hang-up, Quit, and OS restrictions remain in force.
 App Lock conceals content but intentionally leaves ongoing media audible.
 Background RAM may increase. Extended live WhatsApp media/call checks remain unverified;
-see [implementation and acceptance](IMPLEMENTATION_v2.6.3.md) and the
+see [implementation and acceptance](history/IMPLEMENTATION_v2.6.3.md) and the
 [2.7.0 record](IMPLEMENTATION_v2.7.0.md).
 
 WebView2 still uses separate browser,

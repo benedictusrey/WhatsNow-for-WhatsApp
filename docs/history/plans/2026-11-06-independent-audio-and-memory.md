@@ -1,6 +1,6 @@
 # Independent WhatsNow and TubeNow Audio Implementation Plan
 
-> **Execution update — 2026-11-07:** The maintainer approved the WhatsNow side only. Owned session naming/icon/grouping is implemented and locally tested; TubeNow tasks are excluded. Live two-app mute persistence, mixer visuals, real calls, platform coverage, and whole-app RAM savings remain acceptance gates. See [implementation and evidence](../../IMPLEMENTATION_v2.6.3.md). No installation or publication was performed.
+> **Execution update — 2026-11-07:** The maintainer approved the WhatsNow side only. Owned session naming/icon/grouping is implemented and locally tested; TubeNow tasks are excluded. Live two-app mute persistence, mixer visuals, real calls, platform coverage, and whole-app RAM savings remain acceptance gates. See [implementation and evidence](../IMPLEMENTATION_v2.6.3.md). No installation or publication was performed.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. Do not publish or replace installed apps without the maintainer's direction. The original two-app checklist below is historical scope, not authorization to edit TubeNow.
 

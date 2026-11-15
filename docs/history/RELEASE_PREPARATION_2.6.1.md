@@ -14,7 +14,7 @@ operations can therefore prepare the draft without weakening the live gates.
 The README and related guides use the supplied artwork with measurement caveats.
 
 Workspace consolidation on 2026-10-17 made the Desktop `WhatsNow` directory
-the single canonical checkout. See [workspace layout](WORKSPACE_LAYOUT.md).
+the single canonical checkout. See [workspace layout](../WORKSPACE_LAYOUT.md).
 Recovery copies and build caches are local-only and must not enter the release commit.
 
 - Target repository: `benedictusrey/WhatsNow-for-WhatsApp`
@@ -38,12 +38,12 @@ as a live status feed.
 
 | Document | Purpose |
 | --- | --- |
-| [Implementation record](../CHANGELOGS_v2.6.1.md) | All v2.6.1 changes, rejected paths, regression evidence, and limitations |
-| [Current features](../WhatsNow_latest.md) | User-facing feature catalogue with platform and privacy boundaries |
-| [Release notes](../RELEASE_NOTES.md) | Prepared GitHub release body |
+| [Implementation record](../../CHANGELOG.md) | All v2.6.1 changes, rejected paths, regression evidence, and limitations |
+| [Current features](../../WhatsNow_latest.md) | User-facing feature catalogue with platform and privacy boundaries |
+| [Release notes](../../RELEASE_NOTES.md) | Prepared GitHub release body |
 | [Audit](AUDIT_2.6.1.md) | Detailed investigation and test evidence |
-| [Installation](INSTALLATION.md) | Package selection, verification, and upgrade guidance |
-| [Security](../SECURITY.md) | Trust, signing, privacy, and vulnerability-reporting boundaries |
+| [Installation](../INSTALLATION.md) | Package selection, verification, and upgrade guidance |
+| [Security](../../SECURITY.md) | Trust, signing, privacy, and vulnerability-reporting boundaries |
 
 The new records consolidate history; they do not replace or delete earlier
 changelogs, locked backups, or older private candidate packages.
@@ -137,7 +137,7 @@ WhatsNow_2.6.1_x86_64.app.tar.gz
 checksums.sha256
 ```
 
-The release workflow uses [RELEASE_NOTES.md](../RELEASE_NOTES.md) as its draft
+The release workflow uses [RELEASE_NOTES.md](../../RELEASE_NOTES.md) as its draft
 body. Keep the validation-status section until the relevant checks are truly
 completed. Verify all nine package hashes against `checksums.sha256`, confirm
 the same source SHA for every job, disclose unsigned/unnotarized packages,

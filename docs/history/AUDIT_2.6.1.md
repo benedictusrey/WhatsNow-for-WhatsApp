@@ -156,7 +156,7 @@ Additional failures caught during revision were retained as regression cases:
 The final attribution candidate supersedes the package sets described below.
 Its exact Windows hashes and outstanding publication gates are consolidated in
 [release preparation](RELEASE_PREPARATION_2.6.1.md). The complete v2.6.1
-implementation record is [CHANGELOGS_v2.6.1.md](../CHANGELOGS_v2.6.1.md).
+implementation record is in the [changelog](../../CHANGELOG.md).
 
 The revised Windows builds use `dist/v2.6.1-no-reload/windows/`, with SHA-256
 checksums. Both installer and portable builds use the same working source;
