@@ -59,7 +59,7 @@ fn notification_context(app: &tauri::AppHandle, account_id: &str) -> Option<(Str
     }
 
     Some((
-        account.name.clone(),
+        accounts::display_name(account).to_string(),
         accounts_file.accounts.len() > 1,
         settings.notification_previews,
     ))
@@ -97,6 +97,15 @@ fn validate_account_name(name: &str) -> Result<&str, String> {
         return Err("account name cannot contain control characters".into());
     }
     Ok(trimmed)
+}
+
+/// Rename accepts an empty value: it clears the typed label so the account shows
+/// WhatsApp's own profile name again. Every other rule matches a new account name.
+fn validate_account_label(name: &str) -> Result<&str, String> {
+    if name.trim().is_empty() {
+        return Ok("");
+    }
+    validate_account_name(name)
 }
 
 #[tauri::command]
@@ -285,9 +294,14 @@ pub fn set_profile_name(
         return Ok(());
     }
     accounts::save(&app, &accounts_file).map_err(|error| error.to_string())?;
-    window
-        .set_title(&format!("WhatsNow — {name}"))
-        .map_err(|error| error.to_string())?;
+    // The title and the tray menu show the typed label when there is one, so a
+    // newly discovered profile name only changes them while no label is set.
+    if let Some(account) = accounts_file.accounts.iter().find(|a| a.id == account_id) {
+        window
+            .set_title(&format!("WhatsNow — {}", accounts::display_name(account)))
+            .map_err(|error| error.to_string())?;
+    }
+    crate::tray::rebuild_menu(&app);
     Ok(())
 }
 
@@ -477,7 +491,10 @@ pub fn test_notification(window: tauri::Window, app: tauri::AppHandle) -> Result
 #[derive(Debug, Clone, Serialize)]
 pub struct AccountView {
     pub id: String,
+    /// The label the user typed; empty when none is set.
     pub name: String,
+    /// What to show: the label, else WhatsApp's profile name (`accounts::display_name`).
+    pub display_name: String,
     pub order: u32,
     pub unread: u32,
     pub open: bool,
@@ -494,6 +511,7 @@ fn account_views(app: &tauri::AppHandle) -> Vec<AccountView> {
         .map(|a| AccountView {
             id: a.id.clone(),
             name: a.name.clone(),
+            display_name: accounts::display_name(a).to_string(),
             order: a.order,
             unread: map.get(&a.id).copied().unwrap_or(0),
             open: app
@@ -541,8 +559,9 @@ pub async fn add_account(
     crate::tray::rebuild_menu(&app);
 
     Ok(AccountView {
-        id: acct.id,
-        name: acct.name,
+        id: acct.id.clone(),
+        display_name: accounts::display_name(&acct).to_string(),
+        name: acct.name.clone(),
         order: acct.order,
         unread: 0,
         open: true,
@@ -599,20 +618,16 @@ pub fn rename_account(
         return Err("forbidden".into());
     }
     lock::require_unlocked(&app)?;
-    let name = validate_account_name(&name)?;
+    let name = validate_account_label(&name)?;
 
     let mut f = accounts::load(&app);
     accounts::rename(&mut f, &id, name)?;
     accounts::save(&app, &f).map_err(|e| e.to_string())?;
 
     if let Some(w) = app.get_webview_window(&accounts::window_label(&id)) {
-        let title_name = f
-            .accounts
-            .iter()
-            .find(|account| account.id == id)
-            .map(accounts::title_name)
-            .unwrap_or(name);
-        let _ = w.set_title(&format!("WhatsNow — {title_name}"));
+        if let Some(account) = f.accounts.iter().find(|account| account.id == id) {
+            let _ = w.set_title(&format!("WhatsNow — {}", accounts::display_name(account)));
+        }
     }
     crate::tray::rebuild_menu(&app);
     Ok(())
@@ -906,7 +921,7 @@ pub fn reset_app_lock(window: tauri::Window, app: tauri::AppHandle) -> Result<()
 mod tests {
     use super::{
         is_remote_label, notification_activation_allowed, notification_content,
-        productivity_status, validate_account_name,
+        productivity_status, validate_account_label, validate_account_name,
     };
     use crate::settings::Settings;
 
@@ -972,5 +987,9 @@ mod tests {
         assert!(validate_account_name("Work\nInjected").is_err());
         assert!(validate_account_name(&"x".repeat(61)).is_err());
         assert_eq!(validate_account_name("  Work  ").unwrap(), "Work");
+        assert_eq!(validate_account_label("   ").unwrap(), "", "rename may clear the label");
+        assert_eq!(validate_account_label("").unwrap(), "");
+        assert_eq!(validate_account_label(" Work ").unwrap(), "Work");
+        assert!(validate_account_label("Work\nInjected").is_err());
     }
 }

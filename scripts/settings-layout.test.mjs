@@ -32,8 +32,8 @@ try {
               case "get_settings": return Promise.resolve({ ...settings });
               case "list_accounts":
                 return Promise.resolve([
-                  { id: "default", name: "WhatsApp", unread: 14, open: true, notifications_enabled: true },
-                  { id: "acct-1", name: "A very long account name that keeps on going and going", unread: 120, open: true, notifications_enabled: false },
+                  { id: "default", name: "", display_name: "Ben", unread: 14, open: true, notifications_enabled: true },
+                  { id: "acct-1", name: "A very long account name that keeps on going and going", display_name: "A very long account name that keeps on going and going", unread: 120, open: true, notifications_enabled: false },
                 ]);
               case "get_productivity_status":
                 return Promise.resolve({ focus_active: true, focus_until_epoch_secs: 1, focus_remaining_secs: 3600 });

@@ -104,6 +104,21 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
     Ok(())
 }
 
+/// Tray menu text for one account: its display name (typed label, else WhatsApp
+/// profile name), the unread count when there is one, and a muted marker.
+fn account_menu_label(account: &accounts::Account, unread: u32) -> String {
+    let name = accounts::display_name(account);
+    let mut label = if unread > 0 {
+        format!("{name} ({unread})")
+    } else {
+        name.to_string()
+    };
+    if !account.notifications_enabled {
+        label.push_str(" · muted");
+    }
+    label
+}
+
 /// Rebuild the tray menu from the current accounts list: one `acct:<id>` item per
 /// account showing `name (n)`, then productivity and app actions.
 pub fn rebuild_menu(app: &AppHandle) {
@@ -132,14 +147,7 @@ pub fn rebuild_menu(app: &AppHandle) {
     let mut builder = MenuBuilder::new(app);
     for a in &accts {
         let unread = counts.get(&a.id).copied().unwrap_or(0);
-        let mut label = if unread > 0 {
-            format!("{} ({})", a.name, unread)
-        } else {
-            a.name.clone()
-        };
-        if !a.notifications_enabled {
-            label.push_str(" · muted");
-        }
+        let label = account_menu_label(a, unread);
         let item = match MenuItemBuilder::with_id(format!("acct:{}", a.id), label).build(app) {
             Ok(i) => i,
             Err(_) => return,
@@ -401,8 +409,23 @@ fn set_pixel(rgba: &mut [u8], width: u32, x: i32, y: i32, color: [u8; 4]) {
 #[cfg(test)]
 mod tests {
     use super::{
-        badge_state, count_badge_image, BadgeState, OVERLAY_BADGE_RADIUS, OVERLAY_BADGE_SIZE,
+        account_menu_label, badge_state, count_badge_image, BadgeState, OVERLAY_BADGE_RADIUS,
+        OVERLAY_BADGE_SIZE,
     };
+    use crate::accounts::AccountsFile;
+
+    #[test]
+    fn menu_label_shows_the_profile_name_not_the_product_name() {
+        let mut file = AccountsFile::default();
+        assert_eq!(account_menu_label(&file.accounts[0], 0), "WhatsApp");
+        crate::accounts::set_profile_name(&mut file, "default", "Ben").unwrap();
+        assert_eq!(account_menu_label(&file.accounts[0], 0), "Ben");
+        assert_eq!(account_menu_label(&file.accounts[0], 14), "Ben (14)");
+        crate::accounts::rename(&mut file, "default", "Work").unwrap();
+        assert_eq!(account_menu_label(&file.accounts[0], 3), "Work (3)");
+        file.accounts[0].notifications_enabled = false;
+        assert_eq!(account_menu_label(&file.accounts[0], 0), "Work · muted");
+    }
 
     #[test]
     fn zero_is_clear() {

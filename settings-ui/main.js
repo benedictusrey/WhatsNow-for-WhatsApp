@@ -462,6 +462,7 @@ function openDialog({ title, message = "", fields = [], confirmLabel = "Confirm"
       input.value = field.value || "";
       if (field.autocomplete) input.autocomplete = field.autocomplete;
       if (field.maxLength) input.maxLength = field.maxLength;
+      if (field.placeholder) input.placeholder = field.placeholder;
       label.append(caption, input);
       container.append(label);
     }
@@ -514,7 +515,7 @@ function accountRow(account, { manage }) {
 
   const name = document.createElement("span");
   name.className = "acct-name";
-  name.textContent = account.name;
+  name.textContent = account.display_name;
   row.appendChild(name);
 
   const meta = document.createElement("span");
@@ -547,7 +548,7 @@ function accountRow(account, { manage }) {
     actions.appendChild(button);
   };
 
-  add("Open", `Open ${account.name}`, async () => {
+  add("Open", `Open ${account.display_name}`, async () => {
     try {
       await invoke("open_account", { id: account.id });
     } catch (e) {
@@ -557,7 +558,7 @@ function accountRow(account, { manage }) {
   if (manage) {
     add(
       account.notifications_enabled ? "Mute" : "Unmute",
-      `${account.notifications_enabled ? "Mute" : "Unmute"} alerts for ${account.name}`,
+      `${account.notifications_enabled ? "Mute" : "Unmute"} alerts for ${account.display_name}`,
       async () => {
         try {
           await invoke("set_account_notifications", {
@@ -576,8 +577,8 @@ function accountRow(account, { manage }) {
           : "Resume native alerts for this account",
       },
     );
-    add("Rename", `Rename ${account.name}`, () => renameAccount(account));
-    add("Remove", `Remove ${account.name}`, () => removeAccount(account), {
+    add("Rename", `Rename ${account.display_name}`, () => renameAccount(account));
+    add("Remove", `Remove ${account.display_name}`, () => removeAccount(account), {
       disabled: accountsCache.length <= 1,
       danger: true,
     });
@@ -610,11 +611,20 @@ async function loadAccounts() {
 function renameAccount(account) {
   return openDialog({
     title: "Rename account",
-    fields: [{ name: "name", label: "Account name", value: account.name, maxLength: 60 }],
+    message: "Leave the name empty to use your WhatsApp profile name.",
+    fields: [
+      {
+        name: "name",
+        label: "Account name",
+        // The typed label only; the profile name is shown as the placeholder.
+        value: account.name,
+        placeholder: account.display_name,
+        maxLength: 60,
+      },
+    ],
     confirmLabel: "Save name",
     submit: async ({ name }) => {
       const next = name.trim();
-      if (!next) throw new Error("Enter a name for this account.");
       if (next === account.name) return;
       await invoke("rename_account", { id: account.id, name: next });
       await loadAccounts();
@@ -624,7 +634,7 @@ function renameAccount(account) {
 
 function removeAccount(account) {
   return openDialog({
-    title: `Remove “${account.name}”?`,
+    title: `Remove “${account.display_name}”?`,
     message: "Its local WhatsApp session is deleted from this computer. Your chats stay on your phone.",
     confirmLabel: "Remove account",
     danger: true,

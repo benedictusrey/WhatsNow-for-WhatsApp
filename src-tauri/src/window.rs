@@ -340,7 +340,7 @@ fn open_account_window_inner(
     // monitor the window actually opens on (small screens, high-DPI scaling,
     // removed secondary monitors) and centres it.
     let builder = WebviewWindowBuilder::new(app, &label, WebviewUrl::External(url))
-        .title(format!("WhatsNow — {}", accounts::title_name(account)))
+        .title(format!("WhatsNow — {}", accounts::display_name(account)))
         .inner_size(1100.0, 800.0)
         .min_inner_size(560.0, 480.0)
         .icon(icon)?

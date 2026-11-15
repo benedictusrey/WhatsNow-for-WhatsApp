@@ -115,6 +115,7 @@ try {
                 {
                   id: "default",
                   name: "Personal",
+                  display_name: "Personal",
                   unread: 2,
                   open: true,
                   notifications_enabled: true,

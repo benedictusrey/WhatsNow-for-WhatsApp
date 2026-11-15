@@ -18,10 +18,13 @@ pub type ActiveAccount = Mutex<String>;
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Account {
     pub id: String,
+    /// The label the user typed (Add account / Rename). Empty means "not set":
+    /// every surface then shows WhatsApp's own profile name (see `display_name`).
+    /// A typed label is persisted until the account is removed.
+    #[serde(default)]
     pub name: String,
     /// WhatsApp's own Profile > Name value, discovered read-only by the page bridge.
-    /// It drives the native window title without replacing the user's optional
-    /// WhatsNow account label.
+    /// It is the display name until the user types a label of their own.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub profile_name: Option<String>,
     pub order: u32,
@@ -46,7 +49,7 @@ impl Default for AccountsFile {
         Self {
             accounts: vec![Account {
                 id: "default".to_string(),
-                name: "WhatsApp".to_string(),
+                name: String::new(),
                 profile_name: None,
                 order: 0,
                 store_uuid: None,
@@ -121,10 +124,37 @@ pub fn set_profile_name(
     Ok(true)
 }
 
-/// Prefer WhatsApp's live profile name for native chrome, falling back to the
-/// optional WhatsNow account label until the profile has been discovered.
-pub fn title_name(account: &Account) -> &str {
-    account.profile_name.as_deref().unwrap_or(&account.name)
+/// What every surface (tray menu, Settings, toasts, window title) calls an
+/// account: the label the user typed, else WhatsApp's own profile name, else the
+/// product name until the profile has been discovered. Pure and unit-tested.
+pub fn display_name(account: &Account) -> &str {
+    let label = account.name.trim();
+    if !label.is_empty() {
+        return label;
+    }
+    account
+        .profile_name
+        .as_deref()
+        .map(str::trim)
+        .filter(|name| !name.is_empty())
+        .unwrap_or(FALLBACK_DISPLAY_NAME)
+}
+
+/// Shown only until WhatsApp's profile name has been read for the account.
+pub const FALLBACK_DISPLAY_NAME: &str = "WhatsApp";
+
+/// Older builds stored "WhatsApp" as the default account's label, which the user
+/// never typed. Treat it as "no label" so the profile name can show. Returns
+/// whether anything changed. Runs on load; the file is rewritten on the next save.
+pub fn migrate_legacy_labels(f: &mut AccountsFile) -> bool {
+    let mut changed = false;
+    for account in &mut f.accounts {
+        if account.id == "default" && account.name == FALLBACK_DISPLAY_NAME {
+            account.name.clear();
+            changed = true;
+        }
+    }
+    changed
 }
 
 pub fn set_notifications_enabled(
@@ -207,11 +237,13 @@ fn accounts_path(app: &AppHandle) -> tauri::Result<PathBuf> {
 }
 
 pub fn load(app: &AppHandle) -> AccountsFile {
-    accounts_path(app)
+    let mut file: AccountsFile = accounts_path(app)
         .ok()
         .and_then(|p| std::fs::read_to_string(p).ok())
         .and_then(|s| serde_json::from_str(&s).ok())
-        .unwrap_or_default()
+        .unwrap_or_default();
+    migrate_legacy_labels(&mut file);
+    file
 }
 
 pub fn save(app: &AppHandle, f: &AccountsFile) -> tauri::Result<()> {
@@ -276,7 +308,7 @@ mod tests {
         assert_eq!(f.accounts.len(), 1);
         let a = &f.accounts[0];
         assert_eq!(a.id, "default");
-        assert_eq!(a.name, "WhatsApp");
+        assert_eq!(a.name, "", "no typed label by default");
         assert_eq!(a.profile_name, None);
         assert_eq!(a.order, 0);
         assert_eq!(a.store_uuid, None);
@@ -369,13 +401,54 @@ mod tests {
     }
 
     #[test]
-    fn profile_name_is_separate_and_drives_title() {
+    fn display_name_prefers_typed_label_then_profile_then_fallback() {
         let mut f = AccountsFile::default();
-        assert_eq!(title_name(&f.accounts[0]), "WhatsApp");
+        assert_eq!(display_name(&f.accounts[0]), "WhatsApp", "fallback until known");
         assert!(set_profile_name(&mut f, "default", "Ben").unwrap());
-        assert_eq!(f.accounts[0].name, "WhatsApp");
-        assert_eq!(title_name(&f.accounts[0]), "Ben");
+        assert_eq!(f.accounts[0].name, "", "the profile name is never stored as a label");
+        assert_eq!(display_name(&f.accounts[0]), "Ben");
         assert!(!set_profile_name(&mut f, "default", "Ben").unwrap());
+
+        rename(&mut f, "default", "Work").unwrap();
+        assert_eq!(display_name(&f.accounts[0]), "Work", "typed label wins");
+        set_profile_name(&mut f, "default", "Benedictus").unwrap();
+        assert_eq!(display_name(&f.accounts[0]), "Work", "profile updates keep the label");
+
+        rename(&mut f, "default", "").unwrap();
+        assert_eq!(display_name(&f.accounts[0]), "Benedictus", "clearing the label restores the profile name");
+        rename(&mut f, "default", "   ").unwrap();
+        assert_eq!(display_name(&f.accounts[0]), "Benedictus", "blank is not a label");
+    }
+
+    #[test]
+    fn legacy_whatsapp_placeholder_on_the_default_account_is_migrated() {
+        let mut f: AccountsFile = serde_json::from_str(
+            r#"{"accounts":[{"id":"default","name":"WhatsApp","profile_name":"Ben","order":0},
+                            {"id":"acct-1","name":"WhatsApp","order":1}],"next_seq":2}"#,
+        )
+        .unwrap();
+        assert!(migrate_legacy_labels(&mut f));
+        assert_eq!(f.accounts[0].name, "");
+        assert_eq!(display_name(&f.accounts[0]), "Ben");
+        assert_eq!(
+            f.accounts[1].name, "WhatsApp",
+            "a label typed on an added account is never touched"
+        );
+        assert!(!migrate_legacy_labels(&mut f), "idempotent");
+
+        let mut typed: AccountsFile = serde_json::from_str(
+            r#"{"accounts":[{"id":"default","name":"Primary","order":0}],"next_seq":1}"#,
+        )
+        .unwrap();
+        assert!(!migrate_legacy_labels(&mut typed));
+        assert_eq!(typed.accounts[0].name, "Primary");
+    }
+
+    #[test]
+    fn a_missing_name_field_means_no_label() {
+        let f: AccountsFile =
+            serde_json::from_str(r#"{"accounts":[{"id":"default","order":0}],"next_seq":1}"#).unwrap();
+        assert_eq!(f.accounts[0].name, "");
     }
 
     #[test]
