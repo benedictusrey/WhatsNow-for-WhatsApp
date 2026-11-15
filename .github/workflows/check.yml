@@ -1,7 +1,15 @@
 name: check
+# Runs only on demand (Actions > check > Run workflow) or on pull requests that
+# change code, so routine pushes, tags and docs-only edits do not spend the
+# monthly Actions minutes (the four-platform matrix, macOS especially, is costly).
 on:
-  push:
   pull_request:
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - "release-assets/**"
+      - "LICENSE"
+      - "THIRD_PARTY_NOTICES"
   workflow_dispatch:
 
 permissions:
