@@ -92,6 +92,17 @@ User-specified, verified by tests; do not revert without being asked.
 - **Unread fallback:** the bridge tracks unread per chat, arms the fallback only
   after the chat list has rendered and settled, skips muted rows, picks the
   top-most rising row, and drops a real+fallback pair for one chat within 5 s.
+- **Opening Settings (2.7.1):** the window stays hidden until the page has
+  rendered its first data and calls `settings_ready` (4 s fallback timer);
+  Rust then centers and shows it. Settings starts from the theme Rust stamped
+  on `<html>` (never a hard-coded "system"), colors cross-fade only after a
+  user theme change, and controls are not dimmed while loading. Panel layout
+  follows the stage width via `@container`, not the viewport.
+- **Native theming (2.7.1):** account windows get a per-theme
+  `background_color` (no white flash) and, on Windows 11, a title bar tinted
+  with the palette header/primary (`caption_colors`, pinned to `chat-theme.js`
+  by a unit test); official themes restore the system defaults. The lock
+  window starts in the saved theme and `lock.css` carries all 10 palettes.
 
 ### 0. The four pillars (summary — each has its own section below)
 
@@ -162,10 +173,19 @@ Implementation (all three MUST stay consistent):
   storage listener clobbers live writes). Forcing true at every boot
   guarantees a later live switch into Dark/Light shows the doodle instantly —
   the preference can never be left false by an earlier personality session.
-- `src-tauri/resources/chat-theme.js` — personality themes apply their
-  palette EXCLUSIVELY to the conversation/Chat UI viewport (wallpaper panel,
-  `#main > header`, `compose-box`). The side navigation rail and the middle
-  contact/list column stay completely original — no `#side` rules.
+- `src-tauri/resources/chat-theme.js` — **2.7.1 scope change (user-approved,
+  "whole window"):** personality themes color the WHOLE window: left icon
+  rail, chat list, search, selection, header, bubbles, menus, dialogs,
+  popovers and the composer pill. They do it by re-pointing WhatsApp's
+  `--WDS-*` design tokens (!important) from the palette, restated on `#main`,
+  inside messages (`conv-msg-*`) and in `expressions-panel`, because
+  WhatsApp's per-chat colour theme re-declares them there (verified live over
+  CDP). Official Dark/Light still return `""`. The composer STRIP
+  (`footer` / `compose-box` / its container) stays transparent like
+  Dark/Light so the wallpaper shows around the message pill; never give it a
+  background or a wallpaper copy (`bridge.js` doodle kill-switch only sets
+  `background-image: none` there). `chat-theme.test.mjs` pins every token and
+  that every palette colour is consumed.
 
 ### 2. Settings window is a seamless frameless pop-up
 

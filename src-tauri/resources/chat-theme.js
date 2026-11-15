@@ -169,16 +169,111 @@
     return THEMES.indexOf(theme) === -1 ? "system" : theme;
   }
 
+  // ---- colour helpers (the palettes are hex; WhatsApp also wants "r, g, b") ----
+  function hexToRgb(hex) {
+    var value = String(hex).replace("#", "");
+    return [
+      parseInt(value.slice(0, 2), 16),
+      parseInt(value.slice(2, 4), 16),
+      parseInt(value.slice(4, 6), 16),
+    ];
+  }
+
+  function rgbList(hex) {
+    return hexToRgb(hex).join(", ");
+  }
+
+  function luminance(hex) {
+    var channels = hexToRgb(hex).map(function (channel) {
+      var value = channel / 255;
+      return value <= 0.04045 ? value / 12.92 : Math.pow((value + 0.055) / 1.055, 2.4);
+    });
+    return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+  }
+
+  function contrast(first, second) {
+    var a = luminance(first);
+    var b = luminance(second);
+    return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+  }
+
+  // Text that stays readable on the accent colour (badges, buttons).
+  function readableOn(background) {
+    return contrast(background, "#ffffff") >= contrast(background, "#0b141a")
+      ? "#ffffff"
+      : "#0b141a";
+  }
+
+  // WhatsApp paints almost every surface from a small set of design-system
+  // tokens (--WDS-*) that it defines on <html>. Re-pointing those tokens at the
+  // palette themes the whole window — left rail, chat list, search, selection,
+  // bubbles, menus, dialogs, popovers — without chasing per-element selectors
+  // that WhatsApp renames. The declarations are !important so they beat both
+  // WhatsApp's atomic-class definitions and its per-chat colour themes.
+  function tokenDeclarations(palette) {
+    var accentText = readableOn(palette.accent);
+    var declarations = {
+      "--WDS-surface-default": palette.panel,
+      "--WDS-surface-emphasized": palette.header,
+      "--WDS-surface-highlight": palette.hover,
+      "--WDS-surface-elevated-default": palette.panelSoft,
+      "--WDS-background-wash-plain": palette.panel,
+      "--WDS-content-default": palette.primary,
+      "--WDS-content-deemphasized": palette.secondary,
+      "--WDS-content-action-default": palette.icon,
+      "--WDS-accent": palette.accent,
+      "--WDS-accent-RGB": rgbList(palette.accent),
+      "--WDS-content-action-emphasized": palette.accent,
+      "--WDS-content-external-link": palette.accent,
+      "--WDS-accent-deemphasized": palette.active,
+      "--WDS-accent-emphasized": palette.primary,
+      "--WDS-content-on-accent": accentText,
+      "--WDS-lines-outline-deemphasized":
+        "color-mix(in srgb, " + palette.secondary + " 30%, transparent)",
+      "--WDS-systems-chat-surface-composer": palette.panel,
+      "--WDS-systems-bubble-surface-incoming": palette.incoming,
+      "--WDS-systems-bubble-surface-incoming-RGB": rgbList(palette.incoming),
+      "--WDS-systems-bubble-surface-outgoing": palette.outgoing,
+      "--WDS-systems-bubble-surface-outgoing-RGB": rgbList(palette.outgoing),
+      "--WDS-systems-bubble-surface-system":
+        "color-mix(in srgb, " + palette.panel + " 90%, transparent)",
+      "--WDS-systems-bubble-content-deemphasized": palette.secondary,
+      "--WDS-systems-bubble-surface-overlay":
+        "color-mix(in srgb, " + palette.primary + " 8%, transparent)",
+      "--WDS-systems-bubble-surface-overlay-RGB": rgbList(palette.primary),
+    };
+    return Object.keys(declarations).map(function (name) {
+      return "  " + name + ": " + declarations[name] + " !important;";
+    });
+  }
+
+  // Inside a message WhatsApp re-declares its text/accent tokens for the
+  // bubble's own background (white on its green/maroon outgoing bubble). The
+  // palette picks the bubble colours, so the text colours must follow too.
+  function bubbleTokenDeclarations(palette) {
+    return [
+      "  --WDS-content-default: " + palette.primary + " !important;",
+      "  --WDS-content-deemphasized: " + palette.secondary + " !important;",
+      "  --WDS-systems-bubble-content-deemphasized: " + palette.secondary + " !important;",
+      "  --WDS-systems-bubble-surface-overlay: color-mix(in srgb, " + palette.primary + " 8%, transparent) !important;",
+      "  --WDS-systems-bubble-surface-overlay-RGB: " + rgbList(palette.primary) + " !important;",
+      "  --WDS-systems-bubble-content-business: " + palette.secondary + " !important;",
+      "  --WDS-systems-bubble-content-e2e: " + palette.secondary + " !important;",
+      "  --WDS-accent: " + palette.accent + " !important;",
+      "  --WDS-accent-deemphasized: " + palette.hover + " !important;",
+    ];
+  }
+
   function buildCss(theme) {
     var normalized = normalize(theme);
     var palette = PALETTES[normalized];
     // LOCKED BEHAVIOR (user-specified, do not change — see AGENTS.md):
     // Dark and Light deliberately leave WhatsApp's complete UI untouched,
     // including its official wallpaper doodles, composer, Reply card, bubbles,
-    // contact list, and controls. Personality themes apply their palette
-    // EXCLUSIVELY to the main conversation/Chat UI viewport (wallpaper panel,
-    // conversation header, composer); the side navigation rail and the middle
-    // contact/message list column stay completely original and unaffected.
+    // contact list, and controls. Personality themes (2.7.1) restyle the whole
+    // window from their palette: rail, chat list, header, bubbles, composer
+    // pill, menus and dialogs. The composer STRIP stays transparent over the
+    // wallpaper exactly like Dark and Light; only the pill itself is tinted.
     if (
       !palette ||
       normalized === "light" ||
@@ -187,6 +282,7 @@
       return "";
     }
     var wallpaperImage = palette.wallpaper || "none";
+    var colorScheme = LIGHT_PALETTES.indexOf(normalized) !== -1 ? "light" : "dark";
     return [
       "html[data-whatsnow-theme] {",
       "  --whatsnow-page: " + palette.page + ";",
@@ -195,72 +291,119 @@
       "  --whatsnow-header: " + palette.header + ";",
       "  --whatsnow-hover: " + palette.hover + ";",
       "  --whatsnow-active: " + palette.active + ";",
+      "  --whatsnow-incoming: " + palette.incoming + ";",
+      "  --whatsnow-outgoing: " + palette.outgoing + ";",
       "  --whatsnow-primary: " + palette.primary + ";",
       "  --whatsnow-secondary: " + palette.secondary + ";",
       "  --whatsnow-icon: " + palette.icon + ";",
       "  --whatsnow-accent: " + palette.accent + ";",
       "  --whatsnow-chat-wallpaper: " + wallpaperImage + ";",
-      "}",
-      "html[data-whatsnow-theme] #main,",
-      "html[data-whatsnow-theme] [data-testid='conversation-panel-wrapper'],",
-      "html[data-whatsnow-theme] [data-testid='conversation-panel-body'],",
-      "html[data-whatsnow-theme] [data-testid='conversation-panel-messages'],",
-      "html[data-whatsnow-theme] [data-asset-chat-background],",
-      "html[data-whatsnow-theme] [data-asset-chat-background-dark],",
-      "html[data-whatsnow-theme] [data-asset-chat-background-light] {",
-      "  --conversation-panel-background: var(--whatsnow-page) !important;",
-      "  --wallpaper-background: var(--whatsnow-page) !important;",
-      "  --chat-background: var(--whatsnow-page) !important;",
-      "  --WDS-systems-chat-background-wallpaper: var(--whatsnow-page) !important;",
-      "  background-color: var(--whatsnow-page) !important;",
-      "  background-image: var(--whatsnow-chat-wallpaper) !important;",
-      "}",
-      // Media previews are NEVER wallpaper: image/video thumbnails render
-      // as inline background-image: url(blob:…/data:…) divs — keep them.
-      "html[data-whatsnow-theme] #main > div[style*='background']:not([style*='url(blob:']):not([style*='url(\"blob:']):not([style*='url(data:']):not([style*='url(\"data:']),",
-      "html[data-whatsnow-theme] [data-testid='conversation-panel-wrapper'] > div[style*='background']:not([style*='url(blob:']):not([style*='url(\"blob:']):not([style*='url(data:']):not([style*='url(\"data:']),",
-      "html[data-whatsnow-theme] [data-testid='conversation-panel-body'] > div[style*='background']:not([style*='url(blob:']):not([style*='url(\"blob:']):not([style*='url(data:']):not([style*='url(\"data:']) {",
-      "  background-image: var(--whatsnow-chat-wallpaper) !important;",
-      "}",
-      "html[data-whatsnow-theme] #main::before,",
-      "html[data-whatsnow-theme] #main::after,",
-      "html[data-whatsnow-theme] #main > div::before,",
-      "html[data-whatsnow-theme] #main > div::after,",
-      "html[data-whatsnow-theme] [data-testid='conversation-panel-wrapper']::before,",
-      "html[data-whatsnow-theme] [data-testid='conversation-panel-wrapper']::after,",
-      "html[data-whatsnow-theme] [data-testid='conversation-panel-body']::before,",
-      "html[data-whatsnow-theme] [data-testid='conversation-panel-body']::after,",
-      "html[data-whatsnow-theme] [data-testid='conversation-panel-messages']::before,",
-      "html[data-whatsnow-theme] [data-testid='conversation-panel-messages']::after,",
-      "html[data-whatsnow-theme] [data-asset-chat-background]::before,",
-      "html[data-whatsnow-theme] [data-asset-chat-background]::after {",
-      "  background-image: none !important;",
-      "}",
-      // ---- conversation/Chat UI viewport only: header + composer; the side
-      // navigation rail and the middle contact/list column stay original ----
-      "html[data-whatsnow-theme] #main > header {",
-      "  background-color: var(--whatsnow-header) !important;",
-      "}",
-      "html[data-whatsnow-theme] #main > header [title] {",
-      "  color: var(--whatsnow-primary) !important;",
-      "}",
-      "html[data-whatsnow-theme] [data-testid='conversation-compose-box-container'],",
-      "html[data-whatsnow-theme] [data-testid='compose-box'] {",
-      "  background-color: var(--whatsnow-panel) !important;",
-      "}",
-      // WhatsApp owns the color scheme of every surface it renders (emoji
-      // picker, popovers, native controls). The theme only restates a
-      // color-scheme for the surfaces it restyles, so their native bits
-      // (scrollbars, form controls) match the palette without ever
-      // distorting the typing-area emoji surfaces.
-      "html[data-whatsnow-theme] [data-testid='conversation-panel-wrapper'],",
-      "html[data-whatsnow-theme] [data-testid='conversation-panel-body'],",
-      "html[data-whatsnow-theme] [data-testid='conversation-panel-messages'],",
-      "html[data-whatsnow-theme] [data-testid='conversation-compose-box-container'],",
-      "html[data-whatsnow-theme] [data-testid='compose-box'] {",
-      "  color-scheme: " + (LIGHT_PALETTES.indexOf(normalized) !== -1 ? "light" : "dark") + ";",
-      "}",
-    ].join("\n");
+    ]
+      .concat(tokenDeclarations(palette))
+      .concat([
+        "}",
+        // WhatsApp's per-chat colour theme re-declares these on #main itself,
+        // so the palette must be restated at that level too.
+        "html[data-whatsnow-theme] #main {",
+        "  --WDS-accent: " + palette.accent + " !important;",
+        "  --WDS-accent-RGB: " + rgbList(palette.accent) + " !important;",
+        "  --WDS-content-action-emphasized: " + palette.accent + " !important;",
+        "  --WDS-content-external-link: " + palette.accent + " !important;",
+        "  --WDS-systems-chat-background-wallpaper-RGB: " + rgbList(palette.page) + " !important;",
+        "  --WDS-systems-chat-foreground-wallpaper: transparent !important;",
+        "  --WDS-accent-deemphasized: " + palette.active + " !important;",
+        "  --WDS-accent-emphasized: " + palette.primary + " !important;",
+        "  --WDS-systems-bubble-surface-outgoing: " + palette.outgoing + " !important;",
+        "  --WDS-systems-bubble-surface-outgoing-RGB: " + rgbList(palette.outgoing) + " !important;",
+        "}",
+        // The emoji/GIF/sticker panel opens its own copy of the chat colour theme.
+        "html[data-whatsnow-theme] [data-testid='expressions-panel'],",
+        "html[data-whatsnow-theme] [data-testid='expressions-panel'] * {",
+        "  --WDS-accent: " + palette.accent + " !important;",
+        "  --WDS-accent-RGB: " + rgbList(palette.accent) + " !important;",
+        "  --WDS-accent-emphasized: " + palette.primary + " !important;",
+        "  --WDS-content-action-emphasized: " + palette.accent + " !important;",
+        "  --WDS-systems-bubble-surface-outgoing: " + palette.outgoing + " !important;",
+        "}",
+        "html[data-whatsnow-theme] #main [data-testid^='conv-msg-'],",
+        "html[data-whatsnow-theme] #main [data-testid^='conv-msg-'] * {",
+      ])
+      .concat(bubbleTokenDeclarations(palette))
+      .concat([
+        "}",
+        "html[data-whatsnow-theme] #main,",
+        "html[data-whatsnow-theme] [data-testid='conversation-panel-wrapper'],",
+        "html[data-whatsnow-theme] [data-testid='conversation-panel-body'],",
+        "html[data-whatsnow-theme] [data-testid='conversation-panel-messages'],",
+        "html[data-whatsnow-theme] [data-asset-chat-background],",
+        "html[data-whatsnow-theme] [data-asset-chat-background-dark],",
+        "html[data-whatsnow-theme] [data-asset-chat-background-light] {",
+        "  --conversation-panel-background: var(--whatsnow-page) !important;",
+        "  --wallpaper-background: var(--whatsnow-page) !important;",
+        "  --chat-background: var(--whatsnow-page) !important;",
+        "  --WDS-systems-chat-background-wallpaper: var(--whatsnow-page) !important;",
+        "  background-color: var(--whatsnow-page) !important;",
+        "  background-image: var(--whatsnow-chat-wallpaper) !important;",
+        "}",
+        // Media previews are NEVER wallpaper: image/video thumbnails render
+        // as inline background-image: url(blob:…/data:…) divs — keep them.
+        "html[data-whatsnow-theme] #main > div[style*='background']:not([style*='url(blob:']):not([style*='url(\"blob:']):not([style*='url(data:']):not([style*='url(\"data:']),",
+        "html[data-whatsnow-theme] [data-testid='conversation-panel-wrapper'] > div[style*='background']:not([style*='url(blob:']):not([style*='url(\"blob:']):not([style*='url(data:']):not([style*='url(\"data:']),",
+        "html[data-whatsnow-theme] [data-testid='conversation-panel-body'] > div[style*='background']:not([style*='url(blob:']):not([style*='url(\"blob:']):not([style*='url(data:']):not([style*='url(\"data:']) {",
+        "  background-image: var(--whatsnow-chat-wallpaper) !important;",
+        "}",
+        "html[data-whatsnow-theme] #main::before,",
+        "html[data-whatsnow-theme] #main::after,",
+        "html[data-whatsnow-theme] #main > div::before,",
+        "html[data-whatsnow-theme] #main > div::after,",
+        "html[data-whatsnow-theme] [data-testid='conversation-panel-wrapper']::before,",
+        "html[data-whatsnow-theme] [data-testid='conversation-panel-wrapper']::after,",
+        "html[data-whatsnow-theme] [data-testid='conversation-panel-body']::before,",
+        "html[data-whatsnow-theme] [data-testid='conversation-panel-body']::after,",
+        "html[data-whatsnow-theme] [data-testid='conversation-panel-messages']::before,",
+        "html[data-whatsnow-theme] [data-testid='conversation-panel-messages']::after,",
+        "html[data-whatsnow-theme] [data-asset-chat-background]::before,",
+        "html[data-whatsnow-theme] [data-asset-chat-background]::after {",
+        "  background-image: none !important;",
+        "}",
+        // The WhatsApp wordmark switches to "always white" in WhatsApp's dark
+        // scheme; on a light palette that would vanish, so it follows the accent.
+        "html[data-whatsnow-theme] [data-testid='wa-wordmark'] {",
+        "  color: var(--whatsnow-accent) !important;",
+        "}",
+        // Conversation header: the palette header colour and title.
+        "html[data-whatsnow-theme] #main > header {",
+        "  background-color: var(--whatsnow-header) !important;",
+        "}",
+        "html[data-whatsnow-theme] #main > header [title] {",
+        "  color: var(--whatsnow-primary) !important;",
+        "}",
+        // The composer STRIP (footer / compose-box / its container) paints
+        // nothing, exactly like Dark and Light: the wallpaper shows around the
+        // pill. The pill itself is tinted through --WDS-systems-chat-surface-
+        // composer above; the Reply preview bar keeps its own opaque surface.
+        "html[data-whatsnow-theme] #main footer,",
+        "html[data-whatsnow-theme] [data-testid='conversation-compose-box-container'],",
+        "html[data-whatsnow-theme] [data-testid='compose-box'] {",
+        "  background-color: transparent !important;",
+        "  background-image: none !important;",
+        "}",
+        // WhatsApp owns the color scheme of every surface it renders (emoji
+        // picker, popovers, native controls). The theme only restates a
+        // color-scheme for the surfaces it restyles, so their native bits
+        // (scrollbars, form controls) match the palette without ever
+        // distorting the typing-area emoji surfaces.
+        "html[data-whatsnow-theme] #pane-side,",
+        "html[data-whatsnow-theme] [data-testid='drawer-left'],",
+        "html[data-whatsnow-theme] [data-testid='conversation-panel-wrapper'],",
+        "html[data-whatsnow-theme] [data-testid='conversation-panel-body'],",
+        "html[data-whatsnow-theme] [data-testid='conversation-panel-messages'],",
+        "html[data-whatsnow-theme] [data-testid='conversation-compose-box-container'],",
+        "html[data-whatsnow-theme] [data-testid='compose-box'] {",
+        "  color-scheme: " + colorScheme + ";",
+        "}",
+      ])
+      .join("\n");
   }
 
   var repairObserver = null;
@@ -283,7 +426,12 @@
         // A previously forced color-scheme must never linger on the document.
         if (target.style) target.style.removeProperty("color-scheme");
       } else {
-        target.setAttribute("data-whatsnow-theme", normalized);
+        // Only write when it differs: setAttribute with the same value still
+        // queues a mutation record, which a repair observer would answer by
+        // writing again, forever.
+        if (!target.getAttribute || target.getAttribute("data-whatsnow-theme") !== normalized) {
+          target.setAttribute("data-whatsnow-theme", normalized);
+        }
         // LOCKED BEHAVIOR (see AGENTS.md): the theme must NOT force its
         // color-scheme onto the whole document. WhatsApp owns the color
         // scheme of every surface it renders (emoji picker, composer input,
@@ -347,17 +495,21 @@
     style.textContent = buildCss(normalized);
     markTheme(normalized);
     if (!repairObserver && typeof root.MutationObserver === "function") {
+      // WhatsApp only ever replaces the <head>/<html> children; watching the
+      // whole subtree ran this callback on every chat-list or message mutation
+      // for no benefit. Direct children of <html> and <head> are enough.
       repairObserver = new root.MutationObserver(ensureThemeAttached);
-      repairObserver.observe(root.document.documentElement, {
-        childList: true,
-        subtree: true,
-      });
+      repairObserver.observe(root.document.documentElement, { childList: true });
+      if (root.document.head) {
+        repairObserver.observe(root.document.head, { childList: true });
+      }
     }
     return normalized;
   }
 
   root.WhatsNowChatTheme = Object.freeze({
     THEMES: Object.freeze(THEMES.slice()),
+    PALETTES: PALETTES,
     normalize: normalize,
     buildCss: buildCss,
     apply: apply,

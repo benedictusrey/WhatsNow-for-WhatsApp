@@ -158,8 +158,14 @@ pub fn show_lock_window(app: &AppHandle) {
         let _ = w.set_focus();
         return;
     }
+    let theme = crate::settings::load(app).theme;
     let built = WebviewWindowBuilder::new(app, "lock", WebviewUrl::App("lock.html".into()))
         .title("WhatsNow — Locked")
+        // Start in the saved theme: the page used to open in default Dark and
+        // switch after an async IPC round trip, and the webview showed white
+        // until its first paint.
+        .initialization_script(crate::window::settings_theme_bootstrap(theme))
+        .background_color(crate::window::settings_window_background(theme))
         .inner_size(420.0, 540.0)
         .resizable(false)
         .decorations(false)
@@ -170,7 +176,7 @@ pub fn show_lock_window(app: &AppHandle) {
         .build();
 
     if let Ok(win) = built {
-        let _ = win.set_theme(crate::settings::load(app).theme.native_theme());
+        let _ = win.set_theme(theme.native_theme());
         let app_handle = app.clone();
         win.on_window_event(move |event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {

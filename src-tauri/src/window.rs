@@ -345,6 +345,7 @@ fn open_account_window_inner(
         .min_inner_size(560.0, 480.0)
         .icon(icon)?
         .user_agent(CHROME_UA)
+        .background_color(account_window_background(current_settings.theme))
         .initialization_script(initialization_script);
 
     // WebView2 must receive Windows file drops directly. Tauri's OS handler can
@@ -655,6 +656,7 @@ fn open_account_window_inner(
     center_on_monitor(&win, cascade);
     let _ = win.set_always_on_top(current_settings.always_on_top);
     let _ = win.set_theme(current_settings.theme.native_theme());
+    apply_native_theme(&win, current_settings.theme);
 
     // Close-to-tray (reads the live setting so the toggle takes effect without a restart).
     let app_handle = app.clone();
@@ -2153,7 +2155,81 @@ pub fn toggle_active(app: &AppHandle) {
     }
 }
 
-fn settings_window_background(theme: crate::settings::AppTheme) -> tauri::window::Color {
+/// Colour shown by an account window before WhatsApp paints (and behind it while
+/// resizing). WebView2's default is white, which flashed on every launch in the
+/// dark themes. Official Dark/Light use WhatsApp's own base colours; personality
+/// themes use their palette (the same values the Settings window starts with).
+pub(crate) fn account_window_background(theme: crate::settings::AppTheme) -> tauri::window::Color {
+    use crate::settings::AppTheme;
+
+    match theme {
+        AppTheme::System | AppTheme::Dark => tauri::window::Color(0x0b, 0x14, 0x1a, 0xff),
+        AppTheme::Light => tauri::window::Color(0xff, 0xff, 0xff, 0xff),
+        other => settings_window_background(other),
+    }
+}
+
+type Rgb = (u8, u8, u8);
+
+/// Title-bar colours `(background, text)` for a personality theme: the same
+/// header and primary colours the chat theme uses (`chat-theme.js`, pinned by a
+/// unit test). `None` for the official themes, which keep the system title bar.
+pub(crate) fn caption_colors(theme: crate::settings::AppTheme) -> Option<(Rgb, Rgb)> {
+    use crate::settings::AppTheme;
+
+    match theme {
+        AppTheme::System | AppTheme::Dark | AppTheme::Light => None,
+        AppTheme::Midnight => Some(((0x10, 0x1d, 0x2d), (0xed, 0xf6, 0xff))),
+        AppTheme::Forest => Some(((0x10, 0x27, 0x1d), (0xee, 0xf8, 0xf2))),
+        AppTheme::Graphite => Some(((0x1d, 0x23, 0x2a), (0xf1, 0xf4, 0xf6))),
+        AppTheme::Ocean => Some(((0x0d, 0x2b, 0x37), (0xee, 0xfb, 0xff))),
+        AppTheme::Blush => Some(((0xfc, 0xec, 0xef), (0x32, 0x21, 0x26))),
+        AppTheme::Lavender => Some(((0xee, 0xe8, 0xfa), (0x2c, 0x24, 0x38))),
+        AppTheme::Candy => Some(((0xf9, 0xea, 0xf3), (0x33, 0x25, 0x30))),
+        AppTheme::Aurora => Some(((0xf4, 0xee, 0xf9), (0x30, 0x29, 0x3a))),
+    }
+}
+
+/// Apply the theme to the parts of an account window WhatsApp's page cannot
+/// reach: the pre-paint background and (Windows 11) the native title bar.
+/// Official themes restore the system defaults. Best effort, never fatal.
+pub(crate) fn apply_native_theme(win: &WebviewWindow, theme: crate::settings::AppTheme) {
+    let _ = win.set_background_color(Some(account_window_background(theme)));
+    #[cfg(target_os = "windows")]
+    {
+        use windows::Win32::Foundation::HWND;
+        use windows::Win32::Graphics::Dwm::{
+            DwmSetWindowAttribute, DWMWA_BORDER_COLOR, DWMWA_CAPTION_COLOR, DWMWA_TEXT_COLOR,
+        };
+        let Ok(hwnd) = win.hwnd() else { return };
+        let hwnd = HWND(hwnd.0);
+        // COLORREF is 0x00BBGGRR; 0xFFFFFFFF is DWMWA_COLOR_DEFAULT.
+        let to_colorref = |(r, g, b): (u8, u8, u8)| -> u32 {
+            u32::from(r) | (u32::from(g) << 8) | (u32::from(b) << 16)
+        };
+        let (caption, text) = match caption_colors(theme) {
+            Some((background, foreground)) => (to_colorref(background), to_colorref(foreground)),
+            None => (0xFFFF_FFFF, 0xFFFF_FFFF),
+        };
+        for (attribute, value) in [
+            (DWMWA_CAPTION_COLOR, caption),
+            (DWMWA_BORDER_COLOR, caption),
+            (DWMWA_TEXT_COLOR, text),
+        ] {
+            // Windows before 11 rejects these attributes; that is fine.
+            let _ = unsafe {
+                DwmSetWindowAttribute(
+                    hwnd,
+                    attribute,
+                    std::ptr::from_ref(&value).cast(),
+                    std::mem::size_of::<u32>() as u32,
+                )
+            };
+        }
+    }
+}
+
+pub(crate) fn settings_window_background(theme: crate::settings::AppTheme) -> tauri::window::Color {
     use crate::settings::AppTheme;
 
     match theme {
@@ -2170,7 +2246,7 @@ fn settings_window_background(theme: crate::settings::AppTheme) -> tauri::window
     }
 }
 
-fn settings_theme_bootstrap(theme: crate::settings::AppTheme) -> String {
+pub(crate) fn settings_theme_bootstrap(theme: crate::settings::AppTheme) -> String {
     let choice = serde_json::to_string(&theme).expect("serialize settings theme");
     format!(
         r#"(() => {{
@@ -2303,6 +2379,35 @@ mod tests {
         DROP_CHUNK_BYTES, DROP_MSG_CHUNK_SUFFIX, MAX_DROP_FILES,
     };
     use crate::settings::AppTheme;
+
+    #[test]
+    fn caption_colors_match_the_chat_theme_palettes() {
+        // The native title bar must use the same header/primary colours as
+        // chat-theme.js, so a palette edit cannot silently desync them.
+        let js = include_str!("../resources/chat-theme.js").to_lowercase();
+        for theme in [
+            AppTheme::Midnight,
+            AppTheme::Forest,
+            AppTheme::Graphite,
+            AppTheme::Ocean,
+            AppTheme::Blush,
+            AppTheme::Lavender,
+            AppTheme::Candy,
+            AppTheme::Aurora,
+        ] {
+            let name = format!("{theme:?}").to_lowercase();
+            let (background, text) = super::caption_colors(theme).expect("personality theme");
+            let block_start = js
+                .find(&format!("    {name}: {{"))
+                .unwrap_or_else(|| panic!("{name} palette"));
+            let block = &js[block_start..js[block_start..].find("},").map_or(js.len(), |i| block_start + i)];
+            let hex = |(r, g, b): (u8, u8, u8)| format!("#{r:02x}{g:02x}{b:02x}");
+            assert!(block.contains(&format!("header: \"{}\"", hex(background))), "{name} header");
+            assert!(block.contains(&format!("primary: \"{}\"", hex(text))), "{name} primary");
+        }
+        assert!(super::caption_colors(AppTheme::System).is_none());
+        assert!(super::caption_colors(AppTheme::Light).is_none());
+    }
 
     #[test]
     fn centering_places_a_window_in_the_middle_of_a_primary_work_area() {

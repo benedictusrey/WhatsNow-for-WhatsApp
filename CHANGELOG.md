@@ -34,6 +34,16 @@ Authored and maintained by [@benedictusrey](https://github.com/benedictusrey).
   `get_notification_status`, and `open_os_notification_settings`.
 - Per-account taskbar badges; throttle the unread probe (slower while hidden).
 - Give call windows the WhatsNow icon and a dark client background.
+- Settings polish: panels no longer crop (layout follows the panel width with
+  container queries); Focus, Accounts and Appearance reorganized; the window now
+  appears only after its first data has rendered, starts in the saved theme, and
+  no longer dims or fades on open. New `scripts/settings-layout.test.mjs`.
+- Themes Graphite through Aurora now color the whole window (icon rail, chat list,
+  search, selection, bubbles, menus, dialogs, emoji panel, composer pill) by
+  re-pointing WhatsApp's design tokens; the composer strip around the message
+  pill stays transparent like Dark and Light. Account windows get a per-theme
+  start background and a tinted title bar on Windows 11; the lock screen gains
+  the missing Aurora palette and starts in the saved theme.
 
 See [implementation and test boundaries](docs/IMPLEMENTATION_v2.7.0.md).
 

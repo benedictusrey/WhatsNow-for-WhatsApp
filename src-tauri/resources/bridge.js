@@ -455,14 +455,18 @@
       // versions; personality themes must keep it clean too.
       "html[data-whatsnow-doodles='disabled'] [data-testid*='quoted'],",
       "html[data-whatsnow-doodles='disabled'] [data-testid*='reply'],",
-      "html[data-whatsnow-doodles='disabled'] [data-testid*='quote'],",
-      "html[data-whatsnow-doodles='disabled'] [data-testid='conversation-compose-box-container'],",
-      // WhatsApp renamed the composer container; keep the legacy testid for
-      // older DOMs and cover the current one so the Reply preview bar (which
-      // slides up like a curtain) can never flash the wallpaper behind it.
-      "html[data-whatsnow-doodles='disabled'] [data-testid='compose-box'],",
-      "html[data-whatsnow-doodles='disabled'] [data-testid='compose-box'] > div[style*='background'] {",
+      "html[data-whatsnow-doodles='disabled'] [data-testid*='quote'] {",
       "  background-image: var(--whatsnow-chat-wallpaper, none) !important;",
+      "}",
+      // The composer STRIP never paints its own wallpaper copy (a second
+      // gradient/solid fill there is what made personality themes show a band
+      // around the message pill). WhatsApp renamed the container from
+      // conversation-compose-box-container to compose-box; both stay listed so
+      // a legacy or current DOM is covered. The wallpaper behind #main shows
+      // through, like Dark and Light.
+      "html[data-whatsnow-doodles='disabled'] [data-testid='conversation-compose-box-container'],",
+      "html[data-whatsnow-doodles='disabled'] [data-testid='compose-box'] {",
+      "  background-image: none !important;",
       "}",
       // WhatsApp 2.24xx+ paints the default doodle wallpaper as a CSS MASK:
       // a full-bleed layer ([data-testid='conversation-background-*']) with

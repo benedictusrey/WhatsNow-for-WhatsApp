@@ -18,19 +18,57 @@ for (const name of theme.THEMES.filter(
   assert.match(css, /--WDS-systems-chat-background-wallpaper:/);
   assert.match(css, /background-image: none !important/);
   assert.match(css, /#main/);
-  // Scope: EXCLUSIVELY the main conversation/Chat UI viewport — the side
-  // navigation rail and the middle contact/list column stay original.
+  // Scope (2.7.1): the WHOLE window. WhatsApp paints its rail, chat list,
+  // search, selection, bubbles, menus, dialogs and composer pill from its
+  // --WDS-* design tokens, so the palette is applied by re-pointing them.
   assert.match(css, /#main > header/);
-  assert.doesNotMatch(css, /#side/);
-  assert.doesNotMatch(css, /Chats/);
-  assert.doesNotMatch(css, /drawer/);
-  assert.doesNotMatch(css, /profile-panel/);
   assert.match(css, /conversation-compose-box-container/);
   assert.match(css, /--whatsnow-page:/);
   assert.match(css, /--whatsnow-panel:/);
   assert.match(css, /--whatsnow-primary:/);
-  assert.doesNotMatch(css, /--incoming-background|--outgoing-background/);
   assert.ok(!css.includes("undefined"), `${name} must define every chat color`);
+  for (const token of [
+    "--WDS-surface-default",
+    "--WDS-surface-emphasized",
+    "--WDS-surface-highlight",
+    "--WDS-surface-elevated-default",
+    "--WDS-content-default",
+    "--WDS-content-deemphasized",
+    "--WDS-content-action-default",
+    "--WDS-accent",
+    "--WDS-accent-deemphasized",
+    "--WDS-content-on-accent",
+    "--WDS-systems-chat-surface-composer",
+    "--WDS-systems-bubble-surface-incoming",
+    "--WDS-systems-bubble-surface-outgoing",
+  ]) {
+    assert.match(css, new RegExp(`${token}: [^;]+ !important;`), `${name} themes ${token}`);
+  }
+  // WhatsApp's per-chat colour theme re-declares accent/outgoing on #main, in
+  // every message, and in the emoji panel; the palette must win there too.
+  assert.match(css, /#main \{\n\s+--WDS-accent: /, `${name} restates the accent on #main`);
+  assert.match(css, /conv-msg-/, `${name} themes the text inside bubbles`);
+  assert.match(css, /expressions-panel/, `${name} themes the emoji panel`);
+  // Every palette colour is consumed (nothing is defined and then ignored).
+  const palette = theme.PALETTES[name];
+  for (const key of ["page", "panel", "panelSoft", "header", "hover", "active", "incoming", "outgoing", "primary", "secondary", "icon", "accent"]) {
+    assert.ok(
+      css.toLowerCase().includes(palette[key].toLowerCase()),
+      `${name} uses palette.${key} (${palette[key]})`,
+    );
+  }
+  assert.match(css, /--WDS-content-on-accent: #(ffffff|0b141a) !important;/);
+  // The composer STRIP paints nothing (like Dark and Light): only the pill is tinted.
+  assert.match(
+    css,
+    /#main footer,[^{]*\[data-testid='compose-box'\] \{\n\s+background-color: transparent !important;/,
+    `${name} leaves the composer strip transparent`,
+  );
+  assert.doesNotMatch(
+    css,
+    /compose-box'\] \{\n\s+background-color: var\(--whatsnow-panel\)/,
+    `${name} must not fill the composer strip`,
+  );
   // Scoped color-scheme: the theme restates light/dark ONLY on the surfaces
   // it restyles (conversation panel + composer), never on the document, so
   // WhatsApp's typing-area emoji surfaces keep their own scheme.
@@ -117,6 +155,57 @@ assert.match(
       "aurora restates a scoped light color-scheme",
     );
   } finally {
+    if (previousDocument === undefined) delete globalThis.document;
+    else globalThis.document = previousDocument;
+  }
+}
+
+// The repair observer must never feed itself: re-applying the same theme writes
+// nothing (a same-value setAttribute still queues a mutation record), and the
+// observer watches only direct children, never attributes or the whole subtree.
+{
+  const attrs = new Map();
+  let writes = 0;
+  const observed = [];
+  const makeElement = () => ({
+    getAttribute: (name) => (attrs.has(name) ? attrs.get(name) : null),
+    setAttribute(name, value) {
+      writes += 1;
+      attrs.set(name, value);
+    },
+    removeAttribute(name) {
+      attrs.delete(name);
+    },
+    style: { removeProperty() {} },
+  });
+  const documentElement = makeElement();
+  const previousDocument = globalThis.document;
+  const previousObserver = globalThis.MutationObserver;
+  globalThis.MutationObserver = class {
+    observe(target, options) {
+      observed.push(options);
+    }
+    disconnect() {}
+  };
+  globalThis.document = {
+    documentElement,
+    body: null,
+    head: { appendChild() {} },
+    getElementById: () => null,
+    createElement: () => ({ id: "", textContent: "" }),
+  };
+  try {
+    theme.apply("graphite");
+    const afterFirst = writes;
+    assert.ok(afterFirst > 0, "the first apply marks the document");
+    theme.apply("graphite");
+    assert.equal(writes, afterFirst, "re-applying the same theme writes nothing");
+    assert.ok(observed.length > 0, "a repair observer is installed");
+    for (const options of observed) {
+      assert.ok(!options.attributes && !options.subtree, "observer ignores attributes and subtrees");
+    }
+  } finally {
+    globalThis.MutationObserver = previousObserver;
     if (previousDocument === undefined) delete globalThis.document;
     else globalThis.document = previousDocument;
   }

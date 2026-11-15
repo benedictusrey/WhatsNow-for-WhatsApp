@@ -143,6 +143,20 @@
   --glow: rgba(166, 68, 120, 0.16);
 }
 
+:root[data-theme="aurora"] {
+  color-scheme: light;
+  --bg: #f7f3fb;
+  --surface: rgba(255, 250, 253, 0.95);
+  --surface-muted: #f2edf8;
+  --text: #30293a;
+  --muted: #706779;
+  --line: #dfd6eb;
+  --brand: #715b9f;
+  --on-brand: #fffaff;
+  --danger: #aa2c49;
+  --glow: rgba(113, 91, 159, 0.16);
+}
+
 * {
   box-sizing: border-box;
 }

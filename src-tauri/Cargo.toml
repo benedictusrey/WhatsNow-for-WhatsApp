@@ -63,6 +63,7 @@ windows = { version = "0.61", features = [
   "Foundation",               # async return-type plumbing
   "Win32_Security",           # SECURITY_ATTRIBUTES (referenced by RegCreateKeyExW)
   "Win32_System_Registry",    # RegCreateKeyExW/RegSetValueExW: register the toast AUMID in HKCU
+  "Win32_Graphics_Dwm",       # tint the native title bar to match the personality themes
   "Win32_UI_Shell",           # AUMID, Start-menu shortcut, and taskbar identity
   "Win32_UI_Shell_PropertiesSystem", # IPropertyStore for System.AppUserModel.ID
 ] }

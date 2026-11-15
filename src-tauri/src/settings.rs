@@ -299,6 +299,9 @@ pub fn apply(app: &AppHandle, prev: Option<&Settings>, s: &Settings) -> Option<S
                 if !crate::accounts::is_account_label(&label) {
                     continue;
                 }
+                if theme_changed {
+                    crate::window::apply_native_theme(&window, s.theme);
+                }
                 if on_top_changed {
                     if let Err(error) = window.set_always_on_top(s.always_on_top) {
                         warnings.push(format!(

@@ -22,6 +22,16 @@ the touched locked-pillar files.
   `scripts/smoke-test.mjs`, `scripts/smoke-links.mjs`, `scripts/check-docs.mjs`
 - Native `call-window-smoke` example (opener handoff, maximize, restore, resize)
 
+## Verified live (follow-up pass, built exe over CDP)
+
+With the user's app closed, the built exe was driven over a local debug port
+(structure and computed colours only, no message text kept): in every personality
+theme the composer footer/strip is transparent, the pill, left rail and outgoing
+bubble take the palette, typed emoji render, the emoji panel and chat menu follow
+the palette, Settings opens visible with data loaded, no gated controls and no
+horizontal overflow. This also caught and fixed a feedback loop in the chat-theme
+repair observer (now covered by `chat-theme.test.mjs`).
+
 ## Not verified live
 
 These need a signed-in WhatsApp account or a second device and were not run:
