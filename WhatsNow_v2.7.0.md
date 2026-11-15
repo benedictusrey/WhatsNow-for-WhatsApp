@@ -69,7 +69,10 @@ and in [CHANGELOG.md](CHANGELOG.md); test boundaries are in
 | Commit | Change |
 | --- | --- |
 | `a483af1` | Audio: `identify` clears the mute flag of every WhatsNow-owned WebView2 audio session, the 3 s sweep re-checks it, and `attach` clears WebView2's `IsMuted`. Tag `v2.7.0` moved here and the release workflow re-run; the three installers on the release were replaced and the release notes updated. **The tagged build now.** |
-| _this commit_ | Local cleanup of caches and old copies (about 33 GB), `docs/history/past_builds&tests.md` inventory, audit-tool source kept in `docs/history/tools/audio-audit/`, test record below. |
+| `1c20f4b` | Local cleanup of caches and old copies (about 33 GB), `docs/history/past_builds&tests.md` inventory, audit-tool source kept in `docs/history/tools/audio-audit/`, test record below. |
+| `5a67f6e` | Checkpoint added in `docs/checkpoint/`. |
+| `3c1890d`, `b142094` | A project `CLAUDE.md` was added, then removed from the repository and git-ignored (it stays on the owner's drive only). |
+| _this commit_ | Documentation sync: statements about mute, commit table, and checkpoint brought up to date. |
 
 ## Verification at release
 

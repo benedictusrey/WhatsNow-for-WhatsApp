@@ -19,7 +19,7 @@ webviews. Ongoing sound is not deliberately silenced by tray hiding or App Lock.
 Manual pause/mute and OS controls remain in force; background RAM may increase.
 Extended live WhatsApp playback remains unverified. In 2.7.0 a real call was checked on Windows: its window opens and closes together with the call.
 Owned Windows audio sessions also receive WhatsNow's name, existing icon, and
-app-specific mixer grouping. This does not install an audio driver, force unmute,
+app-specific mixer grouping. WhatsNow clears Windows' saved mute on its own audio sessions so it is never muted. This does not install an audio driver,
 or establish independent persisted-mute behavior without two-app live testing.
 
 ## 💬 Messaging and media

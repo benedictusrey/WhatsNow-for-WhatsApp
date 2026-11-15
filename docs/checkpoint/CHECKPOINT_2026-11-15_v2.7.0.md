@@ -12,7 +12,7 @@ deleted local files is [past_builds&tests.md](../history/past_builds%26tests.md)
 | Item | Value |
 | --- | --- |
 | Version | 2.7.0 (`VERSION`, `tauri.conf.json`, `Cargo.toml`); bump only when the owner asks |
-| Branch | `main` only; the feature branch was deleted. Local and GitHub `main` match (`1c20f4b` plus this checkpoint commit) |
+| Branch | `main` only; the feature branch was deleted. Local and GitHub `main` matched at `b142094`; later documentation commits are listed in `WhatsNow_v2.7.0.md` |
 | Tag | `v2.7.0` on `a483af1` (moved once, on purpose, to ship the mute fix) |
 | Release | Public (not a draft), published 2026-11-15; three installers plus `checksums.sha256` |
 | Rust tests | 125 passed (`cargo test --lib`); fmt and clippy clean |
@@ -64,6 +64,8 @@ installer per operating system. Audio: WhatsNow's own audio sessions are kept un
   check `git config --show-origin user.email` in each repository.
 - Source files use CRLF (`unix2dos` after edits); shell scripts are LF (`.gitattributes`).
 - `backup/` is a reference and is never edited; older snapshots stay byte-identical.
+- Keep pushes few: visitors see each push as an update, so batch finished work into one push and ask first.
+- `CLAUDE.md` is local only (git-ignored); it holds the checkpoint routine and the push rules. Never commit it.
 
 ## 5. Open items
 
