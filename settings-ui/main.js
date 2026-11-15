@@ -504,7 +504,7 @@ let accountsCache = [];
 
 function accountRow(account, { manage }) {
   const row = document.createElement("div");
-  row.className = "account-row";
+  row.className = manage ? "account-row" : "account-row compact";
 
   const name = document.createElement("span");
   name.className = "acct-name";
@@ -531,7 +531,7 @@ function accountRow(account, { manage }) {
   const add = (label, aria, handler, extra = {}) => {
     const button = document.createElement("button");
     button.type = "button";
-    button.className = "secondary";
+    button.className = extra.danger ? "danger" : "secondary";
     button.textContent = label;
     button.setAttribute("aria-label", aria);
     if (extra.title) button.title = extra.title;
@@ -573,6 +573,7 @@ function accountRow(account, { manage }) {
     add("Rename", `Rename ${account.name}`, () => renameAccount(account));
     add("Remove", `Remove ${account.name}`, () => removeAccount(account), {
       disabled: accountsCache.length <= 1,
+      danger: true,
     });
   }
   row.appendChild(actions);

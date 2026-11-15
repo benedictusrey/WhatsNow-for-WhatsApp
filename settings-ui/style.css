@@ -332,7 +332,7 @@ input:disabled {
 
 .settings-shell {
   display: grid;
-  grid-template-columns: 200px minmax(0, 1fr);
+  grid-template-columns: 184px minmax(0, 1fr);
   width: 100%;
   height: calc(100vh - 36px);
 }
@@ -544,6 +544,11 @@ input:disabled {
 }
 
 .panel-stage {
+  /* Layout follows the real panel width (not the window width): the rail and
+     padding already consume part of it, so media queries on the viewport never
+     matched the width the controls actually had. */
+  container-type: inline-size;
+  container-name: stage;
   flex: 1 1 auto;
   min-width: 0;
   min-height: 0;
@@ -565,8 +570,15 @@ input:disabled {
   background-clip: content-box;
 }
 
+.settings-panel > * {
+  min-width: 0;
+}
+
 .settings-panel {
   display: grid;
+  /* An implicit auto column grows to the widest child's min-content and gets
+     clipped by .panel-stage; pin it to the available width instead. */
+  grid-template-columns: minmax(0, 1fr);
   width: min(100%, 860px);
   margin: 0 auto;
   gap: var(--space-4);
@@ -730,9 +742,8 @@ input:disabled {
 
 .custom-focus {
   display: grid;
-  grid-template-columns: minmax(180px, 1fr) minmax(300px, auto) auto;
-  align-items: center;
-  gap: var(--space-4);
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
 }
 
 .custom-focus-copy {
@@ -751,8 +762,8 @@ input:disabled {
 }
 
 .number-action {
-  display: grid;
-  grid-template-columns: 92px auto auto;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
 }
@@ -764,6 +775,7 @@ input:disabled {
 }
 
 #focus_custom {
+  width: 96px;
   min-height: 44px;
   font-size: 20px;
   font-weight: 750;
@@ -824,16 +836,27 @@ input:disabled {
 
 .account-row {
   display: grid;
-  grid-template-columns: minmax(100px, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "name meta"
+    "actions actions";
   align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-2) var(--space-3);
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-3);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background: var(--surface-soft);
 }
 
+/* Overview rows carry a single action, so it sits on the same line. */
+.account-row.compact {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-areas: "name meta actions";
+  padding: var(--space-2) var(--space-3);
+}
+
 .acct-name {
+  grid-area: name;
   overflow: hidden;
   font-weight: 700;
   text-overflow: ellipsis;
@@ -841,6 +864,7 @@ input:disabled {
 }
 
 .acct-meta {
+  grid-area: meta;
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
@@ -849,10 +873,19 @@ input:disabled {
 }
 
 .acct-actions {
-  display: inline-flex;
+  grid-area: actions;
+  display: flex;
   flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: var(--space-1);
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.acct-actions .danger {
+  margin-left: auto;
+}
+
+.compact .acct-actions .danger {
+  margin-left: 0;
 }
 
 .acct-unread {
@@ -921,6 +954,7 @@ input[type="radio"] {
   align-items: center;
   gap: var(--space-3);
   min-width: 0;
+  min-height: 64px;
   padding: var(--space-3);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
@@ -959,11 +993,15 @@ input[type="radio"] {
   gap: 2px;
 }
 
-.theme-option strong,
-.theme-option small {
+.theme-option strong {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.theme-option small {
+  overflow-wrap: anywhere;
+  line-height: 1.35;
 }
 
 .theme-option strong {
@@ -1398,31 +1436,24 @@ button.recording {
   }
 }
 
-@media (max-width: 580px) {
-  .compact-presets {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+/* The stage is ~498px wide in the default 762px window and ~300px at the
+   minimum, so these thresholds describe the panel, not the window. */
+@container stage (max-width: 540px) {
+  .about-card {
+    grid-template-columns: 54px minmax(0, 1fr);
+    gap: var(--space-3);
   }
 
-  .focus-presets {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .about-card > img {
+    width: 52px;
+    height: 52px;
   }
+}
 
-  .compact-presets .preset-button {
-    min-height: 56px;
-  }
-
+@container stage (max-width: 440px) {
   .theme-picker,
   .password-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .account-row {
-    grid-template-columns: minmax(100px, 1fr) auto;
-  }
-
-  .account-row .acct-actions {
-    grid-column: 1 / -1;
-    justify-content: flex-start;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .health-row {
@@ -1434,38 +1465,26 @@ button.recording {
     justify-self: start;
   }
 
-  .about-card {
-    grid-template-columns: 54px minmax(0, 1fr);
-    gap: var(--space-3);
+  .focus-presets {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
 
-  .about-card > img {
-    width: 52px;
-    height: 52px;
-  }
-
-  .custom-focus {
-    grid-template-columns: 1fr;
-    align-items: stretch;
-  }
-
-  .custom-focus #focus_off {
-    justify-self: start;
+@container stage (max-width: 400px) {
+  .compact-presets {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .duration-row {
     align-items: flex-start;
     flex-direction: column;
   }
-}
 
-@media (max-width: 430px) {
-  .number-action {
-    grid-template-columns: 72px auto;
-  }
-
-  .number-action button {
-    grid-column: 1 / -1;
+  .account-row.compact {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "name meta"
+      "actions actions";
   }
 
   .add-row,
@@ -1473,6 +1492,22 @@ button.recording {
   .inline-action {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .about-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .about-card > img {
+    display: none;
+  }
+}
+
+/* Roomy panel: copy left, controls right. */
+@container stage (min-width: 560px) {
+  .custom-focus {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
   }
 }
 
