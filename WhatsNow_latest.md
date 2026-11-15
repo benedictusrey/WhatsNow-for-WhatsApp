@@ -17,7 +17,7 @@ See [v2.7.0 changes and acceptance status](docs/IMPLEMENTATION_v2.7.0.md).
 The Windows build retains NORMAL memory priority for background account/call
 webviews. Ongoing sound is not deliberately silenced by tray hiding or App Lock.
 Manual pause/mute and OS controls remain in force; background RAM may increase.
-Extended live WhatsApp playback and real two-party calls on this update remain unverified.
+Extended live WhatsApp playback remains unverified. In 2.7.0 a real call was checked on Windows: its window opens and closes together with the call.
 Owned Windows audio sessions also receive WhatsNow's name, existing icon, and
 app-specific mixer grouping. This does not install an audio driver, force unmute,
 or establish independent persisted-mute behavior without two-app live testing.
@@ -47,8 +47,11 @@ and other service features can vary by account, rollout, webview, and platform.
 ## 👥 Accounts and desktop controls
 
 Add, open, rename, mute/unmute, and remove named account spaces through
-**Settings → Accounts**. Account labels are separate from the detected profile
-name. Sessions use isolated webview profiles where supported; multiple isolated
+**Settings → Accounts**. Every surface (tray menu, Settings, toasts, window title)
+shows the name you typed in Rename; when none is set, it shows the detected
+WhatsApp profile name. Leave Rename empty to go back to the profile name.
+WhatsNow also adds a small button in WhatsApp's chat-list header, next to the ⋮
+menu, that opens WhatsNow Settings. Sessions use isolated webview profiles where supported; multiple isolated
 accounts on macOS require macOS 14 or later.
 
 Desktop preferences include close-to-tray, start minimized, launch at sign-in,

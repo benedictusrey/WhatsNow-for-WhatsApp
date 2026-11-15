@@ -34,23 +34,23 @@ Authenticode publisher.
 
 1. Download the x64 setup executable.
 2. Check the SHA-256 checksum and inspect **Properties > Digital Signatures**
-   when a signature is present. The v2.6.3 Windows release packages are unsigned;
+   when a signature is present. The v2.7.0 Windows release packages are unsigned;
    a missing signature must not be described as a verified publisher.
 3. Run the setup and start WhatsNow from the Start menu.
 
 PowerShell can display the signature and hash:
 
 ```powershell
-Get-AuthenticodeSignature .\WhatsNow_2.6.3_windows_x64-setup.exe |
+Get-AuthenticodeSignature .\WhatsNow_2.7.0_windows_x64-setup.exe |
   Format-List Status,StatusMessage,SignerCertificate
-Get-FileHash .\WhatsNow_2.6.3_windows_x64-setup.exe -Algorithm SHA256
+Get-FileHash .\WhatsNow_2.7.0_windows_x64-setup.exe -Algorithm SHA256
 ```
 
 The repository installer accepts a local package:
 
 ```powershell
 .\scripts\install-windows.ps1 `
-  -Source .\WhatsNow_2.6.3_windows_x64-setup.exe `
+  -Source .\WhatsNow_2.7.0_windows_x64-setup.exe `
   -ExpectedSha256 'RELEASE_SHA256'
 ```
 
@@ -60,20 +60,22 @@ It can also select the newest compatible GitHub release:
 .\scripts\install-windows.ps1 -Repository 'benedictusrey/WhatsNow-for-WhatsApp'
 ```
 
-### MSI
+### MSI (built locally)
 
-Use the MSI for managed deployment:
+The MSI is not attached to releases; build it with `scripts/build-windows.ps1`.
+Use it for managed deployment:
 
 ```powershell
-msiexec.exe /i .\WhatsNow_2.6.3_windows_x64_en-US.msi
+msiexec.exe /i .\WhatsNow_2.7.0_windows_x64_en-US.msi
 ```
 
 Your deployment system can pass its normal `msiexec` user-interface and logging
 options.
 
-### Portable
+### Portable (built locally)
 
-The release asset may include the version in its filename. You can keep that
+The portable executable is not attached to releases; build it with
+`scripts/build-windows.ps1`. The build output may include the version in its filename. You can keep that
 name or rename it to `WhatsNow.exe`.
 
 Run it in place, or install it with shortcuts:
@@ -148,10 +150,10 @@ The AppImage installer creates:
 - `~/.local/bin/whatsnow`
 - a desktop entry under `~/.local/share/applications`
 
-Install a Debian package with:
+Install a locally built Debian package (not attached to releases) with:
 
 ```bash
-sh ./scripts/install-linux.sh --source ./WhatsNow_2.6.3_amd64.deb
+sh ./scripts/install-linux.sh --source ./WhatsNow_2.7.0_amd64.deb
 ```
 
 The script uses `apt-get` or `dpkg` and asks for `sudo` only for the Debian

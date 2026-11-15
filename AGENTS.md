@@ -409,7 +409,7 @@ Also LOCKED:
 
 ## Verification (no canonical suite — ad-hoc but thorough)
 
-`cargo test --lib` (91 tests), `bridge.test.mjs`, `chat-theme.test.mjs`,
+`cargo test --lib` (125 tests), `bridge.test.mjs`, `chat-theme.test.mjs`,
 `toast-route.test.mjs`, settings-ui `theme/comboToAccelerator/settingsAcl`
 suites, then a release build (`--features windows-memory`; portable mode
 from `src-tauri` with `windows-memory,portable-mode`). The full

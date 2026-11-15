@@ -31,10 +31,12 @@ native notifications. It is created and maintained by Benedictus Reynaldo
 Hartanto ([@benedictusrey](https://github.com/benedictusrey)) and is not affiliated
 with WhatsApp or Meta.
 
-> **v2.7.0:** a UX and reliability update: windows open centered, Settings
-> saves instantly, and notifications stay in sync with the Windows Action Center.
-> Native tests passed; live checks on a signed-in account (calls, toasts after a
-> phone read) are listed in the [implementation record](docs/IMPLEMENTATION_v2.7.0.md).
+> **v2.7.0:** accounts show your own name instead of "WhatsApp", the call window
+> closes with its call, a WhatsNow button in the chat-list header opens Settings,
+> windows open centered, Settings saves instantly, and notifications stay in sync
+> with the Windows Action Center. Native tests passed; live checks on a signed-in
+> account (calls, toasts after a phone read) are listed in the
+> [implementation record](docs/IMPLEMENTATION_v2.7.0.md).
 > Download only files actually attached to a published release.
 > The artwork is illustrative, not a pixel-exact screenshot or a security certification.
 

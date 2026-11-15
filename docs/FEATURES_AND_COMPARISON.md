@@ -1,6 +1,6 @@
 # Features and comparison
 
-WhatsNow 2.6.3 is a productivity-oriented desktop host for the official
+WhatsNow 2.7.0 is a productivity-oriented desktop host for the official
 WhatsApp Web service. It does not implement a separate messaging protocol or
 operate a chat relay.
 
@@ -25,7 +25,10 @@ operate a chat relay.
 - Add, rename, switch, and remove WhatsNow account windows.
 - Keep non-default accounts in isolated webview profiles.
 - Preserve the default account's normal profile store across upgrades.
-- Use the logged-in WhatsApp profile name in the window title.
+- Show each account by the name you typed in Rename; when none is set, by the
+  logged-in WhatsApp profile name. This applies to the tray menu, Settings,
+  toasts, and the window title.
+- Open WhatsNow Settings from the WhatsNow button in WhatsApp's chat-list header.
 - Configure notification behavior per account.
 - Track unread state across account windows.
 

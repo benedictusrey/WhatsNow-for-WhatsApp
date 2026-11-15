@@ -179,6 +179,21 @@ for `call window: created for web.whatsapp.com popup` (the popup path ran)
 versus nothing (WhatsApp served the in-page stage — expected for some
 call types; the in-page stage's own expand control then applies).
 
+## An empty dark "WhatsNow — Call" window stays after a call (fixed in 2.7.0)
+
+WhatsApp's call page ends a call with `window.close()`. WebView2 then destroys
+only the web content and leaves the native frame behind. Since 2.7.0 WhatsNow
+closes the whole call window with its page (`call_window::close_window_with_page`).
+The diagnostic log shows `call window: page closed, closing the window`. If an
+empty call window still appears, update to 2.7.0 or newer.
+
+## The tray menu or Settings shows "WhatsApp" instead of my name
+
+Every surface shows the name you typed in **Settings → Accounts → Rename**, and
+otherwise the WhatsApp profile name read from the signed-in session. "WhatsApp" is
+only a fallback until the profile name has been read (sign in and open a chat once).
+Leave Rename empty to switch back to the profile name.
+
 ## A WhatsApp link opened in my browser instead of WhatsNow
 
 Links on the WhatsApp family — `web.whatsapp.com`, `wa.me`,

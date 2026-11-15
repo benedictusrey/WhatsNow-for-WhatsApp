@@ -3,15 +3,13 @@
 WhatsNow is authored and maintained solely by
 [@benedictusrey](https://github.com/benedictusrey).
 
-WhatsNow 2.6.3 is a reliability-first update. Its Windows packages are:
+WhatsNow 2.7.0 ships one Windows installer on GitHub:
 
-- `WhatsNow_2.6.3_windows_x64-setup.exe` — installer
-- `WhatsNow_2.6.3_windows_x64_en-US.msi` — MSI package (managed deployment)
-- `WhatsNow_2.6.3_windows_x64-portable.exe` — portable application
+- `WhatsNow_2.7.0_windows_x64-setup.exe` — installer
 
-All carry the same background-media policy; they differ only in how they
-are installed. The naming is universal (`windows`, not `windows10`) — the
-build is intended for any 64-bit Windows 10 or Windows 11 system.
+The naming is universal (`windows`, not `windows10`) — the build is intended for
+any 64-bit Windows 10 or Windows 11 system. An MSI and a portable executable can
+still be built locally (see Building); they are not attached to releases.
 
 ## Background media policy
 
@@ -21,7 +19,8 @@ This removes the older LOW-memory hint; it does not force autoplay or unmute.
 Manual pause, mute, volume, hang-up, Quit, and OS restrictions remain in force.
 App Lock conceals content but intentionally leaves ongoing media audible.
 Background RAM may increase. Extended live WhatsApp media/call checks remain unverified;
-see [implementation and acceptance](IMPLEMENTATION_v2.6.3.md).
+see [implementation and acceptance](IMPLEMENTATION_v2.6.3.md) and the
+[2.7.0 record](IMPLEMENTATION_v2.7.0.md).
 
 WebView2 still uses separate browser,
 renderer, GPU, and utility processes by design, and Task Manager can continue
@@ -37,13 +36,13 @@ cause instability, or pause the background scripts that WhatsNow needs.
 
 Installer:
 
-1. Download `WhatsNow_2.6.3_windows_x64-setup.exe` from the official release.
+1. Download `WhatsNow_2.7.0_windows_x64-setup.exe` from the official release.
 2. Verify its SHA-256 value against the release's `checksums.sha256`.
 3. Run the installer and launch WhatsNow normally.
 
-Portable:
+Portable (locally built only):
 
-1. Download `WhatsNow_2.6.3_windows_x64-portable.exe` from the official release.
+1. Build it with `scripts/build-windows.ps1` (see Building).
 2. Keep it in a writable folder, such as `Documents\WhatsNow Portable`.
 3. Run it directly. Do not place it in `Program Files`.
 
@@ -57,4 +56,5 @@ expose the supported memory-target API.
 The source builds this variant with the `windows-memory` Cargo
 feature (see `scripts/build-windows.ps1`). The portable variant additionally
 uses `portable-mode`. The output lands in `dist/windows/` with the
-`WhatsNow_2.6.3_windows_x64-*` names and `checksums-windows.sha256`.
+`WhatsNow_2.7.0_windows_x64-*` names (setup, MSI, portable) and
+`checksums-windows.sha256`.

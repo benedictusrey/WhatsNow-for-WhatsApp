@@ -32,6 +32,17 @@ the palette, Settings opens visible with data loaded, no gated controls and no
 horizontal overflow. This also caught and fixed a feedback loop in the chat-theme
 repair observer (now covered by `chat-theme.test.mjs`).
 
+## Release packaging
+
+The release has one installer per operating system: `WhatsNow_2.7.0_windows_x64-setup.exe`,
+`WhatsNow_2.7.0_macos_universal.dmg` (Apple Silicon and Intel in one) and
+`WhatsNow_2.7.0_linux_x86_64.AppImage`, plus `checksums.sha256`. The release
+workflow checks each file exists and is non-empty, that the macOS binary contains
+both architectures, and the exact file set and checksums; it retries the flaky
+macOS DMG step. `check.yml` runs only on demand or on code pull requests, so
+documentation and routine pushes spend no Actions minutes. The changelog lives on
+the GitHub release page (`RELEASE_NOTES.md`), not in the README.
+
 ## Verified live (account names, call window, Settings button)
 
 Driven over the debug port on the built exe with the real profile, structure only:
