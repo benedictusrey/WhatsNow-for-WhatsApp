@@ -2378,13 +2378,13 @@ pub fn open_settings_window(app: &AppHandle) {
 #[cfg(test)]
 mod tests {
     use super::{
-        base64_encode, centered_in_work_area, deep_link_open_by_phone_script, drop_msg_begin, drop_msg_chunk_prefix,
-        drop_msg_commit, drop_msg_end, drop_msg_reserve, ensure_download_destination,
-        external_web_url, is_whatsapp_call_url, mime_for, plan_drop, settings_theme_bootstrap,
-        settings_version_bootstrap, settings_window_background, stream_chunks, summarize_skips,
-        toggle_decision, whatsapp_family_host, whatsapp_popup_allowed,
-        whatsapp_soft_navigation_script, DropSkips, StreamAbort, ToggleAct, CHROME_UA,
-        DROP_CHUNK_BYTES, DROP_MSG_CHUNK_SUFFIX, MAX_DROP_FILES,
+        base64_encode, centered_in_work_area, deep_link_open_by_phone_script, drop_msg_begin,
+        drop_msg_chunk_prefix, drop_msg_commit, drop_msg_end, drop_msg_reserve,
+        ensure_download_destination, external_web_url, is_whatsapp_call_url, mime_for, plan_drop,
+        settings_theme_bootstrap, settings_version_bootstrap, settings_window_background,
+        stream_chunks, summarize_skips, toggle_decision, whatsapp_family_host,
+        whatsapp_popup_allowed, whatsapp_soft_navigation_script, DropSkips, StreamAbort, ToggleAct,
+        CHROME_UA, DROP_CHUNK_BYTES, DROP_MSG_CHUNK_SUFFIX, MAX_DROP_FILES,
     };
     use crate::settings::AppTheme;
 
@@ -2408,10 +2408,19 @@ mod tests {
             let block_start = js
                 .find(&format!("    {name}: {{"))
                 .unwrap_or_else(|| panic!("{name} palette"));
-            let block = &js[block_start..js[block_start..].find("},").map_or(js.len(), |i| block_start + i)];
+            let block = &js[block_start
+                ..js[block_start..]
+                    .find("},")
+                    .map_or(js.len(), |i| block_start + i)];
             let hex = |(r, g, b): (u8, u8, u8)| format!("#{r:02x}{g:02x}{b:02x}");
-            assert!(block.contains(&format!("header: \"{}\"", hex(background))), "{name} header");
-            assert!(block.contains(&format!("primary: \"{}\"", hex(text))), "{name} primary");
+            assert!(
+                block.contains(&format!("header: \"{}\"", hex(background))),
+                "{name} header"
+            );
+            assert!(
+                block.contains(&format!("primary: \"{}\"", hex(text))),
+                "{name} primary"
+            );
         }
         assert!(super::caption_colors(AppTheme::System).is_none());
         assert!(super::caption_colors(AppTheme::Light).is_none());

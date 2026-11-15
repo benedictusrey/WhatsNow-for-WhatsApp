@@ -944,7 +944,8 @@ pub fn reset_app_lock(window: tauri::Window, app: tauri::AppHandle) -> Result<()
 mod tests {
     use super::{
         is_remote_label, notification_activation_allowed, notification_content,
-        productivity_status, settings_shortcut_allowed, validate_account_label, validate_account_name,
+        productivity_status, settings_shortcut_allowed, validate_account_label,
+        validate_account_name,
     };
     use crate::settings::Settings;
 
@@ -1019,7 +1020,11 @@ mod tests {
         assert!(validate_account_name("Work\nInjected").is_err());
         assert!(validate_account_name(&"x".repeat(61)).is_err());
         assert_eq!(validate_account_name("  Work  ").unwrap(), "Work");
-        assert_eq!(validate_account_label("   ").unwrap(), "", "rename may clear the label");
+        assert_eq!(
+            validate_account_label("   ").unwrap(),
+            "",
+            "rename may clear the label"
+        );
         assert_eq!(validate_account_label("").unwrap(), "");
         assert_eq!(validate_account_label(" Work ").unwrap(), "Work");
         assert!(validate_account_label("Work\nInjected").is_err());

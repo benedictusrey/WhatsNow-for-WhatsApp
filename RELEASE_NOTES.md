@@ -35,6 +35,10 @@ A UX and reliability update. Created and maintained by
 
 ## Installation and compatibility
 
+One installer per operating system: `WhatsNow_2.7.0_windows_x64-setup.exe`
+(Windows), `WhatsNow_2.7.0_macos_universal.dmg` (macOS, Apple Silicon and Intel in
+one), and `WhatsNow_2.7.0_linux_x86_64.AppImage` (Linux; run `chmod +x` once).
+
 Fully quit WhatsNow from the tray before upgrading. Verify your download against
 `checksums.sha256`. Windows builds are unsigned; macOS builds are not Developer ID
 signed or notarized. Live checks on a signed-in account are listed in the

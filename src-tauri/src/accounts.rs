@@ -403,21 +403,40 @@ mod tests {
     #[test]
     fn display_name_prefers_typed_label_then_profile_then_fallback() {
         let mut f = AccountsFile::default();
-        assert_eq!(display_name(&f.accounts[0]), "WhatsApp", "fallback until known");
+        assert_eq!(
+            display_name(&f.accounts[0]),
+            "WhatsApp",
+            "fallback until known"
+        );
         assert!(set_profile_name(&mut f, "default", "Ben").unwrap());
-        assert_eq!(f.accounts[0].name, "", "the profile name is never stored as a label");
+        assert_eq!(
+            f.accounts[0].name, "",
+            "the profile name is never stored as a label"
+        );
         assert_eq!(display_name(&f.accounts[0]), "Ben");
         assert!(!set_profile_name(&mut f, "default", "Ben").unwrap());
 
         rename(&mut f, "default", "Work").unwrap();
         assert_eq!(display_name(&f.accounts[0]), "Work", "typed label wins");
         set_profile_name(&mut f, "default", "Benedictus").unwrap();
-        assert_eq!(display_name(&f.accounts[0]), "Work", "profile updates keep the label");
+        assert_eq!(
+            display_name(&f.accounts[0]),
+            "Work",
+            "profile updates keep the label"
+        );
 
         rename(&mut f, "default", "").unwrap();
-        assert_eq!(display_name(&f.accounts[0]), "Benedictus", "clearing the label restores the profile name");
+        assert_eq!(
+            display_name(&f.accounts[0]),
+            "Benedictus",
+            "clearing the label restores the profile name"
+        );
         rename(&mut f, "default", "   ").unwrap();
-        assert_eq!(display_name(&f.accounts[0]), "Benedictus", "blank is not a label");
+        assert_eq!(
+            display_name(&f.accounts[0]),
+            "Benedictus",
+            "blank is not a label"
+        );
     }
 
     #[test]
@@ -447,7 +466,8 @@ mod tests {
     #[test]
     fn a_missing_name_field_means_no_label() {
         let f: AccountsFile =
-            serde_json::from_str(r#"{"accounts":[{"id":"default","order":0}],"next_seq":1}"#).unwrap();
+            serde_json::from_str(r#"{"accounts":[{"id":"default","order":0}],"next_seq":1}"#)
+                .unwrap();
         assert_eq!(f.accounts[0].name, "");
     }
 

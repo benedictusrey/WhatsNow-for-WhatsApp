@@ -110,9 +110,15 @@ if [ -z "$SOURCE" ]; then
     fail 'curl or wget is required to query the release.'
   fi
   case "$(uname -m)" in arm64|aarch64) ARCH_RE='(aarch64|arm64)' ;; *) ARCH_RE='(x64|x86_64|intel)' ;; esac
-  SOURCE=$(printf '%s' "$RELEASE_JSON" | tr ',' '\n' |
-    sed -nE 's/.*"browser_download_url"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p' |
-    grep -Ei "${ARCH_RE}.*\.(dmg|app\.tar\.gz)$" | head -n 1 || true)
+  ASSETS=$(printf '%s' "$RELEASE_JSON" | tr ',' '\n' |
+    sed -nE 's/.*"browser_download_url"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p')
+  # The universal DMG runs on Apple Silicon and Intel; older releases only
+  # have per-architecture packages.
+  SOURCE=$(printf '%s\n' "$ASSETS" | grep -Ei 'universal.*\.dmg$' | head -n 1 || true)
+  if [ -z "$SOURCE" ]; then
+    SOURCE=$(printf '%s\n' "$ASSETS" |
+      grep -Ei "${ARCH_RE}.*\.(dmg|app\.tar\.gz)$" | head -n 1 || true)
+  fi
   [ -n "$SOURCE" ] || fail 'The latest release has no compatible macOS package.'
 fi
 

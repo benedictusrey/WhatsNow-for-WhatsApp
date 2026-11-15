@@ -74,9 +74,10 @@ jobs:
           node scripts/settings-attribution.test.mjs
 
   build-linux:
-    name: Linux x64 bundles
+    name: Linux installer (AppImage)
     needs: verify
     runs-on: ubuntu-22.04
+    timeout-minutes: 60
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -85,7 +86,7 @@ jobs:
         shell: bash
         run: |
           RAW_VER="${APP_VERSION#v}"
-          echo "NORMALIZED_VERSION=${RAW_VER}" >> $GITHUB_ENV
+          echo "NORMALIZED_VERSION=${RAW_VER}" >> "$GITHUB_ENV"
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -102,59 +103,52 @@ jobs:
         with:
           workspaces: "./src-tauri -> target"
 
+      # Same package set as check.yml (which compiles this exact crate on
+      # ubuntu-22.04) plus the AppImage tooling.
       - name: Install Linux dependencies
         shell: bash
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            libwebkit2gtk-4.1-dev \
-            libappindicator3-dev \
-            librsvg2-dev \
-            libssl-dev \
-            patchelf \
-            xdg-utils \
-            libfuse2 \
-            libxdo-dev \
-            libdbus-1-dev \
-            build-essential
+            libwebkit2gtk-4.1-dev build-essential curl wget file \
+            libxdo-dev libdbus-1-dev libssl-dev libayatana-appindicator3-dev \
+            librsvg2-dev libhunspell-dev patchelf xdg-utils libfuse2
 
       - name: Install Tauri CLI
         shell: bash
         run: npm install -g @tauri-apps/cli@^2
 
-      - name: Build AppImage and Debian package
+      - name: Build AppImage
         shell: bash
         env:
           APPIMAGE_EXTRACT_AND_RUN: 1
-        run: tauri build --target x86_64-unknown-linux-gnu --bundles appimage,deb
+        run: tauri build --target x86_64-unknown-linux-gnu --bundles appimage
 
-      - name: Normalize and verify Linux assets
+      - name: Normalize and verify Linux installer
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p out
-          appimage="$(find src-tauri/target/x86_64-unknown-linux-gnu/release/bundle -type f -name '*.AppImage' -print -quit 2>/dev/null || find src-tauri/target -type f -name '*.AppImage' -print -quit)"
-          deb="$(find src-tauri/target/x86_64-unknown-linux-gnu/release/bundle -type f -name '*.deb' -print -quit 2>/dev/null || find src-tauri/target -type f -name '*.deb' -print -quit)"
+          appimage="$(find src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/appimage -maxdepth 1 -type f -name '*.AppImage' | head -n 1)"
           test -n "${appimage}" || { echo "::error::Tauri did not produce an AppImage."; exit 1; }
-          test -n "${deb}" || { echo "::error::Tauri did not produce a Debian package."; exit 1; }
-          cp "${appimage}" "out/WhatsNow_${NORMALIZED_VERSION}_amd64.AppImage"
-          cp "${deb}" "out/WhatsNow_${NORMALIZED_VERSION}_amd64.deb"
-          sha256sum "out/WhatsNow_${NORMALIZED_VERSION}_amd64.AppImage" "out/WhatsNow_${NORMALIZED_VERSION}_amd64.deb" | tee out/checksums-linux.sha256
+          test -s "${appimage}" || { echo "::error::The AppImage is empty."; exit 1; }
+          cp "${appimage}" "out/WhatsNow_${NORMALIZED_VERSION}_linux_x86_64.AppImage"
+          chmod +x "out/WhatsNow_${NORMALIZED_VERSION}_linux_x86_64.AppImage"
+          (cd out && sha256sum "WhatsNow_${NORMALIZED_VERSION}_linux_x86_64.AppImage")
 
-      - name: Upload Linux workflow artifacts
+      - name: Upload Linux installer
         uses: actions/upload-artifact@v4
         with:
-          name: WhatsNow-${{ env.APP_VERSION }}-linux-amd64
-          path: |
-            out/WhatsNow_${{ env.NORMALIZED_VERSION }}_amd64.AppImage
-            out/WhatsNow_${{ env.NORMALIZED_VERSION }}_amd64.deb
+          name: WhatsNow-${{ env.APP_VERSION }}-linux
+          path: out/WhatsNow_${{ env.NORMALIZED_VERSION }}_linux_x86_64.AppImage
           if-no-files-found: error
           retention-days: 30
 
   build-macos:
-    name: macOS bundles (Apple Silicon + Intel)
+    name: macOS installer (universal DMG)
     needs: verify
     runs-on: macos-15-intel
+    timeout-minutes: 90
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -163,7 +157,7 @@ jobs:
         shell: bash
         run: |
           RAW_VER="${APP_VERSION#v}"
-          echo "NORMALIZED_VERSION=${RAW_VER}" >> $GITHUB_ENV
+          echo "NORMALIZED_VERSION=${RAW_VER}" >> "$GITHUB_ENV"
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -184,68 +178,58 @@ jobs:
         shell: bash
         run: npm install -g @tauri-apps/cli@^2
 
-      - name: Build Apple Silicon DMG and macOS archive
+      # One universal build (Apple Silicon + Intel). DMG creation on hosted
+      # runners occasionally fails with a transient hdiutil error, so retry.
+      - name: Build universal app and DMG
         shell: bash
-        run: tauri build --target aarch64-apple-darwin --bundles app,dmg
+        run: |
+          set -uo pipefail
+          for attempt in 1 2 3; do
+            if tauri build --target universal-apple-darwin --bundles app,dmg; then
+              exit 0
+            fi
+            echo "::warning::tauri build failed (attempt ${attempt}/3)."
+            sleep 15
+          done
+          echo "::error::The universal macOS build failed three times."
+          exit 1
 
-      - name: Build Intel DMG and macOS archive
-        shell: bash
-        run: tauri build --target x86_64-apple-darwin --bundles app,dmg
-
-      - name: Normalize and verify macOS assets
+      - name: Normalize and verify macOS installer
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p out
-          a_dmg="$(find src-tauri/target/aarch64-apple-darwin -type f -name '*.dmg' -print -quit 2>/dev/null)"
-          x_dmg="$(find src-tauri/target/x86_64-apple-darwin -type f -name '*.dmg' -print -quit 2>/dev/null)"
-          test -n "${a_dmg}" || { echo "::error::Tauri did not produce an Apple Silicon DMG."; exit 1; }
-          test -n "${x_dmg}" || { echo "::error::Tauri did not produce an Intel DMG."; exit 1; }
-          cp "${a_dmg}" "out/WhatsNow_${NORMALIZED_VERSION}_aarch64.dmg"
-          cp "${x_dmg}" "out/WhatsNow_${NORMALIZED_VERSION}_x86_64.dmg"
+          bundle="src-tauri/target/universal-apple-darwin/release/bundle"
+          dmg="$(find "${bundle}/dmg" -maxdepth 1 -type f -name '*.dmg' | head -n 1)"
+          test -n "${dmg}" || { echo "::error::Tauri did not produce a universal DMG."; exit 1; }
+          test -s "${dmg}" || { echo "::error::The DMG is empty."; exit 1; }
+          app="$(find "${bundle}/macos" -maxdepth 1 -type d -name '*.app' | head -n 1)"
+          test -n "${app}" || { echo "::error::Tauri did not produce a .app bundle."; exit 1; }
+          universal=0
+          for binary in "${app}"/Contents/MacOS/*; do
+            archs="$(lipo -archs "${binary}" 2>/dev/null || true)"
+            echo "${binary}: ${archs}"
+            case " ${archs} " in
+              *" arm64 "*) case " ${archs} " in *" x86_64 "*) universal=1 ;; esac ;;
+            esac
+          done
+          test "${universal}" -eq 1 || { echo "::error::The app binary is not universal (arm64 + x86_64)."; exit 1; }
+          cp "${dmg}" "out/WhatsNow_${NORMALIZED_VERSION}_macos_universal.dmg"
+          (cd out && shasum -a 256 "WhatsNow_${NORMALIZED_VERSION}_macos_universal.dmg")
 
-          # Process Apple Silicon app archive:
-          a_archive="$(find src-tauri/target/aarch64-apple-darwin -type f -name '*.app.tar.gz' -print -quit 2>/dev/null || true)"
-          if [ -n "${a_archive}" ]; then
-            cp "${a_archive}" "out/WhatsNow_${NORMALIZED_VERSION}_aarch64.app.tar.gz"
-          else
-            a_app_dir="$(find src-tauri/target/aarch64-apple-darwin -type d -name '*.app' -print -quit 2>/dev/null)"
-            test -n "${a_app_dir}" || { echo "::error::Apple Silicon app directory not found."; exit 1; }
-            tar -czf "out/WhatsNow_${NORMALIZED_VERSION}_aarch64.app.tar.gz" -C "$(dirname "${a_app_dir}")" "$(basename "${a_app_dir}")"
-          fi
-
-          # Process Intel app archive:
-          x_archive="$(find src-tauri/target/x86_64-apple-darwin -type f -name '*.app.tar.gz' -print -quit 2>/dev/null || true)"
-          if [ -n "${x_archive}" ]; then
-            cp "${x_archive}" "out/WhatsNow_${NORMALIZED_VERSION}_x86_64.app.tar.gz"
-          else
-            x_app_dir="$(find src-tauri/target/x86_64-apple-darwin -type d -name '*.app' -print -quit 2>/dev/null)"
-            test -n "${x_app_dir}" || { echo "::error::Intel app directory not found."; exit 1; }
-            tar -czf "out/WhatsNow_${NORMALIZED_VERSION}_x86_64.app.tar.gz" -C "$(dirname "${x_app_dir}")" "$(basename "${x_app_dir}")"
-          fi
-
-          shasum -a 256 \
-            "out/WhatsNow_${NORMALIZED_VERSION}_aarch64.dmg" \
-            "out/WhatsNow_${NORMALIZED_VERSION}_aarch64.app.tar.gz" \
-            "out/WhatsNow_${NORMALIZED_VERSION}_x86_64.dmg" \
-            "out/WhatsNow_${NORMALIZED_VERSION}_x86_64.app.tar.gz" | tee out/checksums-macos.sha256
-
-      - name: Upload macOS workflow artifacts
+      - name: Upload macOS installer
         uses: actions/upload-artifact@v4
         with:
           name: WhatsNow-${{ env.APP_VERSION }}-macos
-          path: |
-            out/WhatsNow_${{ env.NORMALIZED_VERSION }}_aarch64.dmg
-            out/WhatsNow_${{ env.NORMALIZED_VERSION }}_aarch64.app.tar.gz
-            out/WhatsNow_${{ env.NORMALIZED_VERSION }}_x86_64.dmg
-            out/WhatsNow_${{ env.NORMALIZED_VERSION }}_x86_64.app.tar.gz
+          path: out/WhatsNow_${{ env.NORMALIZED_VERSION }}_macos_universal.dmg
           if-no-files-found: error
           retention-days: 30
 
   build-windows:
-    name: Windows x64 bundles (NSIS + MSI + portable)
+    name: Windows installer (NSIS setup)
     needs: verify
     runs-on: windows-latest
+    timeout-minutes: 90
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -254,7 +238,7 @@ jobs:
         shell: bash
         run: |
           RAW_VER="${APP_VERSION#v}"
-          echo "NORMALIZED_VERSION=${RAW_VER}" >> $GITHUB_ENV
+          echo "NORMALIZED_VERSION=${RAW_VER}" >> "$GITHUB_ENV"
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -275,9 +259,9 @@ jobs:
         shell: bash
         run: npm install -g @tauri-apps/cli@^2
 
-      - name: Build NSIS installer and MSI
+      - name: Build NSIS installer
         shell: bash
-        run: tauri build --target x86_64-pc-windows-msvc --bundles nsis,msi --features windows-memory
+        run: tauri build --target x86_64-pc-windows-msvc --bundles nsis --features windows-memory
 
       - name: Verify Windows media feature regressions
         shell: bash
@@ -287,34 +271,18 @@ jobs:
           cargo test --locked --features windows-memory,portable-mode
           cargo clippy --locked --all-targets --features windows-memory,portable-mode -- -D warnings
 
-      - name: Build portable executable (windows-memory, portable-mode)
-        shell: bash
-        working-directory: src-tauri
-        run: |
-          cargo build --release \
-            --features "windows-memory,portable-mode" \
-            --target x86_64-pc-windows-msvc
-
-      - name: Normalize and verify Windows assets
+      - name: Normalize and verify Windows installer
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p out
-          setup="$(find src-tauri/target/x86_64-pc-windows-msvc -type f -name '*.exe' -path '*nsis*' -print -quit 2>/dev/null || find src-tauri/target/x86_64-pc-windows-msvc/release/bundle -type f -name '*.exe' -print -quit)"
-          msi="$(find src-tauri/target/x86_64-pc-windows-msvc -type f -name '*.msi' -print -quit 2>/dev/null || find src-tauri/target -type f -name '*.msi' -print -quit)"
-          portable="$(find src-tauri/target/x86_64-pc-windows-msvc/release -maxdepth 1 -type f -name 'whatsnow.exe' -print -quit 2>/dev/null)"
+          setup="$(find src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis -maxdepth 1 -type f -name '*-setup.exe' | head -n 1)"
           test -n "${setup}" || { echo "::error::Tauri did not produce an NSIS installer."; exit 1; }
-          test -n "${msi}" || { echo "::error::Tauri did not produce an MSI package."; exit 1; }
-          test -n "${portable}" || { echo "::error::The portable-mode build did not produce whatsnow.exe."; exit 1; }
+          test -s "${setup}" || { echo "::error::The NSIS installer is empty."; exit 1; }
           cp "${setup}" "out/WhatsNow_${NORMALIZED_VERSION}_windows_x64-setup.exe"
-          cp "${msi}" "out/WhatsNow_${NORMALIZED_VERSION}_windows_x64_en-US.msi"
-          cp "${portable}" "out/WhatsNow_${NORMALIZED_VERSION}_windows_x64-portable.exe"
-          sha256sum \
-            "out/WhatsNow_${NORMALIZED_VERSION}_windows_x64-setup.exe" \
-            "out/WhatsNow_${NORMALIZED_VERSION}_windows_x64_en-US.msi" \
-            "out/WhatsNow_${NORMALIZED_VERSION}_windows_x64-portable.exe" | tee out/checksums-windows.sha256
+          (cd out && sha256sum "WhatsNow_${NORMALIZED_VERSION}_windows_x64-setup.exe")
 
-      - name: Sign Windows assets (when certificate secrets are configured)
+      - name: Sign Windows installer (when certificate secrets are configured)
         if: ${{ env.WINDOWS_CERTIFICATE != '' && env.WINDOWS_CERTIFICATE_PASSWORD != '' }}
         shell: pwsh
         env:
@@ -334,19 +302,12 @@ jobs:
             if ($LASTEXITCODE -ne 0) { throw "signtool failed for $($_.Name)" }
           }
           Remove-Item -LiteralPath $certPath -Force
-          Get-FileHash -Algorithm SHA256 -LiteralPath (Get-ChildItem out -File -Filter "WhatsNow_$env:NORMALIZED_VERSION*") |
-            ForEach-Object { "$($_.Hash.ToLowerInvariant())  $([IO.Path]::GetFileName($_.Path))" } |
-            Set-Content -LiteralPath out/checksums-windows.sha256 -Encoding utf8
 
-      - name: Upload Windows workflow artifacts
+      - name: Upload Windows installer
         uses: actions/upload-artifact@v4
         with:
-          name: WhatsNow-${{ env.APP_VERSION }}-windows-x64
-          path: |
-            out/WhatsNow_${{ env.NORMALIZED_VERSION }}_windows_x64-setup.exe
-            out/WhatsNow_${{ env.NORMALIZED_VERSION }}_windows_x64_en-US.msi
-            out/WhatsNow_${{ env.NORMALIZED_VERSION }}_windows_x64-portable.exe
-            out/checksums-windows.sha256
+          name: WhatsNow-${{ env.APP_VERSION }}-windows
+          path: out/WhatsNow_${{ env.NORMALIZED_VERSION }}_windows_x64-setup.exe
           if-no-files-found: error
           retention-days: 30
 
@@ -355,6 +316,7 @@ jobs:
     needs: [build-linux, build-windows, build-macos]
     if: ${{ github.event_name == 'push' || github.event.inputs.publish_release == 'true' }}
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -363,43 +325,30 @@ jobs:
         shell: bash
         run: |
           RAW_VER="${APP_VERSION#v}"
-          echo "NORMALIZED_VERSION=${RAW_VER}" >> $GITHUB_ENV
+          echo "NORMALIZED_VERSION=${RAW_VER}" >> "$GITHUB_ENV"
 
-      - name: Download Linux, Windows, and macOS artifacts
+      - name: Download the three installers
         uses: actions/download-artifact@v4
         with:
           pattern: WhatsNow-${{ env.APP_VERSION }}-*
           path: dist
           merge-multiple: true
 
-      - name: Create and verify combined checksum manifest
+      - name: Create and verify checksum manifest
         shell: bash
         run: |
           set -euo pipefail
           expected=(
-            "dist/WhatsNow_${NORMALIZED_VERSION}_amd64.AppImage"
-            "dist/WhatsNow_${NORMALIZED_VERSION}_amd64.deb"
-            "dist/WhatsNow_${NORMALIZED_VERSION}_windows_x64-setup.exe"
-            "dist/WhatsNow_${NORMALIZED_VERSION}_windows_x64_en-US.msi"
-            "dist/WhatsNow_${NORMALIZED_VERSION}_windows_x64-portable.exe"
-            "dist/WhatsNow_${NORMALIZED_VERSION}_aarch64.dmg"
-            "dist/WhatsNow_${NORMALIZED_VERSION}_aarch64.app.tar.gz"
-            "dist/WhatsNow_${NORMALIZED_VERSION}_x86_64.dmg"
-            "dist/WhatsNow_${NORMALIZED_VERSION}_x86_64.app.tar.gz"
+            "WhatsNow_${NORMALIZED_VERSION}_windows_x64-setup.exe"
+            "WhatsNow_${NORMALIZED_VERSION}_macos_universal.dmg"
+            "WhatsNow_${NORMALIZED_VERSION}_linux_x86_64.AppImage"
           )
           for asset in "${expected[@]}"; do
-            test -f "${asset}" || { echo "::error::Missing expected release asset: ${asset}"; exit 1; }
+            test -s "dist/${asset}" || { echo "::error::Missing expected release asset: ${asset}"; exit 1; }
           done
-          (cd dist && shasum -a 256 \
-            "WhatsNow_${NORMALIZED_VERSION}_amd64.AppImage" \
-            "WhatsNow_${NORMALIZED_VERSION}_amd64.deb" \
-            "WhatsNow_${NORMALIZED_VERSION}_windows_x64-setup.exe" \
-            "WhatsNow_${NORMALIZED_VERSION}_windows_x64_en-US.msi" \
-            "WhatsNow_${NORMALIZED_VERSION}_windows_x64-portable.exe" \
-            "WhatsNow_${NORMALIZED_VERSION}_aarch64.dmg" \
-            "WhatsNow_${NORMALIZED_VERSION}_aarch64.app.tar.gz" \
-            "WhatsNow_${NORMALIZED_VERSION}_x86_64.dmg" \
-            "WhatsNow_${NORMALIZED_VERSION}_x86_64.app.tar.gz" > checksums.sha256)
+          extra="$(find dist -maxdepth 1 -type f ! -name 'WhatsNow_*' | head -n 1)"
+          test -z "${extra}" || { echo "::error::Unexpected file in the release set: ${extra}"; exit 1; }
+          (cd dist && shasum -a 256 "${expected[@]}" > checksums.sha256)
           (cd dist && shasum -a 256 -c checksums.sha256)
 
       - name: Upload draft release assets
@@ -411,14 +360,9 @@ jobs:
           body_path: RELEASE_NOTES.md
           draft: true
           prerelease: false
+          fail_on_unmatched_files: true
           files: |
-            dist/WhatsNow_${{ env.NORMALIZED_VERSION }}_amd64.AppImage
-            dist/WhatsNow_${{ env.NORMALIZED_VERSION }}_amd64.deb
             dist/WhatsNow_${{ env.NORMALIZED_VERSION }}_windows_x64-setup.exe
-            dist/WhatsNow_${{ env.NORMALIZED_VERSION }}_windows_x64_en-US.msi
-            dist/WhatsNow_${{ env.NORMALIZED_VERSION }}_windows_x64-portable.exe
-            dist/WhatsNow_${{ env.NORMALIZED_VERSION }}_aarch64.dmg
-            dist/WhatsNow_${{ env.NORMALIZED_VERSION }}_aarch64.app.tar.gz
-            dist/WhatsNow_${{ env.NORMALIZED_VERSION }}_x86_64.dmg
-            dist/WhatsNow_${{ env.NORMALIZED_VERSION }}_x86_64.app.tar.gz
+            dist/WhatsNow_${{ env.NORMALIZED_VERSION }}_macos_universal.dmg
+            dist/WhatsNow_${{ env.NORMALIZED_VERSION }}_linux_x86_64.AppImage
             dist/checksums.sha256

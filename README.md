@@ -130,12 +130,11 @@ the complete process tree under a comparable workload. See [Windows notes](docs/
 
 ## 📦 Choose your package
 
-| Platform | v2.7.0 package targets | Requirement |
+| Platform | v2.7.0 installer (one per OS) | Requirement |
 | --- | --- | --- |
-| Windows x64 | Setup EXE, MSI, portable EXE | Updated Microsoft Edge WebView2 |
-| Linux x64 | AppImage, DEB | Compatible WebKitGTK distribution |
-| macOS Apple Silicon | AArch64 DMG, app archive | macOS 12.1+ |
-| macOS Intel | x86_64 DMG, app archive | macOS 12.1+ |
+| Windows x64 | `WhatsNow_2.7.0_windows_x64-setup.exe` | Updated Microsoft Edge WebView2 |
+| macOS (Apple Silicon and Intel) | `WhatsNow_2.7.0_macos_universal.dmg` | macOS 12.1+ |
+| Linux x64 | `WhatsNow_2.7.0_linux_x86_64.AppImage` (`chmod +x` after download) | Compatible WebKitGTK distribution |
 
 Multiple isolated macOS accounts require macOS 14+. Native builds and
 installation checks must complete before a target is described as an available

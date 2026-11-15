@@ -154,7 +154,11 @@ pub fn account_group_prefix(account_id: &str) -> String {
 /// first six being [`account_group_prefix`]. Well under WinRT's 64-char limit.
 pub fn toast_group(account_id: &str, chat_key: &str) -> String {
     let chat = fnv1a64(&format!("{account_id}\u{1f}{chat_key}"));
-    format!("{}{:010x}", account_group_prefix(account_id), chat & 0xff_ffff_ffff)
+    format!(
+        "{}{:010x}",
+        account_group_prefix(account_id),
+        chat & 0xff_ffff_ffff
+    )
 }
 
 /// The key that identifies a chat for grouping/clearing: the chat id (jid) when
@@ -584,7 +588,10 @@ mod tests {
             super::sanitize_toast_text("a\u{FFFE}b\u{FFFF}c\u{FDD0}d\u{0007}e", 50),
             "abcde"
         );
-        assert_eq!(super::sanitize_toast_text("line\nbreak\t", 50), "line\nbreak\t");
+        assert_eq!(
+            super::sanitize_toast_text("line\nbreak\t", 50),
+            "line\nbreak\t"
+        );
     }
 
     #[test]

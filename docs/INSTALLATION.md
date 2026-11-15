@@ -11,15 +11,18 @@ Copyright (c) 2026 @benedictusrey. Released under the
 Download files from the
 [latest WhatsNow release](https://github.com/benedictusrey/WhatsNow-for-WhatsApp/releases/latest).
 
-| Platform | Package | Use it when |
+Each release has exactly one installer per operating system:
+
+| Platform | Package | Notes |
 | --- | --- | --- |
-| Windows x64 | `WhatsNow_<version>_windows_x64-setup.exe` | You want Start menu integration, shortcuts, native notifications, and an uninstaller |
-| Windows x64 | `WhatsNow_<version>_windows_x64_en-US.msi` | Your organization deploys MSI packages |
-| Windows x64 | `WhatsNow_<version>_windows_x64-portable.exe` | You want one executable without an installer |
-| macOS Apple silicon | AArch64 DMG | Your Mac uses an M-series processor |
-| macOS Intel | x64 DMG | Your Mac uses an Intel processor |
-| Linux x64 | AppImage | You want a user-level install across distributions |
-| Debian or Ubuntu x64 | `.deb` | You want package-manager integration |
+| Windows 10/11 (x64) | `WhatsNow_<version>_windows_x64-setup.exe` | Start menu integration, shortcuts, native notifications, and an uninstaller |
+| macOS 12.1+ | `WhatsNow_<version>_macos_universal.dmg` | One DMG for Apple silicon and Intel Macs |
+| Linux x64 | `WhatsNow_<version>_linux_x86_64.AppImage` | Runs on any mainstream distribution; run `chmod +x` once after downloading |
+
+`checksums.sha256` lists the SHA-256 of all three. The MSI, portable
+executable, `.deb`, and per-architecture macOS packages are no longer attached
+to releases; build them yourself with `scripts/build-windows.ps1` or
+`cargo tauri build` when you need them.
 
 GitHub lists a SHA-256 digest beside each release asset. Compare that digest
 before you run a downloaded package. Windows users should also verify the
@@ -105,7 +108,7 @@ Install a downloaded DMG:
 
 ```bash
 sh ./scripts/install-macos.sh \
-  --source ./WhatsNow_2.6.3_aarch64.dmg \
+  --source ./WhatsNow_2.7.0_macos_universal.dmg \
   --sha256 RELEASE_SHA256
 ```
 
@@ -129,7 +132,7 @@ Install an AppImage:
 
 ```bash
 sh ./scripts/install-linux.sh \
-  --source ./WhatsNow_2.6.3_amd64.AppImage \
+  --source ./WhatsNow_2.7.0_linux_x86_64.AppImage \
   --sha256 RELEASE_SHA256
 ```
 

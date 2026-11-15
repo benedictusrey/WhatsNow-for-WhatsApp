@@ -91,9 +91,13 @@ if [ -z "$SOURCE" ]; then
     aarch64|arm64) ARCH_RE='(aarch64|arm64)' ;;
     *) fail "Unsupported Linux architecture: $(uname -m)" ;;
   esac
-  SOURCE=$(printf '%s' "$RELEASE_JSON" | tr ',' '\n' |
-    sed -nE 's/.*"browser_download_url"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p' |
-    grep -Ei "${ARCH_RE}.*\.(AppImage|deb)$" | head -n 1 || true)
+  ASSETS=$(printf '%s' "$RELEASE_JSON" | tr ',' '\n' |
+    sed -nE 's/.*"browser_download_url"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p')
+  # Prefer the AppImage (runs on any distribution); fall back to a .deb.
+  SOURCE=$(printf '%s\n' "$ASSETS" | grep -Ei "${ARCH_RE}.*\.AppImage$" | head -n 1 || true)
+  if [ -z "$SOURCE" ]; then
+    SOURCE=$(printf '%s\n' "$ASSETS" | grep -Ei "${ARCH_RE}.*\.deb$" | head -n 1 || true)
+  fi
   [ -n "$SOURCE" ] || fail 'The latest release has no compatible Linux package.'
 fi
 

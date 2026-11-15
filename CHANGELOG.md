@@ -55,6 +55,18 @@ Authored and maintained by [@benedictusrey](https://github.com/benedictusrey).
   repeated messages without an id notify again after 90 seconds.
 - The unread probe is throttled (slower while hidden).
 
+### Release packaging
+
+- One installer per operating system: Windows setup EXE, a universal macOS DMG
+  (Apple Silicon and Intel in a single download) and a Linux AppImage, plus
+  `checksums.sha256`. The MSI, portable EXE, `.deb`, per-architecture macOS DMGs
+  and app archives are no longer attached to releases (they can still be built
+  locally).
+- The release workflow verifies each installer before publishing (non-empty files,
+  universal macOS binary, exact file set and checksums) and retries the flaky
+  macOS DMG step; `install-macos.sh` prefers the universal DMG and
+  `install-linux.sh` prefers the AppImage.
+
 ### Fixed
 
 - **Call window left behind.** When a call ended, WhatsApp's page closed itself but

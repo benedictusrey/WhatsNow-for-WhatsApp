@@ -159,12 +159,11 @@ Read [Privacy](PRIVACY.md) and [Security](SECURITY.md).
 
 ## 📦 Platforms and installation
 
-| Platform | Package formats | Current v2.7.0 targets |
+| Platform | Release installer (one per OS) | Current v2.7.0 status |
 | --- | --- | --- |
-| Windows x64 | Setup EXE, MSI, portable EXE | Built locally; unsigned |
-| Linux x64 | AppImage, DEB | Native build/validation pending |
-| macOS Apple Silicon | AArch64 DMG, app archive | Native build/validation pending |
-| macOS Intel | x86_64 DMG, app archive | Native build/validation pending |
+| Windows x64 | Setup EXE | Built locally; unsigned |
+| Linux x64 | AppImage | Native build/validation pending |
+| macOS (Apple Silicon and Intel) | Universal DMG | Native build/validation pending |
 
 Windows uses Microsoft Edge WebView2; Linux uses WebKitGTK; macOS uses WKWebView.
 Keep the OS and web runtime updated. Tauri does not replace these rendering
