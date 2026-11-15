@@ -40,3 +40,6 @@ Thumbs.db
 # Tauri generated
 /src-tauri/gen/
 /src-tauri/tauri.windows.conf.json
+
+# Local-only Claude Code instructions (kept on this drive, never published)
+CLAUDE.md
